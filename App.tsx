@@ -239,6 +239,8 @@ function App() {
         const firstSegmentDuration = selectedRoute?.segments?.[0]?.duration;
         const initialSeconds = parseDurationStr(firstSegmentDuration) || STAGE_DURATIONS['TO_STOP'] / 1000;
         setRemainingSeconds(initialSeconds);
+        // Reset lyrics widget to readable size
+        setLyricsHeight(180);
         showToast("ナビゲーションを開始します");
     };
 
@@ -1418,7 +1420,7 @@ function App() {
                                             const congestionLabels = ['快適', 'やや快適', '通常', 'やや混雑', '混雑'];
                                             const congestionColors = ['bg-blue-400', 'bg-cyan-400', 'bg-green-400', 'bg-yellow-400', 'bg-red-400'];
 
-                                            return [1, 2, 3, 4, 5].map(level => {
+                                            return [1, 2, 3].map(level => {
                                                 const spotAtLevel = spots
                                                     .filter(s => s.id !== selectedSpot.id && s.congestionLevel === level)
                                                     .sort((a, b) => getDistance(a) - getDistance(b))[0];
