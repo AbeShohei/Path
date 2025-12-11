@@ -10,6 +10,7 @@ interface MapProps {
     selectedSpotId?: string;
     focusedSpotId?: string;
     selectedRoute?: RouteOption | null;
+    isNavigating?: boolean;
     routeOptions?: RouteOption[];
 }
 
@@ -42,7 +43,7 @@ const mapOptions = {
     ]
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [] }) => {
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating }) => {
     // Determine API Key from environment
     // Determine API Key from environment
     const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
@@ -61,6 +62,13 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
     const [isAutoPan, setIsAutoPan] = useState(true);
+
+    // Disable auto-pan when entering navigation mode
+    useEffect(() => {
+        if (isNavigating) {
+            setIsAutoPan(false);
+        }
+    }, [isNavigating]);
 
     // Update center when props change
     useEffect(() => {
