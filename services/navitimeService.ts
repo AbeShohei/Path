@@ -50,7 +50,6 @@ export const getNavitimeRoutes = async (
             start_time: startTime
         });
 
-        console.log('Calling Navitime Route Search API...');
         const searchResponse = await fetch(`${ROUTE_SEARCH_URL}?${searchParams}`);
 
         if (!searchResponse.ok) {
@@ -58,7 +57,6 @@ export const getNavitimeRoutes = async (
         }
 
         const searchData = await searchResponse.json();
-        console.log('Route Search Response:', searchData);
 
         if (!searchData.items || searchData.items.length === 0) {
             console.warn('No routes found from NAVITIME');
@@ -81,12 +79,10 @@ export const getNavitimeRoutes = async (
                     options: 'transport_shape'
                 });
 
-                console.log(`Fetching shape for route ${index + 1}...`);
                 const shapeResponse = await fetch(`${ROUTE_SHAPE_URL}?${shapeParams}`);
 
                 if (shapeResponse.ok) {
                     shapeData = await shapeResponse.json();
-                    console.log(`Shape data for route ${index + 1}:`, shapeData);
                 }
             } catch (err) {
                 console.warn(`Failed to fetch shape for route ${index + 1}`, err);

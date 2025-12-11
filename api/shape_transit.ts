@@ -12,7 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const queryString = queryParams.toString();
     const url = `https://navitime-route-totalnavi.p.rapidapi.com/shape_transit${queryString ? '?' + queryString : ''}`;
 
-    console.log('Proxying to:', url);
+
 
     try {
         const response = await fetch(url, {

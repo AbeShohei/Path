@@ -65,7 +65,7 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
 
         mapInstanceRef.current = map;
         setIsLoaded(true);
-        console.log('Leaflet Map initialized');
+
 
         // Add custom styles for markers
         const style = document.createElement('style');

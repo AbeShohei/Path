@@ -1,6 +1,6 @@
 // NAVITIME Map Script Loader
 const NAVITIME_API_KEY = process.env.NAVITIME_API_KEY || '';
-console.log('NAVITIME_API_KEY loaded:', NAVITIME_API_KEY ? `${NAVITIME_API_KEY.substring(0, 8)}...` : 'NOT LOADED');
+
 
 let navitimeMapLoaded = false;
 let navitimeMapLoadPromise: Promise<void> | null = null;
