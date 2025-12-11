@@ -1054,7 +1054,7 @@ function App() {
                                                     <div className="absolute top-0 left-0 w-full h-full border-4 border-indigo-200 rounded-full"></div>
                                                     <div className="absolute top-0 left-0 w-full h-full border-4 border-indigo-600 rounded-full animate-spin border-t-transparent"></div>
                                                 </div>
-                                                <p className="text-sm font-bold animate-pulse">最適なルートを検索中...</p>
+                                                <p className="text-sm font-bold">最適なルートを検索中...</p>
                                             </div>
                                         ) : (
                                             routeOptions.map((route, idx) => {
