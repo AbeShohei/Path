@@ -2,14 +2,9 @@
     "buildCommand": "npm run build",
     "outputDirectory": "dist",
     "framework": "vite",
-    "rewrites": [
-        {
-            "source": "/api/navitime-maps/:path*",
-            "destination": "/api/navitime-maps/:path*"
-        },
-        {
-            "source": "/api/navitime-route/:path*",
-            "destination": "/api/navitime-route/:path*"
+    "functions": {
+        "api/**/*.ts": {
+            "runtime": "@vercel/node@3"
         }
-    ]
+    }
 }

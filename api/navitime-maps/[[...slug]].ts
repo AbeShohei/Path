@@ -1,14 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    const { path } = req.query;
-    const targetPath = Array.isArray(path) ? path.join('/') : path || '';
+    // Extract path after /api/navitime-maps/
+    const { slug } = req.query;
+    const targetPath = Array.isArray(slug) ? slug.join('/') : slug || '';
 
     const url = `https://navitime-maps.p.rapidapi.com/${targetPath}`;
 
     try {
         const response = await fetch(url, {
-            method: req.method,
+            method: req.method || 'GET',
             headers: {
                 'x-rapidapi-key': process.env.X_RAPIDAPI_KEY || '',
                 'x-rapidapi-host': 'navitime-maps.p.rapidapi.com',

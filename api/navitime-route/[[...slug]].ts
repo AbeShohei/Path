@@ -1,13 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    const { path } = req.query;
-    const targetPath = Array.isArray(path) ? path.join('/') : path || '';
+    // Extract path after /api/navitime-route/
+    const { slug } = req.query;
+    const targetPath = Array.isArray(slug) ? slug.join('/') : slug || '';
 
-    // Build query string from request
+    // Build query string from request (exclude slug)
     const queryParams = new URLSearchParams();
     for (const [key, value] of Object.entries(req.query)) {
-        if (key !== 'path' && value) {
+        if (key !== 'slug' && value) {
             queryParams.append(key, Array.isArray(value) ? value[0] : value);
         }
     }
@@ -15,9 +16,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const queryString = queryParams.toString();
     const url = `https://navitime-route-totalnavi.p.rapidapi.com/${targetPath}${queryString ? '?' + queryString : ''}`;
 
+    console.log('Proxying to:', url);
+
     try {
         const response = await fetch(url, {
-            method: req.method,
+            method: req.method || 'GET',
             headers: {
                 'x-rapidapi-key': process.env.X_RAPIDAPI_KEY || '',
                 'x-rapidapi-host': 'navitime-route-totalnavi.p.rapidapi.com',
