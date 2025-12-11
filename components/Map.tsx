@@ -61,7 +61,8 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
-    const [isAutoPan, setIsAutoPan] = useState(true);
+    // Initialize auto-pan based on navigation mode (false if navigating)
+    const [isAutoPan, setIsAutoPan] = useState(!isNavigating);
 
     // Disable auto-pan when entering navigation mode
     useEffect(() => {
