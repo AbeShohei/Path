@@ -57,13 +57,14 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+    const [isAutoPan, setIsAutoPan] = useState(true);
 
     // Update center when props change
     useEffect(() => {
-        if (map && center) {
+        if (map && center && isAutoPan) {
             map.panTo({ lat: center.latitude, lng: center.longitude });
         }
-    }, [center, map]);
+    }, [center, map, isAutoPan]);
 
     // Handle focused spot (panning and opening popup)
     useEffect(() => {
@@ -136,8 +137,24 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
             onLoad={onLoad}
             onUnmount={onUnmount}
             options={mapOptions}
+            onDragStart={() => setIsAutoPan(false)} // Disable auto-pan when user drags
             onClick={() => setActiveMarkerId(null)} // Close info window when clicking map
         >
+            {/* Recenter Button - Visible when auto-pan is disabled */}
+            {!isAutoPan && (
+                <button
+                    onClick={() => {
+                        setIsAutoPan(true);
+                        map?.panTo({ lat: center.latitude, lng: center.longitude });
+                    }}
+                    className="absolute bottom-32 right-4 z-40 bg-white p-3 rounded-full shadow-lg text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
+                    title="現在地に戻る"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                    </svg>
+                </button>
+            )}
             {/* Current Location Marker (Approximate visual) */}
             <MarkerF
                 position={{ lat: center.latitude, lng: center.longitude }}
