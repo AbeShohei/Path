@@ -100,6 +100,12 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
         };
     }, []);
 
+    // Store onPinClick in Ref to access latest version without triggering effect
+    const onPinClickRef = useRef(onPinClick);
+    useEffect(() => {
+        onPinClickRef.current = onPinClick;
+    }, [onPinClick]);
+
     // Update center
     useEffect(() => {
         if (!mapInstanceRef.current || !isLoaded) return;
@@ -109,9 +115,21 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
     // Store markers by spot ID for lookup
     const markerMapRef = useRef<{ [key: string]: L.Marker }>({});
 
+    // Store previous spots to prevent unnecessary re-rendering
+    const prevSpotsRef = useRef<string>('');
+
     // Render spot markers
     useEffect(() => {
         if (!mapInstanceRef.current || !isLoaded) return;
+
+        // Create a simple signature for spots to check if they have actually changed
+        // Include ID and congestion level to cover visual changes
+        const spotsSignature = spots.map(s => `${s.id}:${s.congestionLevel}`).join('|');
+        if (prevSpotsRef.current === spotsSignature) {
+            return; // Skip re-rendering if spots haven't changed effectively
+        }
+        prevSpotsRef.current = spotsSignature;
+
         const map = mapInstanceRef.current;
 
         // Clear existing markers
@@ -192,7 +210,7 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
             // Handle popup open to add button listener
             marker.on('popupopen', () => {
                 // Notify parent that a pin was clicked
-                if (onPinClick) onPinClick();
+                if (onPinClickRef.current) onPinClickRef.current();
 
                 setTimeout(() => {
                     const btn = document.getElementById(`route-btn-${spot.id}`);
@@ -209,7 +227,7 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
             markersRef.current.push(marker);
             markerMapRef.current[spot.id] = marker;
         });
-    }, [isLoaded, spots, onSelectSpot, onPinClick]);
+    }, [isLoaded, spots, onSelectSpot]); // Removed onPinClick to prevent recreation
 
     // Pan to focused spot (from list click) and open popup
     useEffect(() => {
@@ -229,10 +247,13 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
             const point = map.latLngToContainerPoint(latLng);
             const newPoint = L.point(point.x, point.y - offsetY);
             const newLatLng = map.containerPointToLatLng(newPoint);
+
             map.setView(newLatLng, map.getZoom(), { animate: true });
+
+            // Open popup after animation with longer delay
             setTimeout(() => {
                 marker.openPopup();
-            }, 300);
+            }, 400);
         }
     }, [focusedSpotId, isLoaded]);
 

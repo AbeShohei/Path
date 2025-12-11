@@ -137,6 +137,7 @@ function App() {
 
     const handleSpotSelect = async (spot: Spot) => {
         setSelectedSpot(spot);
+        setIsSheetMinimized(true); // Minimize sheet to show popup/pin clearly
         // Use timestamp to ensure re-trigger even for same spot
         setFocusedSpotId(`${spot.id}-${Date.now()}`);
     };
