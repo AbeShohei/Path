@@ -108,9 +108,12 @@ const LyricsReader: React.FC<LyricsReaderProps> = ({ text, isPlaying, duration, 
             <p
               key={i}
               ref={el => { lineRefs.current[i] = el; }}
-              className={`text-xl md:text-3xl font-bold transition-all duration-500 leading-relaxed font-serif ${isRead ? 'text-indigo-900 opacity-80 blur-[0.5px]' :
-                  isReading ? 'text-white opacity-100 scale-110 drop-shadow-lg' :
-                    'text-gray-400 opacity-50 blur-[1px] scale-95'
+              className={`text-xl md:text-3xl font-bold transition-all duration-500 leading-relaxed font-serif ${
+                // If not playing, show all text clearly but slightly muted
+                !isPlaying && duration > 0 ? 'text-gray-700 opacity-100 scale-100' :
+                  isRead ? 'text-gray-800 opacity-60 blur-[0.5px]' :
+                    isReading ? 'text-indigo-700 opacity-100 scale-105 drop-shadow-md' :
+                      'text-gray-400 opacity-70 blur-[0.5px] scale-95'
                 }`}
             >
               {line}
