@@ -1440,7 +1440,7 @@ function App() {
                                             const congestionLabels = ['快適', 'やや快適', '通常', 'やや混雑', '混雑'];
                                             const congestionColors = ['bg-blue-400', 'bg-cyan-400', 'bg-green-400', 'bg-yellow-400', 'bg-red-400'];
 
-                                            // Filter spots with congestion level <= 3 (Normal or better) and sort by distance
+                                            // Filter spots with congestion level <= 3 (1:快適, 2:やや快適, 3:通常) and sort by distance explicitly
                                             const recommendedSpots = spots
                                                 .filter(s => s.id !== selectedSpot.id && s.congestionLevel <= 3)
                                                 .sort((a, b) => getDistance(a) - getDistance(b))
