@@ -1,0 +1,8 @@
+{
+  "name": "京都ガイド",
+  "description": "An AI-powered tourism guide for Kyoto using Gemini Maps Grounding, Search, TTS, and Live API.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone"
+  ]
+}
