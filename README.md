@@ -1,4 +1,4 @@
-# 京都スマートガイド (Kyoto Smart Guide)
+# Path - Smart Tourism Kyoto Guide
 
 **京都の「地域データ」と「生成AI」を組み合わせた、新しい観光ナビゲーションアプリ**
 

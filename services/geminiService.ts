@@ -71,7 +71,7 @@ async function callOpenRouter(messages: Array<{ role: string, content: string }>
                 'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
                 'Content-Type': 'application/json',
                 'HTTP-Referer': window.location.origin,
-                'X-Title': 'Kyoto Smart Guide'
+                'X-Title': 'Path - Smart Tourism Kyoto Guide'
             },
             body: JSON.stringify(requestBody)
         });
