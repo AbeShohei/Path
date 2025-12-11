@@ -216,13 +216,20 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
         if (!mapInstanceRef.current || !isLoaded || !focusedSpotId) return;
         const map = mapInstanceRef.current;
 
-        // Extract actual spot ID (remove timestamp suffix if present)
-        const actualSpotId = focusedSpotId.split('-').slice(0, -1).join('-') || focusedSpotId;
+        // Extract actual spot ID (remove timestamp suffix - last part after last hyphen)
+        const lastHyphenIndex = focusedSpotId.lastIndexOf('-');
+        const actualSpotId = lastHyphenIndex > 0 ? focusedSpotId.substring(0, lastHyphenIndex) : focusedSpotId;
         const marker = markerMapRef.current[actualSpotId];
 
         if (marker) {
             const latLng = marker.getLatLng();
-            map.setView(latLng, 16, { animate: true });
+            // Position marker lower on screen (same as pin click)
+            const mapHeight = map.getSize().y;
+            const offsetY = mapHeight * 0.30;
+            const point = map.latLngToContainerPoint(latLng);
+            const newPoint = L.point(point.x, point.y - offsetY);
+            const newLatLng = map.containerPointToLatLng(newPoint);
+            map.setView(newLatLng, map.getZoom(), { animate: true });
             setTimeout(() => {
                 marker.openPopup();
             }, 300);
