@@ -1440,21 +1440,22 @@ function App() {
                                             const congestionLabels = ['快適', 'やや快適', '通常', 'やや混雑', '混雑'];
                                             const congestionColors = ['bg-blue-400', 'bg-cyan-400', 'bg-green-400', 'bg-yellow-400', 'bg-red-400'];
 
-                                            return [1, 2, 3].map(level => {
-                                                const spotAtLevel = spots
-                                                    .filter(s => s.id !== selectedSpot.id && s.congestionLevel === level)
-                                                    .sort((a, b) => getDistance(a) - getDistance(b))[0];
+                                            // Filter spots with congestion level <= 3 (Normal or better) and sort by distance
+                                            const recommendedSpots = spots
+                                                .filter(s => s.id !== selectedSpot.id && s.congestionLevel <= 3)
+                                                .sort((a, b) => getDistance(a) - getDistance(b))
+                                                .slice(0, 3);
 
-                                                if (!spotAtLevel) return null;
-
+                                            return recommendedSpots.map(spot => {
+                                                const level = spot.congestionLevel;
                                                 return (
                                                     <button
-                                                        key={spotAtLevel.id}
+                                                        key={spot.id}
                                                         onClick={() => {
                                                             stopCurrentAudio();
                                                             setMode(AppMode.PLANNING);
-                                                            setSelectedSpot(spotAtLevel);
-                                                            setFocusedSpotId(`${spotAtLevel.id}-${Date.now()}`);
+                                                            setSelectedSpot(spot);
+                                                            setFocusedSpotId(`${spot.id}-${Date.now()}`);
                                                             setGuideText("");
                                                         }}
                                                         className="w-full flex items-center gap-2 p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors text-left"
@@ -1462,11 +1463,11 @@ function App() {
                                                         <div className={`px-1.5 py-0.5 rounded text-[8px] font-bold text-white ${congestionColors[level - 1]}`}>
                                                             {congestionLabels[level - 1]}
                                                         </div>
-                                                        <span className="text-xs text-white/90 flex-1 truncate">{spotAtLevel.name}</span>
-                                                        <span className="text-[10px] text-white/50 shrink-0">{(getDistance(spotAtLevel) * 1000).toFixed(0)}m</span>
+                                                        <span className="text-xs text-white/90 flex-1 truncate">{spot.name}</span>
+                                                        <span className="text-[10px] text-white/50 shrink-0">{(getDistance(spot) * 1000).toFixed(0)}m</span>
                                                     </button>
                                                 );
-                                            }).filter(Boolean);
+                                            });
                                         })()}
                                     </div>
                                 </div>

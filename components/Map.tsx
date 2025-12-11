@@ -32,6 +32,7 @@ const mapOptions = {
     mapTypeControl: false,
     streetViewControl: false,
     fullscreenControl: false,
+    gestureHandling: 'greedy',
     styles: [
         {
             featureType: "poi",
@@ -43,9 +44,7 @@ const mapOptions = {
 
 const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [] }) => {
     // Determine API Key from environment
-    const apiKey = typeof import.meta !== 'undefined' && import.meta.env
-        ? (import.meta.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY)
-        : process.env.GOOGLE_MAPS_API_KEY;
+    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || '';
 
     if (!apiKey) {
         console.error("Google Maps API Key is missing!");
@@ -201,14 +200,14 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                             key={i}
                             path={path}
                             options={{
-                                strokeColor: isWalk ? '#f97316' : '#00bcd4', // Orange or Cyan
-                                strokeOpacity: 0.8,
-                                strokeWeight: isWalk ? 5 : 7,
+                                strokeColor: isWalk ? '#ea580c' : '#0097a7', // Darker Orange (600) or Darker Cyan (700)
+                                strokeOpacity: 1.0,
+                                strokeWeight: isWalk ? 6 : 8,
                                 icons: isWalk ? [{
-                                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 2, fillOpacity: 1, fillColor: '#f97316' },
+                                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 2, fillOpacity: 1, fillColor: '#ea580c' },
                                     offset: '0',
                                     repeat: '10px'
-                                }] : undefined // Dashed effect mock
+                                }] : undefined
                             }}
                         />
                     );
@@ -217,9 +216,9 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                 <PolylineF
                     path={selectedRoute.path.map((p: any) => ({ lat: p.lat, lng: p.lng }))}
                     options={{
-                        strokeColor: '#00bcd4',
-                        strokeOpacity: 0.8,
-                        strokeWeight: 7
+                        strokeColor: '#0097a7', // Darker Cyan (700)
+                        strokeOpacity: 1.0,
+                        strokeWeight: 8
                     }}
                 />
             ) : null)}
