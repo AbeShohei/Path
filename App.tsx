@@ -717,7 +717,6 @@ function App() {
                         focusedSpotId={focusedSpotId || undefined}
                         selectedRoute={selectedRoute}
                         routeOptions={routeOptions} // Pass all routes
-                        isNavigating={mode === AppMode.NAVIGATING}
                     />
                 </div>
 

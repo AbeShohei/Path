@@ -43,8 +43,7 @@ const mapOptions = {
     ]
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating }) => {
-    // Determine API Key from environment
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [] }) => {
     // Determine API Key from environment
     const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
         (import.meta as any).env?.GOOGLE_MAPS_API_KEY ||
@@ -61,22 +60,23 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
-    // Initialize auto-pan based on navigation mode (false if navigating)
-    const [isAutoPan, setIsAutoPan] = useState(!isNavigating);
 
-    // Disable auto-pan when entering navigation mode
-    useEffect(() => {
-        if (isNavigating) {
-            setIsAutoPan(false);
-        }
-    }, [isNavigating]);
+    // Ref to track if initial pan to center has been performed
+    const hasPannedToInitialCenter = useRef(false);
 
-    // Update center when props change
+    // Initial Pan Logic: Pan to center ONLY once when map is loaded and center is available
     useEffect(() => {
-        if (map && center && isAutoPan) {
+        if (map && center && !hasPannedToInitialCenter.current) {
             map.panTo({ lat: center.latitude, lng: center.longitude });
+            hasPannedToInitialCenter.current = true;
         }
-    }, [center, map, isAutoPan]);
+    }, [center, map]);
+
+    // NOTE: Removed logic that auto-pans on center update to prevent hindering user navigation.
+    // Map will now ONLY move when:
+    // 1. Initial load
+    // 2. User clicks "Recenter" button
+    // 3. User selects a spot (focusedSpotId changes)
 
     // Handle focused spot (panning and opening popup)
     useEffect(() => {
@@ -149,7 +149,6 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
             onLoad={onLoad}
             onUnmount={onUnmount}
             options={mapOptions}
-            onDragStart={() => setIsAutoPan(false)} // Disable auto-pan when user drags
             onClick={() => setActiveMarkerId(null)} // Close info window when clicking map
         >
             {/* Recenter Button - Visible when auto-pan is disabled */}
