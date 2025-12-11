@@ -1,420 +1,230 @@
-import React, { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, PolylineF } from '@react-google-maps/api';
 import { Spot, Coordinates, RouteOption } from '../types';
-
-// Fix Leaflet default icon path issues with bundlers
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
 
 interface MapProps {
     center: Coordinates;
     spots: Spot[];
     onSelectSpot: (spot: Spot) => void;
-    onPinClick?: () => void;  // Called when any pin is clicked
+    onPinClick?: () => void;
     selectedSpotId?: string;
-    focusedSpotId?: string;  // Separate prop for list click pan+popup
+    focusedSpotId?: string;
     selectedRoute?: RouteOption | null;
     routeOptions?: RouteOption[];
 }
 
-// Create custom marker icon
-const createCustomIcon = (color: string) => {
-    const svg = `
-        <svg width="28" height="36" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 0C7.163 0 0 7.163 0 16c0 8.837 16 24 16 24s16-15.163 16-24C32 7.163 24.837 0 16 0z" fill="${color}"/>
-            <circle cx="16" cy="16" r="5" fill="white"/>
-        </svg>
-    `;
-    return L.divIcon({
-        html: svg,
-        className: 'custom-marker',
-        iconSize: [28, 36],
-        iconAnchor: [14, 36],
-        popupAnchor: [0, -36]
-    });
+// Map container style
+const containerStyle = {
+    width: '100%',
+    height: '100%'
+};
+
+// Default center (Kyoto Station)
+const defaultCenter = {
+    lat: 34.9858,
+    lng: 135.7588
+};
+
+// Map options
+const mapOptions = {
+    disableDefaultUI: false,
+    zoomControl: true,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    styles: [
+        {
+            featureType: "poi",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }]
+        }
+    ]
 };
 
 const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [] }) => {
-    const mapContainerRef = useRef<HTMLDivElement>(null);
-    const mapInstanceRef = useRef<L.Map | null>(null);
-    const markersRef = useRef<L.Marker[]>([]);
-    const polylinesRef = useRef<L.Polyline[]>([]);
-    const [isLoaded, setIsLoaded] = useState(false);
+    // Determine API Key from environment
+    const apiKey = typeof import.meta !== 'undefined' && import.meta.env
+        ? (import.meta.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY)
+        : process.env.GOOGLE_MAPS_API_KEY;
 
-    // Initialize Leaflet Map
+    if (!apiKey) {
+        console.error("Google Maps API Key is missing!");
+    }
+
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: apiKey || '',
+    });
+
+    const [map, setMap] = useState<google.maps.Map | null>(null);
+    const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+
+    // Update center when props change
     useEffect(() => {
-        if (!mapContainerRef.current || mapInstanceRef.current) return;
+        if (map && center) {
+            map.panTo({ lat: center.latitude, lng: center.longitude });
+        }
+    }, [center, map]);
 
-        // Create map
-        const map = L.map(mapContainerRef.current, {
-            center: [center.latitude, center.longitude],
-            zoom: 15,
-            zoomControl: true
-        });
+    // Handle focused spot (panning and opening popup)
+    useEffect(() => {
+        if (map && focusedSpotId) {
+            // Extract actual ID
+            const lastHyphenIndex = focusedSpotId.lastIndexOf('-');
+            const actualId = lastHyphenIndex > 0 ? focusedSpotId.substring(0, lastHyphenIndex) : focusedSpotId;
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19
-        }).addTo(map);
-
-        mapInstanceRef.current = map;
-        setIsLoaded(true);
-
-
-        // Add custom styles for markers
-        const style = document.createElement('style');
-        style.textContent = `
-            .custom-marker {
-                background: transparent;
-                border: none;
+            const spot = spots.find(s => s.id === actualId);
+            if (spot) {
+                // Pan with offset (similar to Leaflet implementation)
+                // In Google Maps, we can just panTo center for now, or calculate projection
+                // For simplicity, let's just pan to spot
+                map.panTo({ lat: spot.location.latitude, lng: spot.location.longitude });
+                map.setZoom(16);
+                setActiveMarkerId(actualId);
             }
-            .custom-marker svg {
-                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-            }
-            .leaflet-popup-content-wrapper {
-                border-radius: 12px;
-                padding: 0;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            }
-            .leaflet-popup-content {
-                margin: 0;
-                padding: 14px;
-                font-family: 'Zen Kaku Gothic New', sans-serif;
-            }
-            .leaflet-popup-tip {
-                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            }
-        `;
-        document.head.appendChild(style);
+        }
+    }, [focusedSpotId, map, spots]);
 
-        return () => {
-            map.remove();
-            mapInstanceRef.current = null;
-            style.remove();
-        };
+    const onLoad = useCallback((mapInstance: google.maps.Map) => {
+        setMap(mapInstance);
     }, []);
 
-    // Store onPinClick in Ref to access latest version without triggering effect
-    const onPinClickRef = useRef(onPinClick);
-    useEffect(() => {
-        onPinClickRef.current = onPinClick;
-    }, [onPinClick]);
+    const onUnmount = useCallback(() => {
+        setMap(null);
+    }, []);
 
-    // Update center
-    useEffect(() => {
-        if (!mapInstanceRef.current || !isLoaded) return;
-        mapInstanceRef.current.setView([center.latitude, center.longitude], mapInstanceRef.current.getZoom());
-    }, [center, isLoaded]);
+    // Helper to create SVG icon
+    const getMarkerIcon = (spot: Spot) => {
+        let color = '#3b82f6';
+        if (spot.congestionLevel === 5) color = '#ef4444';
+        else if (spot.congestionLevel === 4) color = '#eab308';
+        else if (spot.congestionLevel === 3) color = '#22c55e';
+        else if (spot.congestionLevel === 2) color = '#06b6d4';
 
-    // Store markers by spot ID for lookup
-    const markerMapRef = useRef<{ [key: string]: L.Marker }>({});
+        const svg = `
+            <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 0C7.163 0 0 7.163 0 16c0 8.837 16 24 16 24s16-15.163 16-24C32 7.163 24.837 0 16 0z" fill="${color}"/>
+                <circle cx="16" cy="16" r="5" fill="white"/>
+            </svg>
+        `.trim();
 
-    // Store previous spots to prevent unnecessary re-rendering
-    const prevSpotsRef = useRef<string>('');
-
-    // Render spot markers
-    useEffect(() => {
-        if (!mapInstanceRef.current || !isLoaded) return;
-
-        // Create a simple signature for spots to check if they have actually changed
-        // Include ID and congestion level to cover visual changes
-        const spotsSignature = spots.map(s => `${s.id}:${s.congestionLevel}`).join('|');
-        if (prevSpotsRef.current === spotsSignature) {
-            return; // Skip re-rendering if spots haven't changed effectively
-        }
-        prevSpotsRef.current = spotsSignature;
-
-        const map = mapInstanceRef.current;
-
-        // Clear existing markers
-        markersRef.current.forEach(m => m.remove());
-        markersRef.current = [];
-        markerMapRef.current = {};
-
-        spots.forEach(spot => {
-            // Determine color based on congestion
-            let color = '#3b82f6';
-            if (spot.congestionLevel === 5) color = '#ef4444';
-            else if (spot.congestionLevel === 4) color = '#eab308';
-            else if (spot.congestionLevel === 3) color = '#22c55e';
-            else if (spot.congestionLevel === 2) color = '#06b6d4';
-
-            const icon = createCustomIcon(color);
-            const marker = L.marker([spot.location.latitude, spot.location.longitude], { icon });
-
-            // Create popup content with description and consistent SVG icons
-            const congestionText = ['快適', 'やや快適', '通常', 'やや混雑', '混雑'][spot.congestionLevel - 1];
-            const popupContent = document.createElement('div');
-            popupContent.innerHTML = `
-                <div style="min-width: 220px; max-width: 280px; font-family: system-ui, -apple-system, sans-serif;">
-                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px; color: #1f2937; line-height: 1.3;">${spot.name}</div>
-                    <div style="display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; color: white; background: ${color}; margin-bottom: 10px;">${congestionText}</div>
-                    ${spot.description ? `<div style="font-size: 12px; color: #4b5563; margin-bottom: 10px; line-height: 1.5;">${spot.description}</div>` : ''}
-                    ${spot.openingHours ? `
-                        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #4b5563; margin-bottom: 6px;">
-                            <svg style="width: 16px; height: 16px; min-width: 16px; min-height: 16px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            <span>${spot.openingHours}</span>
-                        </div>
-                    ` : ''}
-                    ${spot.price ? `
-                        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #4b5563; margin-bottom: 6px;">
-                            <svg style="width: 16px; height: 16px; min-width: 16px; min-height: 16px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2">
-                                <line x1="12" y1="1" x2="12" y2="23"/>
-                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                            </svg>
-                            <span>${spot.price}</span>
-                        </div>
-                    ` : ''}
-                    <button id="route-btn-${spot.id}" style="
-                        margin-top: 10px;
-                        width: 100%;
-                        background: linear-gradient(135deg, #667eea, #764ba2);
-                        color: white;
-                        border: none;
-                        padding: 10px;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-weight: 700;
-                        font-size: 12px;
-                        box-shadow: 0 2px 8px rgba(102,126,234,0.4);
-                    ">ルートを見る</button>
-                </div>
-            `;
-
-            marker.bindPopup(popupContent, { closeButton: true, maxWidth: 250 });
-
-            // Handle marker click - pan to position marker lower on screen
-            marker.on('click', () => {
-                const map = mapInstanceRef.current;
-                if (map) {
-                    const latLng = marker.getLatLng();
-                    // Calculate offset to position marker at ~35% from top (instead of center)
-                    const mapHeight = map.getSize().y;
-                    const offsetY = mapHeight * 0.30; // Move view up so marker appears lower
-                    const point = map.latLngToContainerPoint(latLng);
-                    const newPoint = L.point(point.x, point.y - offsetY);
-                    const newLatLng = map.containerPointToLatLng(newPoint);
-                    map.setView(newLatLng, map.getZoom(), { animate: true });
-                }
-            });
-
-            // Handle popup open to add button listener
-            marker.on('popupopen', () => {
-                // Notify parent that a pin was clicked
-                if (onPinClickRef.current) onPinClickRef.current();
-
-                setTimeout(() => {
-                    const btn = document.getElementById(`route-btn-${spot.id}`);
-                    if (btn) {
-                        btn.onclick = () => {
-                            marker.closePopup();
-                            onSelectSpot(spot);
-                        };
-                    }
-                }, 50);
-            });
-
-            marker.addTo(map);
-            markersRef.current.push(marker);
-            markerMapRef.current[spot.id] = marker;
-        });
-    }, [isLoaded, spots, onSelectSpot]); // Removed onPinClick to prevent recreation
-
-    // Pan to focused spot (from list click) and open popup
-    useEffect(() => {
-        if (!mapInstanceRef.current || !isLoaded || !focusedSpotId) return;
-        const map = mapInstanceRef.current;
-
-        // Extract actual spot ID (remove timestamp suffix - last part after last hyphen)
-        const lastHyphenIndex = focusedSpotId.lastIndexOf('-');
-        const actualSpotId = lastHyphenIndex > 0 ? focusedSpotId.substring(0, lastHyphenIndex) : focusedSpotId;
-        const marker = markerMapRef.current[actualSpotId];
-
-        if (marker) {
-            const latLng = marker.getLatLng();
-            // Position marker lower on screen (same as pin click)
-            const mapHeight = map.getSize().y;
-            const offsetY = mapHeight * 0.30;
-            const point = map.latLngToContainerPoint(latLng);
-            const newPoint = L.point(point.x, point.y - offsetY);
-            const newLatLng = map.containerPointToLatLng(newPoint);
-
-            map.setView(newLatLng, map.getZoom(), { animate: true });
-
-            // Open popup after animation with longer delay
-            setTimeout(() => {
-                marker.openPopup();
-            }, 400);
-        }
-    }, [focusedSpotId, isLoaded]);
-
-    // Render Routes (Polylines) - Only show when a route is selected
-    useEffect(() => {
-        if (!mapInstanceRef.current || !isLoaded) return;
-        const map = mapInstanceRef.current;
-
-        // Clear existing lines
-        polylinesRef.current.forEach(line => line.remove());
-        polylinesRef.current = [];
-
-        // Only show routes when a route is actually selected (not just browsing options)
-        if (!selectedRoute) return;
-
-        let allPoints: L.LatLng[] = [];
-
-        if (selectedRoute.segments && selectedRoute.segments.length > 0) {
-            selectedRoute.segments.forEach(segment => {
-                if (!segment.path || segment.path.length === 0) return;
-
-                // Cyan for transit, orange dashed for walking
-                const isWalk = segment.type === 'WALK';
-                const segmentColor = isWalk ? '#f97316' : '#00bcd4'; // Orange for walk, Cyan for transit
-                const points: L.LatLngExpression[] = segment.path.map((p: any) => [p.lat, p.lng]);
-
-                const polyline = L.polyline(points, {
-                    color: segmentColor,
-                    weight: isWalk ? 5 : 7, // Thicker for transit
-                    opacity: 0.9,
-                    dashArray: isWalk ? '10, 10' : undefined, // Dashed for walking
-                    lineCap: 'round',
-                    lineJoin: 'round'
-                }).addTo(map);
-                polylinesRef.current.push(polyline);
-
-                allPoints = allPoints.concat(segment.path.map((p: any) => L.latLng(p.lat, p.lng)));
-            });
-        } else if (selectedRoute.path && selectedRoute.path.length > 0) {
-            const points: L.LatLngExpression[] = selectedRoute.path.map((p: any) => [p.lat, p.lng]);
-            const polyline = L.polyline(points, {
-                color: '#00bcd4', // Cyan
-                weight: 7,
-                opacity: 0.9,
-                lineCap: 'round',
-                lineJoin: 'round'
-            }).addTo(map);
-            polylinesRef.current.push(polyline);
-
-            allPoints = selectedRoute.path.map((p: any) => L.latLng(p.lat, p.lng));
-        }
-
-        // Fit bounds to show full route
-        if (allPoints.length > 0) {
-            const bounds = L.latLngBounds(allPoints);
-            map.fitBounds(bounds, { padding: [50, 50] });
-        }
-    }, [isLoaded, selectedRoute]);
-
-    // Current Location Marker
-    const currentLocationMarkerRef = useRef<L.Marker | null>(null);
-
-    useEffect(() => {
-        if (!mapInstanceRef.current || !isLoaded) return;
-        const map = mapInstanceRef.current;
-
-        // Custom pulsing dot icon for current location
-        const currentLocationIcon = L.divIcon({
-            className: 'current-location-marker',
-            html: `
-                <div class="pulse-ring"></div>
-                <div class="pulse-core"></div>
-            `,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
-        });
-
-        // Add CSS for current location marker
-        const styleId = 'current-location-style';
-        if (!document.getElementById(styleId)) {
-            const style = document.createElement('style');
-            style.id = styleId;
-            style.textContent = `
-                .current-location-marker {
-                    background: transparent;
-                    border: none;
-                }
-                .pulse-core {
-                    width: 14px;
-                    height: 14px;
-                    background-color: #2563eb;
-                    border: 2px solid white;
-                    border-radius: 50%;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    z-index: 2;
-                }
-                .pulse-ring {
-                    width: 24px;
-                    height: 24px;
-                    background-color: rgba(37, 99, 235, 0.4);
-                    border-radius: 50%;
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    animation: pulse 2s infinite;
-                }
-                @keyframes pulse {
-                    0% {
-                        transform: scale(0.8);
-                        opacity: 0.8;
-                    }
-                    70% {
-                        transform: scale(2);
-                        opacity: 0;
-                    }
-                    100% {
-                        transform: scale(0.8);
-                        opacity: 0;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        // Remove existing marker if any
-        if (currentLocationMarkerRef.current) {
-            currentLocationMarkerRef.current.remove();
-        }
-
-        // Add new marker
-        const marker = L.marker([center.latitude, center.longitude], {
-            icon: currentLocationIcon,
-            zIndexOffset: 1000 // Ensure it sits on top of other markers
-        }).addTo(map);
-
-        marker.bindPopup(`
-            <div style="font-family: system-ui, sans-serif; font-size: 13px; font-weight: bold; padding: 4px 8px;">
-                現在地 (京都駅)
-            </div>
-        `, { closeButton: false, offset: [0, -10] });
-
-        currentLocationMarkerRef.current = marker;
-
-        return () => {
-            // Cleanup logic is handled by re-running effect, but styling persists which is fine
+        return {
+            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+            scaledSize: new google.maps.Size(32, 40),
+            anchor: new google.maps.Point(16, 40)
         };
-    }, [center, isLoaded]);
+    };
+
+    if (!isLoaded) {
+        return <div className="w-full h-full bg-gray-200 flex items-center justify-center">Loading Maps...</div>;
+    }
+
+    // Current Location Icon
+    const currentLocationIcon = {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: "#2563eb",
+        fillOpacity: 1,
+        strokeColor: "white",
+        strokeWeight: 2,
+    };
 
     return (
-        <div
-            ref={mapContainerRef}
-            style={{
-                width: '100%',
-                height: '100%',
-                background: '#e5e7eb'
-            }}
-        />
+        <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={{ lat: center.latitude, lng: center.longitude }}
+            zoom={15}
+            onLoad={onLoad}
+            onUnmount={onUnmount}
+            options={mapOptions}
+            onClick={() => setActiveMarkerId(null)} // Close info window when clicking map
+        >
+            {/* Current Location Marker (Approximate visual) */}
+            <MarkerF
+                position={{ lat: center.latitude, lng: center.longitude }}
+                icon={currentLocationIcon}
+                zIndex={100}
+                title="現在地"
+            />
+
+            {/* Spot Markers */}
+            {spots.map(spot => (
+                <MarkerF
+                    key={spot.id}
+                    position={{ lat: spot.location.latitude, lng: spot.location.longitude }}
+                    icon={getMarkerIcon(spot)}
+                    onClick={() => {
+                        setActiveMarkerId(spot.id);
+                        if (onPinClick) onPinClick();
+                    }}
+                >
+                    {activeMarkerId === spot.id && (
+                        <InfoWindowF
+                            position={{ lat: spot.location.latitude, lng: spot.location.longitude }}
+                            onCloseClick={() => setActiveMarkerId(null)}
+                            options={{ pixelOffset: new google.maps.Size(0, -40) }}
+                        >
+                            <div style={{ minWidth: '220px', maxWidth: '250px', fontFamily: 'sans-serif' }}>
+                                <div className="font-bold text-base mb-1 text-gray-800">{spot.name}</div>
+                                <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white mb-2`}
+                                    style={{
+                                        backgroundColor: spot.congestionLevel === 5 ? '#ef4444' :
+                                            spot.congestionLevel === 4 ? '#eab308' :
+                                                spot.congestionLevel === 3 ? '#22c55e' :
+                                                    spot.congestionLevel === 2 ? '#06b6d4' : '#3b82f6'
+                                    }}>
+                                    {['快適', 'やや快適', '通常', 'やや混雑', '混雑'][spot.congestionLevel - 1]}
+                                </div>
+                                {spot.description && <div className="text-xs text-gray-600 mb-2 leading-snug">{spot.description}</div>}
+                                <button
+                                    onClick={() => onSelectSpot(spot)}
+                                    className="w-full mt-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 py-2 rounded shadow text-xs font-bold cursor-pointer"
+                                >
+                                    ルートを見る
+                                </button>
+                            </div>
+                        </InfoWindowF>
+                    )}
+                </MarkerF>
+            ))}
+
+            {/* Route Polylines */}
+            {selectedRoute && (selectedRoute.segments ? (
+                selectedRoute.segments.map((seg, i) => {
+                    if (!seg.path || seg.path.length === 0) return null;
+                    const path = seg.path.map((p: any) => ({ lat: p.lat, lng: p.lng }));
+
+                    const isWalk = seg.type === 'WALK';
+
+                    return (
+                        <PolylineF
+                            key={i}
+                            path={path}
+                            options={{
+                                strokeColor: isWalk ? '#f97316' : '#00bcd4', // Orange or Cyan
+                                strokeOpacity: 0.8,
+                                strokeWeight: isWalk ? 5 : 7,
+                                icons: isWalk ? [{
+                                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 2, fillOpacity: 1, fillColor: '#f97316' },
+                                    offset: '0',
+                                    repeat: '10px'
+                                }] : undefined // Dashed effect mock
+                            }}
+                        />
+                    );
+                })
+            ) : selectedRoute.path ? (
+                <PolylineF
+                    path={selectedRoute.path.map((p: any) => ({ lat: p.lat, lng: p.lng }))}
+                    options={{
+                        strokeColor: '#00bcd4',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 7
+                    }}
+                />
+            ) : null)}
+
+        </GoogleMap>
     );
 };
 
