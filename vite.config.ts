@@ -10,20 +10,30 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       proxy: {
         // Proxy for Navitime Maps (RapidAPI) - for map_script
-        '/api/navitime-maps': {
+        '/api/map_script': {
           target: 'https://navitime-maps.p.rapidapi.com',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/navitime-maps/, ''),
+          rewrite: () => '/map_script?host=localhost',
           headers: {
             'x-rapidapi-key': env['X-RAPIDAPI-KEY'] || '',
             'x-rapidapi-host': 'navitime-maps.p.rapidapi.com'
           }
         },
-        // Proxy for Navitime Route API (RapidAPI) - for route_transit, shape_transit
-        '/api/navitime-route': {
+        // Proxy for Navitime Route API (RapidAPI) - for route_transit
+        '/api/route_transit': {
           target: 'https://navitime-route-totalnavi.p.rapidapi.com',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/navitime-route/, ''),
+          rewrite: (path) => path.replace(/^\/api/, ''),
+          headers: {
+            'x-rapidapi-key': env['X-RAPIDAPI-KEY'] || '',
+            'x-rapidapi-host': 'navitime-route-totalnavi.p.rapidapi.com'
+          }
+        },
+        // Proxy for Navitime Route API (RapidAPI) - for shape_transit
+        '/api/shape_transit': {
+          target: 'https://navitime-route-totalnavi.p.rapidapi.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ''),
           headers: {
             'x-rapidapi-key': env['X-RAPIDAPI-KEY'] || '',
             'x-rapidapi-host': 'navitime-route-totalnavi.p.rapidapi.com'

@@ -1,8 +1,8 @@
 import { RouteOption, TransportMode, RouteSegment } from '../types';
 
 // API Endpoints (via Vite proxy in dev, via Vercel serverless in prod)
-const ROUTE_SEARCH_URL = '/api/navitime-route/route_transit';
-const ROUTE_SHAPE_URL = '/api/navitime-route/shape_transit';
+const ROUTE_SEARCH_URL = '/api/route_transit';
+const ROUTE_SHAPE_URL = '/api/shape_transit';
 
 // Format date for API (YYYY-MM-DDThh:mm:ss)
 const formatDateTime = (date: Date): string => {

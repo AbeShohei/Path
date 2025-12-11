@@ -4,7 +4,7 @@ export const loadNavitimeMapScript = async (): Promise<void> => {
     }
 
     // Use Vite proxy for RapidAPI NAVITIME Maps endpoint
-    const proxyUrl = '/api/navitime-maps/map_script?host=localhost';
+    const proxyUrl = '/api/map_script';
 
     try {
         const response = await fetch(proxyUrl);
