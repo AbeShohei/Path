@@ -44,7 +44,10 @@ const mapOptions = {
 
 const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [] }) => {
     // Determine API Key from environment
-    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || '';
+    // Determine API Key from environment
+    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
+        (import.meta as any).env?.GOOGLE_MAPS_API_KEY ||
+        (typeof process !== 'undefined' && process.env ? process.env.GOOGLE_MAPS_API_KEY : '') || '';
 
     if (!apiKey) {
         console.error("Google Maps API Key is missing!");
