@@ -153,20 +153,19 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
             onClick={() => setActiveMarkerId(null)} // Close info window when clicking map
         >
             {/* Recenter Button - Visible when auto-pan is disabled */}
-            {!isAutoPan && (
-                <button
-                    onClick={() => {
-                        setIsAutoPan(true);
-                        map?.panTo({ lat: center.latitude, lng: center.longitude });
-                    }}
-                    className="absolute top-20 left-4 z-40 bg-white p-3 rounded-full shadow-lg text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
-                    title="現在地に戻る"
-                >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-                    </svg>
-                </button>
-            )}
+            {/* Recenter Button - Always visible */}
+            <button
+                onClick={() => {
+                    // Just pan once, do not enable auto-pan to allow free movement
+                    map?.panTo({ lat: center.latitude, lng: center.longitude });
+                }}
+                className="absolute top-20 left-4 z-40 bg-white p-3 rounded-full shadow-lg text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
+                title="現在地に戻る"
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                </svg>
+            </button>
             {/* Current Location Marker (Approximate visual) */}
             <MarkerF
                 position={{ lat: center.latitude, lng: center.longitude }}
