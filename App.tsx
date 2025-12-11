@@ -241,6 +241,7 @@ function App() {
         setRemainingSeconds(initialSeconds);
         // Reset lyrics widget to readable size
         setLyricsHeight(180);
+        setIsSheetMinimized(false); // Ensure sheet is open
         showToast("ナビゲーションを開始します");
     };
 
@@ -419,10 +420,11 @@ function App() {
         }
 
         const text = await generateGuideContent(context, stage, durationSeconds);
-        setGuideText(text);
         setLoading(false);
+        setGuideText(text);
 
-        if (text && isAutoPlay) {
+        // Only auto-play if still in navigation mode
+        if (text && isAutoPlay && mode === AppMode.NAVIGATING) {
             handlePlayAudio(text);
         }
     };
@@ -482,10 +484,11 @@ function App() {
         setLoading(true);
         // 60 seconds for destination guide
         const text = await generateGuideContent(`ユーザーは${selectedSpot.name}に到着しました。この場所の歴史的背景、見どころ、参拝のマナーなどを案内してください。`, 'TO_DEST', 60);
-        setGuideText(text);
         setLoading(false);
+        setGuideText(text);
 
-        if (text && isAutoPlay) {
+        // Only auto-play if still in destination mode
+        if (text && isAutoPlay && mode === AppMode.DESTINATION) {
             handlePlayAudio(text);
         }
     };
