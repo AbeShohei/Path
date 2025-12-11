@@ -689,7 +689,7 @@ function App() {
                             <ChevronLeftIcon />
                         </button>
                         <div className="truncate flex-1">
-                            <h1 className="text-sm font-bold opacity-90 tracking-wide uppercase">京都スマートガイド</h1>
+                            <h1 className="text-sm font-bold opacity-90 tracking-wide uppercase">Path</h1>
                             {selectedSpot && (
                                 <div className="text-base font-bold truncate leading-tight">{selectedSpot.name}</div>
                             )}
@@ -734,10 +734,13 @@ function App() {
                         </div>
 
                         <div className="relative z-10 w-full px-6 space-y-8 animate-fade-in-up">
-                            <div className="space-y-2">
-                                <p className="text-indigo-200 text-sm tracking-[0.2em] uppercase font-bold">スマートツーリズム</p>
-                                <h1 className="text-5xl font-bold text-white font-serif tracking-tight">京都</h1>
-                                <p className="text-white/80 font-light">歴史と先端技術の融合</p>
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-center gap-4 mb-2">
+                                    <img src="/favicon.png" alt="Path Logo" className="w-12 h-12 drop-shadow-lg" />
+                                    <h1 className="text-6xl font-bold text-white font-serif tracking-tighter drop-shadow-md">Path</h1>
+                                </div>
+                                <p className="text-indigo-100 text-lg font-bold tracking-widest uppercase text-shadow-sm">スマートツーリズム 京都観光案内ガイド</p>
+                                <p className="text-white/80 font-light text-sm">歴史と先端技術の融合</p>
                             </div>
 
                             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-left shadow-2xl">
