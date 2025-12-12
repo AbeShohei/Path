@@ -21,8 +21,6 @@ export function useSpotPhotos(): UseSpotPhotosResult {
     const [loading, setLoading] = useState(false);
 
     const fetchPhotosForSpots = useCallback(async (spots: Spot[]) => {
-        console.log('[useSpotPhotos] fetchPhotosForSpots called with', spots.length, 'spots');
-
         if (spots.length === 0) {
             return;
         }
@@ -36,19 +34,18 @@ export function useSpotPhotos(): UseSpotPhotosResult {
                 lng: spot.location.longitude
             }));
 
-            console.log('[useSpotPhotos] Fetching photos for', places.length, 'places');
-            const photos = await getPlacePhotosInBatch(places);
-            console.log('[useSpotPhotos] Got', photos.size, 'photos');
-
-            setSpotPhotos(prev => {
-                const newMap = new Map(prev);
-                photos.forEach((url, name) => {
-                    newMap.set(name, url);
+            // onProgressコールバックで部分的な結果を受け取り、随時反映
+            await getPlacePhotosInBatch(places, (newPhotos) => {
+                setSpotPhotos(prev => {
+                    const newMap = new Map(prev);
+                    newPhotos.forEach((url, name) => {
+                        newMap.set(name, url);
+                    });
+                    return newMap;
                 });
-                return newMap;
             });
         } catch (error) {
-            console.error('Failed to fetch spot photos:', error);
+            // エラーログ抑制
         } finally {
             setLoading(false);
         }

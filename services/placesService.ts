@@ -43,7 +43,7 @@ export async function getPlacePhotoUrl(
 
         return null;
     } catch (error) {
-        console.error('Error fetching place photo:', error);
+        // console.error('Error fetching place photo:', error);
         return null;
     }
 }
@@ -51,10 +51,12 @@ export async function getPlacePhotoUrl(
 /**
  * 複数の場所の写真URLを一括取得
  * @param places 場所の配列 [{name, lat, lng}]
+ * @param onProgress 進捗通知用コールバック (部分的に取得できた結果を返す)
  * @returns 名前からURLへのMap
  */
 export async function getPlacePhotosInBatch(
-    places: Array<{ name: string; lat?: number; lng?: number }>
+    places: Array<{ name: string; lat?: number; lng?: number }>,
+    onProgress?: (newPhotos: Map<string, string>) => void
 ): Promise<Map<string, string>> {
     const results = new Map<string, string>();
 
@@ -68,30 +70,28 @@ export async function getPlacePhotosInBatch(
         return true;
     });
 
+    // キャッシュヒットがあれば即時反映
+    if (results.size > 0 && onProgress) {
+        onProgress(new Map(results));
+    }
+
     if (uncached.length === 0) {
         return results;
     }
 
     // Vercelのタイムアウトを回避するため、リクエストを分割して送信
-    // 1バッチあたり20件まで（サーバーレス関数の制限に合わせる）
-    // さらに並列数も制限する
     const BATCH_SIZE = 10;
     const CONCURRENT_REQUESTS = 3;
 
     try {
-        // 全体の処理バッチを作成
         const chunks = [];
         for (let i = 0; i < uncached.length; i += BATCH_SIZE) {
             chunks.push(uncached.slice(i, i + BATCH_SIZE));
         }
 
-        console.log(`[placesService] Processing ${uncached.length} places in ${chunks.length} chunks`);
-
-        // 並列処理用のキュー
         const queue = [...chunks];
         const activeWorkers = [];
 
-        // ワーカー関数：キューから取り出してAPIを呼ぶ
         const worker = async () => {
             while (queue.length > 0) {
                 const chunk = queue.shift();
@@ -107,9 +107,13 @@ export async function getPlacePhotosInBatch(
                     const data = await response.json();
 
                     if (data.photos) {
+                        const batchResults = new Map<string, string>();
+
                         for (const [name, url] of Object.entries(data.photos)) {
                             if (typeof url === 'string') {
                                 results.set(name, url);
+                                batchResults.set(name, url);
+
                                 // キャッシュに保存
                                 const place = uncached.find(p => p.name === name);
                                 if (place) {
@@ -118,23 +122,26 @@ export async function getPlacePhotosInBatch(
                                 }
                             }
                         }
+
+                        // 進捗があれば通知
+                        if (onProgress && batchResults.size > 0) {
+                            onProgress(batchResults);
+                        }
                     }
                 } catch (err) {
-                    console.error('[placesService] Batch fetch error:', err);
+                    // エラーログ抑制
                 }
             }
         };
 
-        // ワーカーを並列起動
         for (let i = 0; i < Math.min(chunks.length, CONCURRENT_REQUESTS); i++) {
             activeWorkers.push(worker());
         }
 
-        // 全ワーカーの完了を待機
         await Promise.all(activeWorkers);
 
     } catch (error) {
-        console.error('Error in batch processing:', error);
+        // エラーログ抑制
     }
 
     return results;
