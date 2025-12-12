@@ -3,7 +3,7 @@
  * スポットの写真を取得するカスタムフック
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Spot } from '../types';
 import { getPlacePhotosInBatch } from '../services/placesService';
 
@@ -23,25 +23,22 @@ export function useSpotPhotos(): UseSpotPhotosResult {
     const fetchPhotosForSpots = useCallback(async (spots: Spot[]) => {
         console.log('[useSpotPhotos] fetchPhotosForSpots called with', spots.length, 'spots');
 
-        // 既にimageUrlがあるスポットは除外
-        const spotsNeedingPhotos = spots.filter(spot => !spot.imageUrl);
-        console.log('[useSpotPhotos] Spots needing photos:', spotsNeedingPhotos.length);
-
-        if (spotsNeedingPhotos.length === 0) {
-            console.log('[useSpotPhotos] All spots have imageUrl, skipping API call');
+        if (spots.length === 0) {
             return;
         }
 
         setLoading(true);
 
         try {
-            const places = spotsNeedingPhotos.map(spot => ({
+            const places = spots.map(spot => ({
                 name: spot.name,
                 lat: spot.location.latitude,
                 lng: spot.location.longitude
             }));
 
+            console.log('[useSpotPhotos] Fetching photos for', places.length, 'places');
             const photos = await getPlacePhotosInBatch(places);
+            console.log('[useSpotPhotos] Got', photos.size, 'photos');
 
             setSpotPhotos(prev => {
                 const newMap = new Map(prev);
