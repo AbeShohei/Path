@@ -157,12 +157,12 @@ function App() {
         }
     }, [mode]);
 
-    // Fetch photos for spots when they load (only when sheet is large enough to show images)
+    // Fetch photos for spots when they load
     useEffect(() => {
-        if (spots.length > 0 && sheetHeight > 400) {
+        if (spots.length > 0) {
             fetchPhotosForSpots(spots);
         }
-    }, [spots, sheetHeight > 400, fetchPhotosForSpots]);
+    }, [spots, fetchPhotosForSpots]);
 
     // Calculate derived state for visible spots based on selected route AND selected time
     const visibleSpots = React.useMemo(() => {
