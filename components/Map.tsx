@@ -181,7 +181,7 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
           </filter>
           <g filter="url(#shadow)">
             <path d="${iconPath}" fill="${color}" stroke="white" stroke-width="1.5" />
-            ${innerIcon ? `<path d="${innerIcon}" fill="white" transform="scale(0.75) translate(4,4)" />` : `<circle cx="12" cy="9" r="3" fill="white" />`}
+            ${innerIcon ? `<path d="${innerIcon}" fill="white" transform="translate(6.6, 3.6) scale(0.45)" />` : `<circle cx="12" cy="9" r="3" fill="white" />`}
           </g>
         </svg>
         `;
