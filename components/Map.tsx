@@ -192,7 +192,7 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                     setMapCenter(newCenter);
                     map?.setCenter(newCenter);
                 }}
-                className="absolute top-20 left-4 z-40 bg-white p-3 rounded-full shadow-lg text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
+                className="absolute top-24 right-4 z-40 bg-white p-3 rounded-full shadow-lg text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
                 title="現在地に戻る"
             >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

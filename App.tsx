@@ -1246,7 +1246,7 @@ function App() {
 
                             {/* Expanded AI Guide Widget - Compact Version */}
                             {!isNavWidgetMinimized && (
-                                <div className={`absolute bottom-0 left-0 right-0 z-10 p-3 pointer-events-none transition-all duration-300 ${showNavRouteDetail ? 'max-h-[70vh]' : 'max-h-[50vh]'}`}>
+                                <div className={`absolute bottom-0 left-0 right-0 z-10 p-3 pointer-events-none transition-all duration-300 max-h-[85vh]`}>
                                     <div className="pointer-events-auto w-full max-w-md mx-auto">
                                         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden relative flex flex-col animate-fade-in-up">
                                             <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 z-10"></div>
