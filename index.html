@@ -55,6 +55,45 @@
       background-color: #94a3b8;
       border-radius: 10px;
     }
+
+    /* Hide Google Maps InfoWindow default close button (we have custom one) */
+    .gm-ui-hover-effect {
+      display: none !important;
+    }
+
+    /* Remove InfoWindow default padding and overflow for edge-to-edge images */
+    .gm-style-iw-d {
+      overflow: hidden !important;
+      padding: 0 !important;
+      max-height: none !important;
+    }
+
+    .gm-style-iw-c {
+      padding: 0 !important;
+      border-radius: 12px !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* Remove the arrow/tail shadow container */
+    .gm-style-iw-tc {
+      display: none !important;
+    }
+
+    /* Fix InfoWindow inner wrapper - remove all internal padding */
+    .gm-style-iw {
+      padding: 0 !important;
+    }
+
+    /* Target the content wrapper that may add top padding */
+    .gm-style-iw-chr {
+      display: none !important;
+    }
+
+    /* Remove any extra padding from the container */
+    .gm-style .gm-style-iw-c>div:first-child {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
   </style>
   <script type="importmap">
 {

@@ -10,9 +10,11 @@ export interface Spot {
   congestionLevel: 1 | 2 | 3 | 4 | 5; // 1: Low (Comfortable) -> 5: High (Crowded)
   mapLink?: string;
   location: Coordinates;
-  imageUrl?: string; // 画像URL（CSVから取得）
+  imageUrl?: string; // 画像URL（Google Places APIまたはCSVから取得）
+  url?: string; // 公式ウェブサイトURL
   openingHours?: string; // 営業時間
   price?: string; // 料金
+  placeId?: string; // Google Place ID for photos
 }
 
 export interface RouteSegment {

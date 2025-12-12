@@ -20,42 +20,42 @@
   "thresholds": {
     "kyotoCity": {
       "morning": {
-        "level1Max": 114,
-        "level2Max": 1835,
-        "level3Max": 5900,
-        "level4Max": 11919
+        "level1Max": 68,
+        "level2Max": 663,
+        "level3Max": 6362,
+        "level4Max": 60977
       },
       "noon": {
-        "level1Max": 165,
-        "level2Max": 2503,
-        "level3Max": 6672,
-        "level4Max": 12374
+        "level1Max": 68,
+        "level2Max": 663,
+        "level3Max": 6362,
+        "level4Max": 60977
       },
       "evening": {
-        "level1Max": 137,
-        "level2Max": 2332,
-        "level3Max": 6415,
-        "level4Max": 12389
+        "level1Max": 68,
+        "level2Max": 663,
+        "level3Max": 6362,
+        "level4Max": 60977
       }
     },
     "outside": {
       "morning": {
-        "level1Max": 24,
-        "level2Max": 68,
-        "level3Max": 192,
-        "level4Max": 918
+        "level1Max": 2,
+        "level2Max": 25,
+        "level3Max": 229,
+        "level4Max": 2010
       },
       "noon": {
-        "level1Max": 26,
-        "level2Max": 98,
-        "level3Max": 260,
-        "level4Max": 1187
+        "level1Max": 2,
+        "level2Max": 25,
+        "level3Max": 229,
+        "level4Max": 2010
       },
       "evening": {
-        "level1Max": 25,
-        "level2Max": 84,
-        "level3Max": 234,
-        "level4Max": 1087
+        "level1Max": 2,
+        "level2Max": 25,
+        "level3Max": 229,
+        "level4Max": 2010
       }
     }
   },

@@ -1,11 +1,10 @@
 import { Spot, Coordinates } from '../types';
 import { getCongestionLevel } from './humanFlowService';
 
-// 京都府観光施設データ（260002kankoushisetsu.csvより生成）
-// 総数: 1445件（京都市内: 846件, 市外: 599件）
-// 混雑度: 人流データ（opendata/human）2019-2021年12月の3年平均より算出
-// 京都市内閾値: L1≤98, L2≤1728, L3≤5812, L4≤12282
-// 市外閾値: L1≤13, L2≤23, L3≤75, L4≤268
+// 京都府観光施設データ
+// 混雑度: 全エリアで偏差値(対数正規分布T-score)基準を採用
+// 基準: L1(T<35), L2(35≤T<45), L3(45≤T<55), L4(55≤T<65), L5(T≥65)
+// ※計算母集団は「市内観光地」と「市外観光地」で分離
 const KYOTO_SPOTS: Spot[] = [
   {
     "id": "spot-1",
@@ -22,7 +21,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-2",
     "name": "磯砂山",
     "description": "標高661m、頂上へ続く1,010段を登り切るのが、磯砂山登山の醍醐味。羽衣伝説の舞台となった山で、2つの登山コースがある。途中、天女が水浴びをしたと伝えられる「女池」が、また山頂には「天女のモニュメント」がある。山頂からの眺めは素晴らしく、大江山、天橋立、小天橋が一望できる。この山のふもとの「乙女",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.548532,
       "longitude": 135.03811
@@ -48,17 +47,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.621201,
       "longitude": 135.06026
     },
+    "url": "http://www.konpirasan.com/",
     "openingHours": "拝観自由"
   },
   {
     "id": "spot-5",
     "name": "たんご朝市",
     "description": "アミティ丹後駐車場内で開催。地元の新鮮な野菜・鮮魚・海産物、季節のくだもの、ごはん、もち等を販売。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.681516,
       "longitude": 135.025512
     },
+    "url": "http://www.tango.jibasan.jp",
     "openingHours": "毎週日曜日8時～10時頃まで"
   },
   {
@@ -76,18 +77,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-7",
     "name": "丹後温泉はしうど荘",
     "description": "丹後町間人（たいざ）の「立岩」を望むことのできるここ丹後温泉はしうど荘は、ナトリウム・カルシウム硫酸塩泉の良質な温泉で、動脈硬化の予防効果があると言われている。地元間人港に水揚げされる新鮮な食材を使った料理、特に冬の間人カニは絶品です。日本海の波の音を聴きながらの入浴ができる露天もあり、日帰り入浴も",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.740601,
       "longitude": 135.10271
     },
+    "url": "http://www.hashiudosou.com/",
     "openingHours": "宿泊　チェックイン　15時　チェックアウト　10時日帰入浴　平日　16時～22時（受付は21時30分まで）　土曜日、日曜日、祝日　13時～22時（受付は21時30分まで）料理のみの利用　昼　11時～　夜　17時～"
   },
   {
     "id": "spot-8",
     "name": "大宮売神社",
     "description": "「丹後二の宮」として厚い信仰を集めており、祭神は大宮売神と若宮売神で、平安時代前期の『延喜式』にその名が見える。本殿前の石灯籠2基の右側1基には、「徳治2年3月7日」の刻名があり、鎌倉時代の貴重な石造美術品として、重要文化財に指定されている。また、境内全域が祭祀遺跡であり、同じ場所で神社へと発展する",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.591228,
       "longitude": 135.101869
@@ -98,7 +100,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-9",
     "name": "神谷神社（神谷太刀宮）",
     "description": "祟神天皇の時代、四道将軍丹波道主命が出雲より八知矛神（大国主命）を迎えて神谷の地に祀り、道主命亡き後、人々がこれを追幕し現在地に神社を創建し、道主命所有の「国見の剣（くにみのつるぎ）」を神霊として祀り太刀宮と称した。国見の剣が「久美浜」の地名の起こりでもあるといわれる。境内西側の山にある巨岩、磐座（",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.604043,
       "longitude": 134.892513
@@ -119,7 +121,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-11",
     "name": "久僧海水浴場",
     "description": "2021年は8/15で海水浴場開設期間を終了広くて静かなビーチ。温泉施設まで徒歩5分。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.757384,
       "longitude": 135.172449
@@ -129,7 +131,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-12",
     "name": "大野城址",
     "description": "近代地誌類によれば、豊臣秀頼の武将で大坂冬の陣・夏の陣で活躍した大野治長の父、道犬を城主と伝える。深い緑に包まれた城跡は、三段の台地となっており、現在城跡には大野神社がある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.582114,
       "longitude": 135.090789
@@ -140,7 +142,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-13",
     "name": "最北子午線塔",
     "description": "日本海を望む景勝の地に建ち、日本標準時子午線東経135度の最北の地をしるす塔。網野町の頭文字の「A」をデザイン化したステンレス製の塔で、高さは5.5m。電源には太陽電池を使用し、日本標準時とグリニッジ標準時をデジタル表示している。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.693143,
       "longitude": 135.003127
@@ -151,7 +153,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-14",
     "name": "静神社",
     "description": "磯地区を見おろす丘の上にある、源義経が愛した静御前を祀る神社。静は、京に出て白拍子となり、義経に見初められるが、晩年は再び故郷で過ごしたと伝えられている。作者不明の静の木像が安置されている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.688544,
       "longitude": 134.99224
@@ -162,7 +164,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-15",
     "name": "嶋児神社",
     "description": "網野町は「丹後国風土記」に伝えられる浦島太郎伝説の地。浦島太郎は風土記では水江浦嶋子となっており、この嶋子を祀る神社が嶋児神社。付近には、嶋子が釣った魚を放しておいた釣溜（つんだめ）という岩場もある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.691365,
       "longitude": 135.018055
@@ -173,11 +175,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-16",
     "name": "久美浜湾遊覧船",
     "description": "山陰海岸ジオパークの代表的ジオサイトのひとつ、久美浜湾一帯を船の上から楽しめる。船長が久美浜湾の歴史や文化、自然についてわかりやすく説明してくれる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.60832,
       "longitude": 134.896491
     },
+    "url": "http://mujinto.net/yuran/",
     "openingHours": "要相談",
     "price": "中学生以上　2,000円小学生以下　1,000円"
   },
@@ -185,7 +188,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-17",
     "name": "網野銚子山古墳",
     "description": "古墳時代前期末に築造された全長201m、後円部の直径115m、高さ16m、前方部幅80m、高さ10mの前方後円墳で、日本海側最大の古墳。古代丹後の隆盛を物語る代表的な古墳の一つに数えられている。国指定史跡。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.677794,
       "longitude": 135.029697
@@ -195,7 +198,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-18",
     "name": "丹後松島",
     "description": "此代から東方、経ヶ岬の方を見る眺めが、日本三景の一つ「松島」に似ているところから名付けられた。荒々しいカマヤ海岸とは対照的に、1枚の絵のようにおだやかな景観で、小島のように見えるが、すべて陸つづきになっている。ユネスコが支援する自然公園である「山陰海岸ジオパーク」の見所のひとつ。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.750656,
       "longitude": 135.13944
@@ -210,13 +213,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.664444,
       "longitude": 134.967084
     },
+    "url": "http://www.ichiboukan.co.jp",
     "openingHours": "宿泊　チェックイン　15時　チェックアウト　10時"
   },
   {
     "id": "spot-20",
     "name": "立岩",
     "description": "麻呂子親王（聖徳太子の異母兄弟）の鬼退治伝説で知られる柱状節理の安山岩。高さ約20mの日本でも数少ない自然岩のひとつ。この辺りは、古代に大陸からの使者船が漂着したところであったといわれ、歴史的にも早くから開けていたことがうかがわれる。ユネスコが支援する自然公園である「山陰海岸ジオパーク」の見所のひと",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.743717,
       "longitude": 135.105438
@@ -226,7 +230,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-21",
     "name": "経ヶ岬",
     "description": "京都府の最北端にあり、遠くには若狭の海岸、越前海岸を望むことができる。眼下には約800mにわたり、高さ30～40mの黒い岩肌をみせる柱状節理の安山岩の断崖が続く。岬の突端には、明治31年（1898）完成のさわやかな白亜の経ケ岬灯台がある。映画「新・喜びも悲しみも幾年月」の舞台にもなったが、現在はコン",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.777134,
       "longitude": 135.223342
@@ -237,7 +241,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-22",
     "name": "屏風岩",
     "description": "山陰海岸ジオパーク・京都の自然200選に選ばれ、屏風のようにそびえる、高さ13mもある奇岩で、北西の方に小さい岩が5つほど海に浮かび、それがちょうど一直線に連なり、台地の亀裂の変化を物語っている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.746115,
       "longitude": 135.122623
@@ -252,13 +256,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.667262,
       "longitude": 135.025083
     },
+    "url": "http://www.kyotango.gr.jp/",
     "openingHours": "8時30分～17時15分"
   },
   {
     "id": "spot-24",
     "name": "黒部銚子山古墳",
     "description": "古墳時代中期初めに築造された前方後円墳。全長約105m、後円部の直径70m、高さ15m、前方部幅45m、高さ10mの大規模なもの。京都府指定史跡。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.68899,
       "longitude": 135.099403
@@ -268,11 +273,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-25",
     "name": "花郷OKADA",
     "description": "咲き乱れる色とりどりの花。75,000平方メートルの広大な花の郷は開放感たっぷりで美しい景観をお楽しみいただけます。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.648923,
       "longitude": 134.987978
     },
+    "url": "http://www.hokki.co.jp/group/hanago/index.html",
     "openingHours": "4月中旬～6月中旬頃※花の開花状況による9時30分～16時30分",
     "price": "大人　700円（中学生以上）小学生　350円幼児無料身障者　350円介添者（1名様のみ）　350円"
   },
@@ -280,7 +286,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-26",
     "name": "細川ガラシャ夫人隠棲地の碑",
     "description": "「本能寺の変」後、夫・細川忠興の命により明智光秀の三女・玉（のちの細川ガラシャ）は、標高約400mに位置する京丹後市弥栄町味土野に幽閉された。ガラシャが2年余り過ごした味土野・女城跡には「細川忠興夫人隠棲地」の記念碑がある。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.650115,
       "longitude": 135.155536
@@ -295,13 +301,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.660241,
       "longitude": 134.964442
     },
+    "url": "http://www.k-kai.jp/",
     "openingHours": "チェックイン　15時チェックアウト　10時"
   },
   {
     "id": "spot-28",
     "name": "京丹後市観光公社　久美浜町支部",
     "description": "明治の初め、久美浜県が置かれた時（1868～1871）の県庁舎の正面玄関棟をモデルに造られた京都丹後鉄道久美浜駅舎の中に、事務局及び久美浜町観光総合案内所がある。案内所では、観光案内のほか、季節によりフルーツ狩りの案内も行う。車椅子やレンタサイクルの貸出しも行っている。〈車椅子〉1台　無料（要予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.602295,
       "longitude": 134.895139
@@ -323,7 +330,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-30",
     "name": "本願寺",
     "description": "天平2年（730）僧行基が開いたという古刹。本堂は、鎌倉時代のものでこけらぶき、入母屋造り、しとみ戸をはめた神殿造り、しっとりとした落ち着きのある建物で重要文化財に指定されている。行基自作の行基菩薩行脚像、源信作の阿弥陀仏、唐より伝わった善導大師像など、一級品の寺宝も多く所蔵している。本堂となりの池",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.601796,
       "longitude": 134.902268
@@ -334,22 +341,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-31",
     "name": "丹後半島松島温泉　宇川温泉よし野の里",
     "description": "まったく趣の異なる2つの温泉があり、海の温泉「竜宮」では日本海に沈む夕陽と丹後松島の景観を、山の温泉「香具夜」では竹林と木々の緑が堪能できる。宿泊施設（コテージタイプの木造平屋建て、部屋数8部屋、定員42名）や、お食事処、直売所、農園・果樹園もある。【泉質】アルカリ性単純温泉（低張性アルカリ性温泉）",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.754968,
       "longitude": 135.177069
     },
+    "url": "https://ukawaonsen.jp/",
     "openingHours": "外湯利用　11時～21時（受付は20時30分まで）"
   },
   {
     "id": "spot-32",
     "name": "如意寺",
     "description": "真言宗の古刹で、行基菩薩の開基。本尊は十一面観音で眼守護のご利益で知られる。日切不動尊は厄除、縁結びなどの諸祈願で参拝が多い。当地の初詣の寺でもある。「関西花の寺25ヶ所霊場」の第七番札所で、4月のミツバツツジは境内一帯をピンクに染めるほか、四季折々の花や300種の山野草が咲く。本尊会である「千日会",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.609976,
       "longitude": 134.889364
     },
+    "url": "http://www.nyoiji.com",
     "openingHours": "8時～17時　拝観自由",
     "price": "入山料　無料（団体は有料）"
   },
@@ -357,18 +366,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-33",
     "name": "久美の浜　みなと悠悠",
     "description": "日本海と久美浜湾の2つの海に囲まれたグルメ宿。5階展望ラウンジからは世界ジオパークに認定された山陰海岸ジオパークの美しい海岸線が一望できる。大好評のバイキングでは季節のフェアに牛肉鉄板焼、刺身、にぎり寿司など全40種類以上のお料理が食べ放題。満点の星をのぞむ露天風呂では自家源泉の湯を満喫。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.643303,
       "longitude": 134.916239
     },
+    "url": "https://yuuuyuuu.com",
     "openingHours": "宿泊　チェックイン　15時　チェックアウト　10時ディナー　17時30分～20時"
   },
   {
     "id": "spot-34",
     "name": "久美浜温泉湯元館",
     "description": "久美浜駅の北東、小天橋のすぐ近くにある久美浜温泉。ここの自慢は何といっても自然の岩肌から流れ落ちる湯を集めた露天風呂。他にも薬草風呂、打たせ湯などバリエーションに富んだお風呂がある。効能は神経痛、胃腸病など。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.640468,
       "longitude": 134.944658
@@ -379,7 +389,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-35",
     "name": "湯舟坂2号墳",
     "description": "昭和56年（1981）に、大小2対の竜が向かい合って、玉をくわえた黄金の太刀が発見され、一躍考古学ファンの注目を集めた。重要文化財に指定されているこの太刀は、全長1.2ｍで、環頭柄頭の最大径は10.8cmの見事なもの。環頭や柄には金箔が施されており、古墳時代の日本海沿岸文化を考えるうえでも欠かせない",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.562216,
       "longitude": 134.917849
@@ -389,7 +399,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-36",
     "name": "丹後ちりめん発祥記念碑",
     "description": "丹後ちりめんが、今日のように独特のしぼを持ち、しなやかな風合いと光沢をもつ織物になったのは、今から約300年前の享保5年（1720）峰山の絹屋佐平治（のちに森田治郎兵衛と改名）が京都西陣の機屋へ修業し、秘伝の技術を学びとり、丹後へ持ち帰ったことに始まる。彼の偉業をたたえ生家跡に丹後ちりめん発祥の碑が",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.626143,
       "longitude": 135.057421
@@ -409,7 +419,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-38",
     "name": "妙性寺",
     "description": "小野山妙性寺は、平安六歌仙の一人として名高い小野小町を開基とする寺院。その昔、小野小町が妙性寺所在の五十河の地で命を落としたと伝えられ、この地に辞世の句を遺すなど幾つかの伝承が残されている。妙性寺には小野小町坐像や位牌などが伝えられいて、「小野妙性大姉」という小町の戒名がそのまま山号・寺号になってい",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.609208,
       "longitude": 135.150206
@@ -435,13 +445,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.67318,
       "longitude": 135.0276
     },
+    "url": "http://torimatsu.jp/",
     "openingHours": "11時30分～15時30分"
   },
   {
     "id": "spot-41",
     "name": "上野温泉",
     "description": "〈外湯〉花ゆうみ（TEL.0772-74-1306）【泉質】単純温泉（低張性弱アルカリ性温泉）ナトリウム・カルシウム温泉【適応症】神経痛、関節痛、五十肩、うちみ、くじき、慢性消化器病、痔疾、冷え性、病後回復期、疲労回復など",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.658197,
       "longitude": 134.964006
@@ -451,7 +462,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-42",
     "name": "間人皇后・聖徳太子母子像",
     "description": "6世紀末、聖徳太子の母で、用明天皇の后の穴穂部間人皇后が、蘇我、物部氏間の戦乱からこの地に逃れ住み、乱がおさまった後、都へ帰る時に里人へ感謝の念を込め自らの名「間人」を村名に贈った。里人は皇后の名をそのまま地名にするのはおそれ多いとして、皇后の御退座にちなみ、「間人」と書いて「たいざ」と読み伝えたと",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.742497,
       "longitude": 135.105387
@@ -461,7 +472,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-43",
     "name": "はたやギャラリー　夢つむぎ",
     "description": "京丹後は丹後ちりめんの発祥の地であり、国内最大の絹織物産地。伝統産業としてこの地に根付く機織りの工場を見学できる。ギャラリーとして改修されたスペースには、夕日ヶ浦で撮影された美しい夕日の写真が展示され、目の前に広がる海を眺めながら休憩することもできる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.667148,
       "longitude": 134.967941
@@ -473,17 +484,18 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-44",
     "name": "昭恋館よ志のや",
     "description": "高台にあり客室から日本海を望むことができる、素晴らしい景観を誇る旅館。ここでは名物の間人ガニのフルコースや海の幸が堪能できる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.735544,
       "longitude": 135.094158
-    }
+    },
+    "url": "http://www.taiza.jp/"
   },
   {
     "id": "spot-45",
     "name": "八丁浜・小浜海水浴場",
     "description": "2021年は8/22で海水浴場開設期間を終了八丁浜海水浴場は、白い砂浜と遠浅の美しいビーチ。サーファーにも人気。隣接する小浜海水浴場では、磯あそびも楽しめます。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.694657,
       "longitude": 135.031444
@@ -493,7 +505,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-46",
     "name": "函石浜砂丘",
     "description": "久美浜湾の東部2kmにわたり広がる函石浜砂丘。ここで、久美浜の特産物でもあるメロンや桃などの果実が栽培されている。メロン、桃の発送サービスもある。メロン狩りも好評。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.649886,
       "longitude": 134.939869
@@ -504,7 +516,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-47",
     "name": "木橋温泉",
     "description": "ホテル丹後王国（TEL.0772-65-4567）【泉質】単純弱放射能冷鉱泉（アルカリ性低張性冷鉱泉）【適応症】神経痛、筋肉痛、関節痛、五十肩、運動麻痺、関節のこわばり、うちみ、くじき、慢性消化器病、痔疾、冷え性、病後回復期、疲労回復、健康増進",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.676533,
       "longitude": 135.067889
@@ -514,7 +526,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-48",
     "name": "立岩・後ヶ浜海水浴場",
     "description": "2021年は8/22で海水浴場開設期間を終了丹後のシンボル「立岩」が近くにあり、丹後温泉もすぐそばにある。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.741948,
       "longitude": 135.095957
@@ -546,7 +558,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-51",
     "name": "弥栄あしぎぬ温泉",
     "description": "日帰り温泉。露天風呂をはじめ、ジャグジー・サウナなど、10種類の風呂が楽しめ、脱衣ロッカーの鍵で入浴者数を制限しているのでゆっくりと入浴できる。「王国の湯」「卑弥呼の湯」が各々男湯・女湯となるが、それが毎日入れ替わる。食堂、駐車場、休憩室有り。【泉質】ナトリウム-カルシウム-硫酸塩温泉（低張性アルカ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.668368,
       "longitude": 135.079706
@@ -558,7 +570,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-52",
     "name": "京丹後市観光公社　丹後町支部",
     "description": "※令和3年4月6日から新住所へ移転し、新電話番号へ変更",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.737874,
       "longitude": 135.089998
@@ -580,11 +592,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-54",
     "name": "丹後網野温泉　浅茂川温泉　静の里",
     "description": "浅茂川漁港を一望できる丘に位置し、浴場からは雄大な日本海が望める。浴場に隣接して、屋内温水プールも設置されており、四季を通じて利用できる。施設にはレストランもある。【泉質】含食塩-硫黄単純温泉（緊張性、低張、温泉）【適応症】神経痛、筋肉痛、関節痛、慢性消化器病、冷え性など",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.68907,
       "longitude": 135.014074
     },
+    "url": "http://www.shizukanosato.com",
     "openingHours": "10時～22時（入浴受付は21時30分まで）",
     "price": "大人600円小人（3歳以上中学生未満）400円"
   },
@@ -592,7 +605,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-55",
     "name": "久美浜朝市",
     "description": "毎週日曜日、京都丹後鉄道宮豊線久美浜駅舎内の観光総合案内所で朝市を開催。久美浜産農産物、地元の方々のばら寿司など手作り惣菜や鯛せんべいなどの加工品を販売。春は、柔らかいわかめを板状に乾燥させた「板わかめ」など旬のおいしい特産物がある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.602296,
       "longitude": 134.895138
@@ -603,11 +616,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-56",
     "name": "小野小町温泉",
     "description": "「セントラーレホテル京丹後」内にある、庭園露天風呂・ドライサウナ・ジャグジー・打たせ湯等が揃った温泉施設。【適応症】神経痛、筋肉痛、慢性皮膚病など",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.578866,
       "longitude": 135.100907
     },
+    "url": "https://komachionsen.com/",
     "openingHours": "6時～9時（受付は8時30分まで）10時～21時（受付は20時まで）",
     "price": "入浴のみ大人（中学生以上）　700円（土・日・祝日は800円）小人（4歳～小学生）　400円"
   },
@@ -615,7 +629,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-57",
     "name": "高嶋海水浴場",
     "description": "2021年は8/15で海水浴場開設期間を終了丹後松島を望む美しい海水浴場。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.753868,
       "longitude": 135.164382
@@ -638,7 +652,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-59",
     "name": "碇高原牧場",
     "description": "日本海を一望する牧草地に牛・羊・山羊などが放牧されている牧場を中心にステーキハウスがある。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.719083,
       "longitude": 135.192733
@@ -659,7 +673,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-61",
     "name": "箱石浜海水浴場",
     "description": "2021年は8/15で海水浴場開設期間を終了約8kmにわたる関西屈指のロングビーチに位置する海水浴場で、海水浴客が比較的少なく、ゆっくりと過ごせる穴場のビーチ。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.653525,
       "longitude": 134.943316
@@ -669,7 +683,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-62",
     "name": "小浜キャンプ場",
     "description": "〈テントサイト数〉フリー100張〈設備〉トイレ、水場、シャワー",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.690359,
       "longitude": 135.03019
@@ -681,7 +695,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-63",
     "name": "小町公園「小町の舎（やかた）」",
     "description": "静かな山間の里である五十河内区は、都を離れた小野小町が晩年を送り亡くなった伝承がある。舎（やかた）は430平方メートルで、神殿造りをイメージしている。ほぼ等身大の小町のブロンズ像の他、小町がこの地を訪れたことを記した巻物や、小町が愛用したという手鏡などを展示している。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.606964,
       "longitude": 135.146762
@@ -693,17 +707,18 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-64",
     "name": "風蘭の館",
     "description": "廃校になった小学校の分校の校舎を利用した、民芸調の落ちついた食堂。そこで食べる十割そばは最高に美味。12月～5月まではカキ小屋もあります。夏は海水浴、シーカヤック、ツリーハウス、海鮮メインのバーベキューを楽しめます。",
-    "congestionLevel": 5,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.651212,
       "longitude": 134.882459
-    }
+    },
+    "url": "http://www17.plala.or.jp/huuran/"
   },
   {
     "id": "spot-65",
     "name": "小天橋・葛野浜海水浴場",
     "description": "2021年は8/22で海水浴場開設期間を終了約8kmにわたる関西屈指のロングビーチの西側に位置し、遠浅の海と白砂青松が自慢のビーチ。浜店も多く、シーズン中多くの人でにぎわう。また「日本の水浴場88選」にも選ばれた。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.645691,
       "longitude": 134.920924
@@ -724,7 +739,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-67",
     "name": "京丹後市久美浜中央運動公園",
     "description": "グラウンド、テニスコート、全天候対応ゲートボール場がある。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.589229,
       "longitude": 134.939328
@@ -736,11 +751,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-68",
     "name": "立岩後ヶ浜キャンプ場",
     "description": "近くには丹後温泉、海水浴場もある。炊飯、トイレ施設有り。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.741493,
       "longitude": 135.10356
     },
+    "url": "http://tenkitenki-mura.jp/summer/tateiwa/",
     "openingHours": "7月中旬～8月下旬",
     "price": "テント1張　2,000円（駐車場込み）"
   },
@@ -748,7 +764,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-69",
     "name": "竹野海水浴場",
     "description": "2021年は8/16で海水浴場開設期間を終了犬ヶ岬をはじめとする山々の景観が素晴らしい海水浴場。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.743994,
       "longitude": 135.1127
@@ -771,11 +787,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-71",
     "name": "道の駅　丹後王国「食のみやこ」",
     "description": "丹後の食材をふんだんに使った飲食店や、自家製ソーセージやクラフトビールの工房、地元野菜の直売所などの「食」が充実したほか、動物とのふれあいもある滞在型の道の駅です。その他時期によって様々なイベントを行っており、子供から大人まで楽しめる施設になっております。京都・丹後の新しい顔として、歴史から食など様",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.67434,
       "longitude": 135.068269
     },
+    "url": "http://tangooukoku.com/",
     "openingHours": "平日　9時～17時土曜日、日曜日、祝日　9時～21時（17時以降はレストラン営業のみ）",
     "price": "入園料無料"
   },
@@ -783,7 +800,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-72",
     "name": "中浜キャンプ場",
     "description": "ファミリー向けのキャンプ場。海水浴場もある。オートキャンプサイト31区画",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.759764,
       "longitude": 135.18165
@@ -800,6 +817,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.619734,
       "longitude": 134.922722
     },
+    "url": "http://www.hosomi-ko-bo.com",
     "openingHours": "10時～17時",
     "price": "体験　1,500円～※作品は着払いで送らせていただきます。"
   },
@@ -807,11 +825,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-74",
     "name": "高嶋キャンプ場",
     "description": "丹後松島の一角にある、景観のすばらしいキャンプ場。海水浴場もある。オートキャンプサイト46区画",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.754979,
       "longitude": 135.165247
     },
+    "url": "http://tango-takashima.com/",
     "openingHours": "通年",
     "price": "テント1張1日　　普通　2,000円　大型　4,000円オートキャンプ1泊　　ブース　4,000円　電源付ブース　5,000円"
   },
@@ -819,22 +838,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-75",
     "name": "丹後半島森林公園「スイス村」",
     "description": "バンガロー、キャンプ場、テニスコート、山の家、コテージ、高原浴場等を備えた、四季を通じて自然を満喫できる高原リゾート。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.692781,
       "longitude": 135.19715
     },
+    "url": "https://kyotangoforestpark.jp/",
     "price": "要問い合わせ"
   },
   {
     "id": "spot-76",
     "name": "テンキテンキ村オートキャンプ場",
     "description": "近くには海水浴場、丹後温泉がある。オートキャンプサイト65区画（ペット専用サイト10、AC電源サイト7） 炊飯、トイレ施設有り",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.739006,
       "longitude": 135.106918
     },
+    "url": "http://taiken.tenkitenki-mura.jp/autocamp/",
     "openingHours": "4月末～10月中旬",
     "price": "夏期テント1張　4,000円（駐車場込み）"
   },
@@ -842,7 +863,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-77",
     "name": "峰山途中ケ丘公園「京丹後はごろも陸上競技場」",
     "description": "令和2年10月1日にリニューアルオープン。京都府北部で初となる日本陸上競技連盟公認第3種陸上競技場として本格的な陸上競技場をもつスポーツレクリエーション公園。400mトラックをメインとした多目的グラウンドでは、陸上競技のほかソフトボール・サッカー・グラウンドゴルフ等あらゆるスポーツに対応できる。グラ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.606842,
       "longitude": 135.059279
@@ -854,7 +875,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-78",
     "name": "蒲井浜海水浴場",
     "description": "2021年は8/22で海水浴場開設期間を終了久美浜町の西端に位置する小さな海水浴場。入り江のような地形で波が穏やかで子供連れでも安心。水の透明度と砂の美しさは定評がある。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.647266,
       "longitude": 134.88336
@@ -864,17 +885,18 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-79",
     "name": "碧翠御苑",
     "description": "久美浜湾の波打ち際1万坪に客室は14室というぜいたくな造りの純和風旅館。天然温泉露天風呂は手が届きそうな程海に近く、朝・夕の光がさざ波にくだけきらめく様は、まさに絶景。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.635427,
       "longitude": 134.890625
-    }
+    },
+    "url": "http://hekisui.jp/"
   },
   {
     "id": "spot-80",
     "name": "袖志の棚田",
     "description": "日本の棚田百選に認定された棚田の一つ。急峻な山々と日本海に挟まれ、海岸線は丹後天橋立大江山国定公園区域にあり、海と里山と棚田が調和した美しい景観をなしている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.762448,
       "longitude": 135.208184
@@ -884,11 +906,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-81",
     "name": "ガラススタジオ「来夢」",
     "description": "ステンドグラス工房のギャラリー見学と、アクセサリー小物、絵皿、万華鏡、フォトスタンドの体験ができる。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.608837,
       "longitude": 134.949562
     },
+    "url": "http://www5.nkansai.ne.jp/shop/lime/",
     "openingHours": "10時～17時",
     "price": "1,500円～2,800円（体験内容によって異なる）"
   },
@@ -906,7 +929,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-83",
     "name": "天女の里",
     "description": "特産品の製造・加工研究や地域情報の発信、都市と農村との交流を目的としたもので、総合交流ターミナル施設や木造萱葺き風コテージ、キャンプ場等があり、コテージではバーベキューも楽しむことができる。また、美味しい水でつくるこんにゃくづくり、渓流釣り、もちつきなど様々な田舎体験ができる。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.561108,
       "longitude": 135.017606
@@ -918,22 +941,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-84",
     "name": "道の駅てんきてんき丹後",
     "description": "国道178号沿いにある道の駅。真後ろに立岩を望むことができ、自然景観がすばらしい。真後ろにはオートキャンプ場があり、山陰海岸ジオパークのジオスポットでもある立岩に歩いて行けます。・地域情報センター・地域特産品販売センター・レストラン・山陰海岸ジオパーク「京丹後市情報センター」",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.738819,
       "longitude": 135.105396
     },
+    "url": "http://tenkitenki-mura.jp/",
     "openingHours": "9時～17時30分（季節変動有り）"
   },
   {
     "id": "spot-85",
     "name": "道の駅くみはまSANKAIKAN",
     "description": "久美浜町の特産物がずらりとそろった総合交流販売施設。地元食材を使いバイキングで食事のできるレストランや、新鮮野菜の菜○野果市（さわやかいち）なども開かれている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.630462,
       "longitude": 134.931797
     },
+    "url": "http://www.sankaikan.net/",
     "openingHours": "売店　8時～17時レストラン　8時～16時30分（ラストオーダー、喫茶8時～、食事11時～）",
     "price": "施設利用無料"
   },
@@ -941,7 +966,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-86",
     "name": "砂方海水浴場",
     "description": "2021年は8/16で海水浴場開設期間を終了ファミリー向けのミニビーチで磯遊びが楽しめる。トイレ・シャワーも整備されている。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.722579,
       "longitude": 135.081347
@@ -952,18 +977,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-87",
     "name": "スイス村山の家",
     "description": "丹後半島のど真ん中にあり、「スイス村」にある施設の1つ。春から秋のキャンプやテニス、冬のスキーと四季を通じて利用でき、研修館、コテージがある。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.692257,
       "longitude": 135.20615
     },
+    "url": "https://kyotangoforestpark.jp/",
     "price": "要問い合わせ"
   },
   {
     "id": "spot-88",
     "name": "豪商稲葉本家",
     "description": "明治18年（1885）から5年の歳月をかけて建設した平入桟瓦葺き切妻造り二階建ての建物を再生し、母屋や蔵等を一般に公開するとともに、米蔵を陶芸やお香の体験ができる工房に改修。また、吟松舎では稲葉本家ゆかりの「ぼた餅」が賞味できる。（平成14年（2002）国登録有形文化財指定）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.606172,
       "longitude": 134.897588
@@ -975,11 +1001,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-89",
     "name": "碇高原ステーキハウス",
     "description": "碇高原牧場が一望でき、海の見える絶好のロケーションで丸い屋根をしたヨーロッパのリゾート風レストラン。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.718832,
       "longitude": 135.190488
     },
+    "url": "http://tenkitenki-mura.jp/ikarikougen/",
     "openingHours": "10時～17時（ラストオーダー16時30分）※季節変動有り"
   },
   {
@@ -998,11 +1025,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-91",
     "name": "丹後古代の里資料館",
     "description": "弥生時代から古墳時代にかけて海外との交易で栄えた丹後「丹後王国」をキーワードに考古資料を中心に展示している。赤坂今井墳墓の頭飾りや、網野銚子山古墳の丹後型円筒埴輪は必見。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.737486,
       "longitude": 135.110262
     },
+    "url": "http://www.city.kyotango.lg.jp/kodainosato/",
     "openingHours": "9時30分～16時",
     "price": "大人　300円（200円）小・中学生　150円（100円）障害者手帳をお持ちの方と介護者は無料（ ）内は団体（15名以上）料金"
   },
@@ -1010,7 +1038,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-92",
     "name": "大宮ふれあい工房",
     "description": "陶芸と染色が初心者から楽しめる、アート体験施設。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.578247,
       "longitude": 135.10186
@@ -1022,7 +1050,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-93",
     "name": "中浜海水浴場",
     "description": "2021年は8/23で海水浴場開設期間を終了白い砂浜が美しい海水浴場。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.759905,
       "longitude": 135.181299
@@ -1033,7 +1061,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-94",
     "name": "風のがっこう京都",
     "description": "環境先進国デンマークの研修センター「風のがっこう」の日本版第一号で、風車と緑に囲まれて「環境教育」「自然体験」を学び、体感することができる宿泊施設です。1階は多目的ホール、研修室、2階は家族・グループで利用できる、全室バリアフリーのゲストフロアです。3階には展望レストラン「風」があります。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.694175,
       "longitude": 135.209259
@@ -1044,11 +1072,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-95",
     "name": "有限会社丹後ジャージー牧場",
     "description": "可愛い目をしたジャージー牛を飼育している牧場。子牛やうさぎ、羊と触れ合うことができる。牧場の中にあるミルク工房「そら」ではジャージー牛乳100%のジェラートやソフトクリーム、ナチュラルチーズなどを作り販売している。またバター作り体験もできる。田園の中の景色を楽しみながらのんびりとした時間が過ごせる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.616079,
       "longitude": 134.922991
     },
+    "url": "http://www.tango-jersey.co.jp/",
     "openingHours": "10時～17時",
     "price": "見学無料バター作り体験　520円（税込、3名以上）※バター作り体験の詳細は要問合せ"
   },
@@ -1056,7 +1085,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-96",
     "name": "岩屋寺",
     "description": "奈良時代に創建されたと伝える古刹。本尊は不動明王で、行基が開基したと伝えられている。通称「お不動さん」の名で親しまれるこの寺には、大江山の鬼退治の伝説を描いた400年前の絵巻物が保存されており、毎年8月18日に一般公開されている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.556332,
       "longitude": 135.097673
@@ -1067,7 +1096,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-97",
     "name": "白杉酒造株式会社",
     "description": "安永6年（1777）創業。代表銘柄「白木久」〈精米歩合〉60％〈主な使用米〉コシヒカリ〈日本酒度〉+1〈酸度〉1.9〈特徴〉コクと味わいのあるお酒。他に、吟醸生原酒など、数量限定の酒もあります。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.590573,
       "longitude": 135.102712
@@ -1083,6 +1112,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.697523,
       "longitude": 135.057123
     },
+    "url": "http://www.nakisuna.jp/",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "大人　300円団体（15名以上）は200円小人（小・中学生）　100円"
   },
@@ -1090,7 +1120,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-99",
     "name": "静の杜",
     "description": "八丁浜と浜詰海岸の間の磯地区のはずれにある静神社から続く遊歩道。展望台もあり、眺めはとても素晴らしい。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.688542,
       "longitude": 134.992239
@@ -1101,7 +1131,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-100",
     "name": "内山ブナ林",
     "description": "大宮町の北側、宮津市と弥栄町の境に接する高尾山から鼓ヶ岳にかけての標高600m前後の低標高でありながら北近畿最大級のブナ林で、広さは約40haあり、ブナをはじめカエデやケヤキなど300種類もの植物が自生をしている。このブナ林内には散策路が整備され、11月に「内山ブナ林観察会」が行われて、保全の輪も広",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.626826,
       "longitude": 135.166555
@@ -1111,7 +1141,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-101",
     "name": "吉岡酒造場",
     "description": "寛政元年（1789）創業。天橋立を見おろす成相山脈が三つに分岐して太鼓山系、金剛童子山系、吉野山山系で丹後半島を形成している、その中央にある吉野山を銘柄とする。代表銘柄「吉野山 大吟醸酒」〈精米歩合〉40％〈主な使用米〉山田錦 〈日本酒度〉+5〈酸度〉1.7〈特徴〉吟醸香とフルーティーな味をバランス",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.656903,
       "longitude": 135.113659
@@ -1131,7 +1161,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-103",
     "name": "竹野酒造有限会社",
     "description": "戦時中、企業整備され廃業となった4軒が昭和22年（1947）、弥栄町の現在地に総合復活し、昭和25年（1950）弥栄町の地名とめでたい鶴の名をとって、弥栄鶴の銘柄とした。代表銘柄「弥栄鶴」〈特徴〉甘口で華やかな香り。あまり酒に馴染みのない方の「はじめての酒」として最適。※見学可（要予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.660487,
       "longitude": 135.092149
@@ -1141,7 +1171,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-104",
     "name": "熊野酒造有限会社",
     "description": "創業は江戸期。代表銘柄「久美の浦 純米大吟醸」〈精米歩合〉45％〈主な使用米〉山田錦（兵庫）〈日本酒度〉+4〈酸度〉1.2〈特徴〉爽やかな香りと淡麗なうま味。酒蔵見学は要予約",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.605305,
       "longitude": 134.901757
@@ -1164,7 +1194,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-106",
     "name": "京丹後市大宮自然運動公園",
     "description": "グラウンド（野球コート・ソフトコート）、テニスコート（ナイター完備、使用期間は4月～11月末）、芝生広場、プレイランドを備えた運動公園。四季を通じて楽しめる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.588735,
       "longitude": 135.078629
@@ -1176,7 +1206,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-107",
     "name": "木下酒造有限会社",
     "description": "天保13年（1842）創業。代表銘柄「玉川 本醸造」〈精米歩合〉68％〈使用米〉五百万石、一般米〈日本酒度〉+2〈酸度〉1.7試飲できます。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.607608,
       "longitude": 134.918834
@@ -1187,7 +1217,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-108",
     "name": "久美の浜海岸",
     "description": "久美浜湾と日本海を分ける約6kmの砂州は、天橋立に似ていることから小天橋と呼ばれており、小天橋・葛野浜・箱石浜の海水浴場がある。この砂浜には、「京都の自然200選　植物の部」、「京丹後市の花」に選定された、日本でも珍しいトウテイランやハイネズの群落など、50種類以上の海浜植物が自生している。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.644742,
       "longitude": 134.910994
@@ -1197,7 +1227,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-109",
     "name": "京丹後市峰山総合公園",
     "description": "野球場・テニスコート・遊歩道などを備えた総合運動公園。公園のメイン施設である「峰山球場」は、両翼95m、中堅120mの広さを確保し、グラウンドの透水性や選手の安全確保にも配慮した施設で、客席も内外野合わせて約5,000名の収容能力があります。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.622368,
       "longitude": 135.069796
@@ -1209,21 +1239,23 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-110",
     "name": "丹後大仏",
     "description": "無病息災にご利益のある、丈六の露天石仏の阿弥陀如来像。この大仏は、大正7年（1918）筒川製糸の従業員42名が、東京見物から帰った後、スペイン風邪（流行性感冒）にかかり亡くなった霊を慰めるために建立された。※ご利益：無病息災",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.70745,
       "longitude": 135.241679
-    }
+    },
+    "url": "http://ine-kankou.jp/"
   },
   {
     "id": "spot-111",
     "name": "新井崎神社",
     "description": "2,200余年の昔、秦の始皇帝の家来の徐福は、皇帝の命をうけ、不老不死の薬草を探す航海に出て、やがて新井崎に漂着した。この神社は、その徐福を氏神として祀り、海上安全と漁業の神として信仰を集めている。黒一色の奇岩が神社を取りまく風景、神社から真東に見える徐福の思想を表現した冠島と沓島の2島のながめは壮",
-    "congestionLevel": 5,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.694604,
       "longitude": 135.307727
     },
+    "url": "http://ine-kankou.jp/",
     "openingHours": "拝観自由"
   },
   {
@@ -1234,38 +1266,42 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.75767,
       "longitude": 135.245398
-    }
+    },
+    "url": "http://ine-kankou.jp/"
   },
   {
     "id": "spot-113",
     "name": "伊根の舟屋",
     "description": "網干場から発展したもので、潮の干満差の少ないこと、山と海に挟まれた狭い土地を利用するうえから生まれた。湾をとり囲み、海にうかぶように、230棟が軒を連ねている景観は見事。昔は、わらぶきの平屋建てが多かったが、生活様式の変化で、今ではほとんどが2階建てになり、階下は船や漁具の格納と納屋のような機能をも",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.67519,
       "longitude": 135.287246
-    }
+    },
+    "url": "http://ine-kankou.jp/"
   },
   {
     "id": "spot-114",
     "name": "株式会社筒川そば",
     "description": "伊根町の山里、筒川名産の本格的手打ちの「筒川そば」のそば打ち体験ができる。そばは昔から挽きたて、打ちたて、茹でたての「三たて」と言い、早く食べるほど美味しくいただける。自分で打ったそばの味は格別。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.711234,
       "longitude": 135.238843
     },
+    "url": "http://ine-kankou.jp/",
     "price": "そば打ち体験　1人2,100円（5人以上）"
   },
   {
     "id": "spot-115",
     "name": "浦嶋神社",
     "description": "伊根浦から経ヶ岬へ行く途中に、日本最古の「丹後風土記」に描かれている浦嶋子（浦島太郎）の物語の舞台となった浦嶋神社がある。この神社は天長2年（825）当時の丹後の豪族であった浦嶋一族の業績をたたえて建立されたと云われている。日本最古といわれる浦嶋太郎物語が細かく描かれた浦嶋明神縁起絵巻（国指定重要文",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.728859,
       "longitude": 135.257845
     },
+    "url": "http://ine-kankou.jp/",
     "openingHours": "9時～17時",
     "price": "拝観無料宝物資料館のみ700円"
   },
@@ -1273,27 +1309,29 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-116",
     "name": "のろせ海岸",
     "description": "徐福伝説が伝わる新井崎を抜け、その先に広がる日本海を臨む。丹後天橋立大江山国定公園の美しい海岸線。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.699948,
       "longitude": 135.299442
-    }
+    },
+    "url": "http://ine-kankou.jp/"
   },
   {
     "id": "spot-117",
     "name": "竜穴",
     "description": "浦嶋神社の近く、国道178号から本庄浜に向かっていく道の途中に、今も竜宮へつながっていると信じられている「竜穴」がある。うっかりすると見すごしてしまうような小さな穴だが、浦嶋伝説の残る町ならではのスポット。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.730192,
       "longitude": 135.258241
-    }
+    },
+    "url": "http://ine-kankou.jp/"
   },
   {
     "id": "spot-118",
     "name": "舟屋の里伊根",
     "description": "伊根湾と舟屋を一望できる高台に建つ道の駅。そこからの眺めは絶景。公園内には水揚げされたばかりの魚を調理し提供するレストランや、地元の新鮮な素材を利用した特産品販売コーナーもある。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.674435,
       "longitude": 135.291138
@@ -1308,13 +1346,14 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.727568,
       "longitude": 135.244326
-    }
+    },
+    "url": "http://ine-kankou.jp/"
   },
   {
     "id": "spot-120",
     "name": "お食事処　油屋",
     "description": "舟屋の里公園内にある「お食事処油屋」では、伊根湾を臨みながら本格的な活魚料理が味わえる。活け造り、ぶりしゃぶ、会席風料理など。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.674492,
       "longitude": 135.291175
@@ -1325,18 +1364,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-121",
     "name": "奥伊根温泉",
     "description": "美しい海岸線が見える絶好のロケーションに建つ庭内に温泉がある。【適応症】神経痛、筋肉痛、関節痛など",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.714664,
       "longitude": 135.287485
     },
+    "url": "http://www.ine-aburaya.com/",
     "price": "入浴（タオル付き、入湯税込）　宿泊客無料　食事利用者3歳以上　400円（入湯税込）"
   },
   {
     "id": "spot-122",
     "name": "向井酒造株式会社",
     "description": "宝暦4年（1754）9月14日創業。伊根町唯一の造酒屋。丹後半島の幽邃の自然に育まれた千古不滅の美酒で、淡麗辛口、芳醇な香りと深みのあるコクが特徴。代表銘柄「京の春」、「伊根満開」",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.674767,
       "longitude": 135.286395
@@ -1346,7 +1386,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-123",
     "name": "伊根湾めぐり遊覧船",
     "description": "伊根湾を取り囲んで並ぶ舟屋の風情ある風景を、海上から眺めることができる。所要時間／25分",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.670566,
       "longitude": 135.277354
@@ -1358,18 +1398,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-124",
     "name": "お食事処　兵四楼",
     "description": "舟屋群が取り囲む伊根湾からすぐ、新鮮な魚料理が自慢のお食事処。刺身、海鮮丼、そばなど様々な品を取り揃えている。中でも、へしこ寿司は絶品。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.677031,
       "longitude": 135.286943
     },
+    "url": "http://ine-kankou.jp/",
     "openingHours": "11時～14時、17時～21時"
   },
   {
     "id": "spot-125",
     "name": "伊根浦発信館おちゃやのかか",
     "description": "地域住民が自分たちで作った資料館。2階は漁具や民芸品の展示があり、1階は喫茶と伊根産野菜・工芸品の直売所を兼ねている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.671105,
       "longitude": 135.295187
@@ -1380,7 +1421,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-126",
     "name": "浦嶋神社・宝物資料館",
     "description": "日本最古の「丹後国風土記」に描かれている浦嶋子（浦島太郎）の物語の舞台となった神社。国指定重要文化財の浦嶋明神縁起絵巻と、乙姫小袖、室町時代に作られたとされる亀甲文櫛笥の玉手箱などがある。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.72886,
       "longitude": 135.257845
@@ -1392,7 +1433,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-127",
     "name": "レストラン舟屋",
     "description": "四季折々の美しい花が咲く舟屋の里公園は、舟屋群が取り囲む波穏やかな伊根湾を一望する道の駅。伊根湾で水揚げされたばかりの旬の味覚を堪能するなら「レストラン舟屋」へ。季節の魚が姿造りで味わえる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.674471,
       "longitude": 135.291108
@@ -1403,11 +1444,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-128",
     "name": "食事処・呑み処なぎさ",
     "description": "高級中華食材の干しあわび・干しなまこを製造販売・海外への輸出もしている来福（Life）水産の直営店で、高級中華食材の一つで海の黒いダイヤと呼ばれる干しなまこをオイスターソースで炒めた丼がおすすめ。他に「干しあわび丼」、「干しあわび粥」、「鯨紅白漬け丼」、伊根で獲れた「季節のイカ丼」、「本まぐろ丼」な",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.675177,
       "longitude": 135.289463
     },
+    "url": "http://www2.gol.com/users/ip1109234366/nagisa.htm",
     "openingHours": "8時～21時※朝食もあり",
     "price": "干しなまこ丼　1,500円"
   },
@@ -1415,51 +1457,55 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-129",
     "name": "おみやげ伊根浦漁業",
     "description": "舟屋群が取り囲む伊根湾を一望する舟屋の里公園にある「おみやげ伊根浦漁業」。サバと米糠と塩で漬け込み熟成させた「サバへしこ」など旬の海産物の加工品が並ぶ。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.674606,
       "longitude": 135.291103
     },
+    "url": "http://ine-kankou.jp/",
     "openingHours": "9時～16時45分"
   },
   {
     "id": "spot-130",
     "name": "伊根町観光協会",
     "description": "伊根町の見どころやお宿をご紹介する窓口です。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.675913,
       "longitude": 135.287943
     },
+    "url": "http://ine-kankou.jp/",
     "openingHours": "9時～17時"
   },
   {
     "id": "spot-131",
     "name": "伊根町観光交流施設「舟屋日和」",
     "description": "伊根町の観光散策の拠点。施設内にはカフェや食事処があります。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.673851,
       "longitude": 135.290747
     },
+    "url": "http://funayabiyori.com",
     "openingHours": "INECAFE　平日　11時～17時（ラストオーダー16時45分）　土曜日、日曜日、祝日　10時～17時（ラストオーダー16時45分）鮨割烹海宮　11時30分～14時30分（ラストオーダー14時）　17時～20時30分（ラストオーダー20時）※季節により営業時間は異なります。"
   },
   {
     "id": "spot-132",
     "name": "よしむら",
     "description": "地元の新鮮で旬な地魚を提供している。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.675999,
       "longitude": 135.287038
     },
+    "url": "http://ine-kankou.jp/",
     "openingHours": "昼　11時30分～14時夜は要予約"
   },
   {
     "id": "spot-133",
     "name": "水の江里浦嶋公園",
     "description": "平成26年9月にリニューアルオープン。浦嶋公園内のイタリアンレストランPIENOでは、地元産野菜を使ったイタリア料理だけでなく、地元名物筒川そばも味わえる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.729854,
       "longitude": 135.257584
@@ -1470,22 +1516,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-134",
     "name": "なでしこ",
     "description": "幻の薦池大納言を使用した「筒川そばまんじゅう」や手打ちの筒川そばなど、伊根町独自の味覚を味わうことができる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.674436,
       "longitude": 135.291138
     },
+    "url": "http://ine-kankou.jp/",
     "openingHours": "3月～11月の土曜日、日曜日、祝日"
   },
   {
     "id": "spot-135",
     "name": "来福（Life）水産",
     "description": "高級中華食材の干しあわび・干しなまこを製造販売・海外へ輸出。直営店「食事処・呑み処　なぎさ」にて干しなまこ丼、干しあわび丼、干しあわび粥などを提供。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.67594,
       "longitude": 135.286716
     },
+    "url": "http://www2.gol.com/users/ip1109234366/index.html",
     "openingHours": "要問い合わせ",
     "price": "要問い合わせ"
   },
@@ -1493,18 +1541,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-136",
     "name": "台湾茶専門店靑竈",
     "description": "舟屋でまったり台湾茶。店主自らが現地で仕入れた上質の台湾茶葉をこだわりの茶器でお注ぎします。お茶の飲み方も台湾流で、まったりとした時間を過ごすことができます。茶葉を購入することもできます。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.674987,
       "longitude": 135.286524
     },
+    "url": "http://www.chinzao.com/",
     "price": "料金はお選びいただく茶葉により異なる。"
   },
   {
     "id": "spot-137",
     "name": "ちりめん街道",
     "description": "ちりめん街道は、与謝野町加悦伝統的建造物群保存地区の愛称。江戸から昭和初期に建てられた住宅や土蔵、縮緬工場、職工宿宿などが一体となって現存する。歴史的風致をよく伝える製繊町の町並み。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.504879,
       "longitude": 135.092258
@@ -1514,7 +1563,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-138",
     "name": "阿蘇シーサイドパーク",
     "description": "「阿蘇シーサイドパーク」は天橋立を横一文字に見渡せるビューポイントです。食事や遊び、歴史や地域の文化に親しみ、まちの魅力を五感で楽しめる観光レクリエーション施設です。観光拠点としてだけでなく、地域の人々の憩いの場としても利用されています。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.565808,
       "longitude": 135.155243
@@ -1525,7 +1574,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-139",
     "name": "加悦椿文化資料館",
     "description": "京都府指定文化財天然記念物「滝のツバキ」を核とした、千年ツバキの里のメイン施設。日本ツバキ協会名誉会員の故・渡邊武先生や新潟大学名誉教授の萩屋薫先生など多方面から寄贈、収集された椿文化に関する絵画や書、陶磁器などを展示。また、椿の種類、歴史、分布などわかりやすく学べる学習コーナーも充実。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.4757,
       "longitude": 135.059351
@@ -1537,11 +1586,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-140",
     "name": "与謝野町観光協会",
     "description": "ちりめん街道の起点となる旧加悦町役場庁舎内に観光案内所が設置され、手織体験やくみひも体験、休憩コーナーなどもある。〈手織り体験シルクコースターづくり〉卓上手織り機で、シルク糸を一本一本丁寧に織り上げ、オリジナルのコースターを作ります。旅の思い出やお土産に最適です。〈組みひも体験ミサンガづくり〉初めて",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.506618,
       "longitude": 135.093098
     },
+    "url": "http://yosano-kankou.net/",
     "openingHours": "開館時間　9時～17時体験時間　10時～16時（シルクコースター約50分、ミサンガ約30分）予約不要（7名様以下）",
     "price": "手織り体験　1回900円ミサンガづくり　1回600円"
   },
@@ -1549,7 +1599,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-141",
     "name": "大江山運動公園",
     "description": "町民の総合運動公園として、京都国体を記念して整備された。園内には、町民体育館・町民グラウンド・テニスコート場・若者センター（会議場）・多目的広場などがあり、昼夜ともにスポーツやレクリエーションを存分に楽しむことができる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.481125,
       "longitude": 135.095648
@@ -1559,7 +1609,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-142",
     "name": "梅林寺",
     "description": "ご本尊が釈迦如来の寺。室町時代に覚陰真如和尚によって創建された臨済宗の寺院。寺宝の銅鐸は、比丘尼山頂から出土した、高さ107cmの立派なもので、表面は袈裟だすきが刻まれている。弥生時代後期の作で、国の重要文化財に指定されている。一般参拝者が鐘をつくことができる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.517352,
       "longitude": 135.089529
@@ -1570,7 +1620,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-143",
     "name": "加悦双峰公園",
     "description": "鬼退治伝説で有名な「大江山」の中腹にある標高500mの宿泊所。大江山連峰と加悦谷平野を一望することができ、バンガローも併設。アウトドア派にはオートキャンプやテントキャンプ場も充実しており、自然を満喫するには最適の施設。大江山連峰の登山口にもなっている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.446302,
       "longitude": 135.090938
@@ -1592,7 +1642,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-145",
     "name": "野田川森林公園",
     "description": "山の斜面を利用してつくられた、自然の中で遊べるプレーゾーン。管理棟や16ホールのグラウンドゴルフコース、全天候型の屋内交流広場があり、一日のんびり楽しめる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.525119,
       "longitude": 135.090551
@@ -1603,7 +1653,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-146",
     "name": "八幡神社",
     "description": "応神天皇が祀られている。境内にある石燈籠は、重要文化財に指定されている。高さ2.5ｍ、八角形の基礎の上に、宝珠の下を長く作って茸形になったこの灯ろうは、南北朝時代に作られた「丹後形燈籠」の代表的なもの。※ご利益：安産祈願",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.531367,
       "longitude": 135.098915
@@ -1614,7 +1664,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-147",
     "name": "滝のツバキ公園",
     "description": "推定樹齢1,000年を越える大椿で、濃紫紅色の可憐な花がうめつくす姿は壮観。奥深い谷にある、樹高9.7ｍ、枝張り計10.0ｍ、幹周3.26ｍもある巨木。この大椿はヤブツバキ科の「ヤブツバキ」で同種のものでは日本最古級の古木であり、その原種ではないかと専門学者の鑑定を受けた。（京都府指定天然記念物、京",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.466,
       "longitude": 135.057399
@@ -1635,7 +1685,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-149",
     "name": "江山文庫",
     "description": "豊中市の故・里見恭一郎（俳号玉兎）先生から寄贈を受けた高浜虚子や山口誓子など著名人の作品等を展示。また、与謝蕪村・与謝野礼巌・鉄幹・晶子のゆかりの地でもあり、その作品をはじめとする短歌と俳句の里づくりの中心施設で、年間通していろんなジャンルの所蔵品展・特別展を開催。与謝蕪村顕彰与謝野町俳句大会も行っ",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.481381,
       "longitude": 135.103903
@@ -1658,7 +1708,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-151",
     "name": "広瀬創作工芸",
     "description": "織物製造の工程で使用する糸巻木枠をモチーフにして糸を巻き上げ、中に電球を入れたシンプルで美しい癒し系のランプづくりが体験できる。定員／2名より実施（要予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.499562,
       "longitude": 135.09357
@@ -1670,7 +1720,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-152",
     "name": "弓木城跡",
     "description": "中世の戦乱を象徴する山城遺構で、平野部を阿蘇海に向けて突き出た標高50mの丘陵上にある。この城は、丹後一色氏の没落の際、最後の攻防がくり広げられた場所で、戦国時代の丹後における代表的な山城のひとつ。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.565,
       "longitude": 135.147071
@@ -1681,7 +1731,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-153",
     "name": "谷口酒造株式会社",
     "description": "明治4年（1871）創業。平成8年（1996）から地元丹後でとれた好適米だけを使用し、社長自らが杜氏というこだわりの丹後づくしの酒。代表銘柄「丹後王国」〈精米歩合〉60％〈主な使用米〉百万石・祝 〈日本酒度〉0〈酸度〉1.7〈特徴〉丹後の好適米だけで造った純米酒。【販売店舗】蔵元道の駅シルクのまちか",
-    "congestionLevel": 5,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.47407,
       "longitude": 135.085419
@@ -1691,7 +1741,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-154",
     "name": "池ケ成公園",
     "description": "鬼退治伝説で有名な「大江山」の中腹にあり、ハイキングコースの好適地にある自然公園。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.480491,
       "longitude": 135.12601
@@ -1701,7 +1751,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-155",
     "name": "旧尾藤家住宅",
     "description": "地域のために奮闘した豪商の屋敷。中世の武士に始まり、幕末にはちりめん商として財を成し、ひと時代を築いた旧尾藤家。丹後大震災で多大な被害を受けた町の復興に貢献した。住宅は江戸時代末期築の広大な屋敷。家具から設計した洋館は、和と洋が調和する。（京都府指定有形文化財）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.504634,
       "longitude": 135.091978
@@ -1713,18 +1763,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-156",
     "name": "かや山の家",
     "description": "鬼退治伝説で有名な「大江山」の登り口にある気軽な宿泊施設。ボリュームたっぷりの季節の料理が楽しめる。また、研修棟もあり合宿や研修会にも対応可能。定員／60名",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.491774,
       "longitude": 135.121322
     },
+    "url": "http://www.kaya-yamanoie.com",
     "price": "宿泊料　素泊まり　4,000円　1泊朝食付き　5,000円夕食　2,000円（予算に応じてメニュー対応可能）※研修室の利用は要相談"
   },
   {
     "id": "spot-157",
     "name": "陶真窯",
     "description": "陶芸作家の親切な指導により、子供から大人まで手軽に皿やマグカップ、置物などお好みの焼き物づくりが楽しめます。また、大人向け「陶芸教室」やお子様向け「どろんこ教室」などもあります。定員／1名～15名程度（要予約）",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.499318,
       "longitude": 135.117673
@@ -1736,11 +1787,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-158",
     "name": "クアハウス岩滝",
     "description": "京都府下では最高温58.5度の「天の橋立岩滝温泉」。クアハウス岩滝は温泉利用型健康増進施設（町施設・宿泊不可）で、水着着用及び裸浴槽。13種類の浴槽・サウナ（水着浴）を配置するバーデゾーン、ウォータースライダーを併設する25m4コースの温泉プール、裸浴槽、トレーニングルーム、リラックスルーム、レスト",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.572449,
       "longitude": 135.153637
     },
+    "url": "http://www.dolphin-group.co.jp/kurhaus-iwataki/",
     "openingHours": "10時～22時（入館は21時30分まで）",
     "price": "全館利用　大人（中学生以上）　1,540円　3歳以上、小学生　550円健康浴場（裸浴槽）利用　大人　550円　3歳以上、小学生　330円水着浴（バーデゾーン・健康浴場）利用　大人　1,210円※各利用　回数券、障害者割引など有り、詳細はお問い合わせください。"
   },
@@ -1748,7 +1800,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-159",
     "name": "与謝野町文化・工芸の里",
     "description": "いろんな手加工職人が集う文化・工芸ゾーン。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.48199,
       "longitude": 135.103351
@@ -1760,18 +1812,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-160",
     "name": "岩滝温泉",
     "description": "宮津湾と丹後の山々に囲まれたホテル喜楽家は、家族や友人などとくつろげる水辺の宿。自然の幸に恵まれ、とりたての魚を使った活造りや、冬のカニ・生ガキなどは絶品。（旅館1軒）【泉質】硫化水素泉【適応症】慢性リウマチ、糖尿病など",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.569303,
       "longitude": 135.159012
     },
+    "url": "http://www.hotel-kirakuya.sakura.ne.jp/",
     "price": "基本料金　1泊2食　15,750円～"
   },
   {
     "id": "spot-161",
     "name": "雲岩公園",
     "description": "鎌倉時代を中心に繁栄した寺院跡で、山頂には丹後地方では最大の「宝篋印塔（ほうきょういんとう）」がある。ツツジの名所でもあり、現在では山全体が公園となっている。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.524036,
       "longitude": 135.069759
@@ -1782,7 +1835,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-162",
     "name": "道の駅「シルクのまちかや」",
     "description": "国道176号線沿いにある「道の駅」。農産物直売所として営業している。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.481411,
       "longitude": 135.09366
@@ -1793,11 +1846,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-163",
     "name": "丹後ちりめん歴史館",
     "description": "丹後ちりめん歴史館は、与謝野町内にある老舗の絹織物会社跡地に立地。明治36年（1903）に創業し昭和34年（1959）の天皇陛下ご成婚の際、ここで製織した白生地を結納の品にお使いになられた名門。再整備を行い、シルクの織りと染めの一貫生産工場として公開。予約をすれば、手機体験などをすることができる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.527913,
       "longitude": 135.07861
     },
+    "url": "http://www.mayuko.co.jp/rekisi/pr.html",
     "openingHours": "9時～17時",
     "price": "工場見学は無料体験料別途必要"
   },
@@ -1805,11 +1859,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-164",
     "name": "古墳公園・はにわ資料館",
     "description": "1,600年前の古代空間を復元した歴史公園。国史跡「蛭子山古墳」「作山古墳」の復元整備を中心とした古代歴史公園。蛭子山古墳は4世紀後半に築造。また、谷ひとつはさんで位置する作山古墳は5基の中形古墳で構成され、4世紀後半から5世紀初めにかけて築造され、円墳、方墳、前方後円墳など代表的な墳形がひとつの丘",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.506535,
       "longitude": 135.103759
     },
+    "url": "http://www.town-yosano.jp/wwwg/section/detail.jsp?common_id=403",
     "openingHours": "9時～17時",
     "price": "入園入館料　　大人　300円（200円）　小・中学生　150円（150円）　（ ）内は団体（8名以上）料金"
   },
@@ -1817,11 +1872,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-165",
     "name": "大内峠一字観公園",
     "description": "天橋立が最も美しく見える場所として、文珠、栗田、傘松峠と並んで天橋立四大観のひとつに数えられている。峠一帯は「一字観公園」として整備され、春は桜、秋は紅葉が見事。園内には、1周15分ほどの遊歩道があり、天橋立の展望台を中心に、その道沿いには大観を詠んだ歌碑、句碑が建てられている。また、パノラマコテー",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.564987,
       "longitude": 135.136117
     },
+    "url": "http://www.kyt-net.jp/~ichijikan-kouen/",
     "openingHours": "受付時間10時～17時",
     "price": "見学自由コテージ（基本額）1棟11,000円（大人一人につき1,500円、小人500円追加）テントサイト（1サイト）3,000円炊事棟1,500円シャワー棟（10分間）100円"
   },
@@ -1839,7 +1895,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-167",
     "name": "カフェ工房風夢",
     "description": "美しい出来上がりの七宝焼は、お好みの色と装飾品などの材料を選ぶことができ、2分で焼成です。子供や初心者でも簡単にコーヒーカップや皿などの陶芸体験が短時間で楽しめます。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.481924,
       "longitude": 135.103351
@@ -1851,7 +1907,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-168",
     "name": "ちんざん",
     "description": "京都府指定天然記念物「滝の千年ツバキ」を核とした村おこしグループ「明人夢村」（あとむむら）が経営するお食事処。椿をテーマにした料理が特徴で、おすすめは、「鴨すき鍋」や「ちんざん御膳」で、椿餅・草餅と抹茶のセットで休憩するのもいい。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.475249,
       "longitude": 135.05904
@@ -1863,7 +1919,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-169",
     "name": "旧加悦鉄道加悦駅舎",
     "description": "加悦駅舎は大正15年（1926）の私鉄加悦鉄道の開通とともに建てられたもので、与謝野町の近代を代表する建物。地元民の足として、また丹後ちりめんや大江山ニッケル鉱山の鉱石の輸送に活躍した加悦鉄道は、自動車交通の波に飲まれ昭和60年（1985）、60年間の歴史にピリオドを打った。この史実を後世に伝えるた",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.503959,
       "longitude": 135.094836
@@ -1875,7 +1931,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-170",
     "name": "旧加悦町役場",
     "description": "重伝建地区「ちりめん街道」の北端に位置する旧加悦町役場は丹後大震災後の昭和4年（1929）に建築された。2020年3月に大規模な修理と耐震改修が完了し、建築当時の雰囲気が再現された。一見シンプルな建造物だが、震災からの地域の復興と繁栄を願い、工夫を凝らし、細部まで丁寧に造られている。（京都府指定有形",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.506617,
       "longitude": 135.093048
@@ -1886,7 +1942,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-171",
     "name": "常栖寺庭園",
     "description": "常栖寺庭園は江戸時代後期につくられ、山を背景として池と中島、そして石組みから構成されている。秋には池に映える紅葉が美しく、江戸時代後期の丹後を代表する庭園。（京都府指定有形文化財）",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.499891,
       "longitude": 135.113461
@@ -1896,7 +1952,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-172",
     "name": "西光寺庭園",
     "description": "西光寺庭園は江戸時代後期につくられ、江戸八景の一つ葛飾の「行徳帰帆」の風情を模したと伝えられる庭園で、静かな池と枯山水的石組が落ち着いた佇まいを残している。（京都府指定有形文化財）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.501215,
       "longitude": 135.09152
@@ -1906,7 +1962,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-173",
     "name": "天満宮の石燈籠",
     "description": "加悦の天満神社は天正14年（1586）に安良城主の有吉氏により現在の地に遷宮されたと伝えられ、本殿脇には高さ約2.6mの丹後を代表する鎌倉時代後期の石燈籠がある。（京都府指定文化財）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.50319,
       "longitude": 135.091673
@@ -1916,11 +1972,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-174",
     "name": "元伊勢籠神社",
     "description": "養老3年（719）に丹後一の宮とされた丹波、丹後地方きっての格式を誇る古社。祭神は、伊勢神宮と同じ天照大神や豊受大神。国宝、重要文化財の社宝も多く、神殿前の狛犬一対は、狛犬としては珍しく国の重要文化財に指定されており、国産石造としては一時期最古ではないかと考えられていたほど歴史が古く、その威風堂々た",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.582792,
       "longitude": 135.196702
     },
+    "url": "http://www.motoise.jp/",
     "openingHours": "拝観自由",
     "price": "無料"
   },
@@ -1933,6 +1990,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.538122,
       "longitude": 135.191059
     },
+    "url": "http://www.amanohashidate.jp/mikamike/",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "一般　350円（300円）小・中学生　250円（200円）（ ）内は団体（15名以上）料金"
   },
@@ -1952,7 +2010,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-177",
     "name": "金引の滝",
     "description": "日本の滝100選にも選ばれた金引の滝は、市街地のはずれ、金引山から流れ落ちている。水量の豊富なときは壮観で、数条の流れが水しぶきとなって四方の木々に飛びちり、涼感を誘う。滝つぼが無く、滝の根元まで行ける珍しいスポット。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.529582,
       "longitude": 135.182312
@@ -1974,7 +2032,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-179",
     "name": "智恵の餅",
     "description": "天橋立の名物和菓子智恵の餅。江戸時代から伝わるこの餅は食べると知恵を授かるといわれており、軟らかい餅にこし餡をのせたもの。智恩寺門前の四軒茶屋と呼ばれる四軒の茶屋で食べられる。四軒それぞれ餅の固さや餡に微妙な差があり、食べ比べもおもしろい。餡の代わりにきな粉をのせた重太郎餅、智恵の餅を入れたかき氷な",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.557648,
       "longitude": 135.184677
@@ -1986,11 +2044,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-180",
     "name": "智恩寺",
     "description": "「切戸の文殊堂」として親しまれており、重要文化財の文殊菩薩を本尊として古くから出羽亀岡、大和桜井の文殊とともに日本三文殊のひとつに数えられている。「3人寄れば文殊の智恵」の言い伝えにあるように、智恵の文殊様として有名で、境内には学業成就、入試祈願の絵馬がびっしりと並んでいる。足利時代の多宝塔、重文の",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.558724,
       "longitude": 135.183892
     },
+    "url": "http://www.monjudo-chionji.jp/",
     "openingHours": "拝観自由",
     "price": "無料"
   },
@@ -1998,11 +2057,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-181",
     "name": "成相寺",
     "description": "慶雲元年（704）開基という古刹で、西国第28番札所。本尊は、秘仏の聖観世音菩薩。本道への石段右手にある「撞かずの鐘」は、その音色に鐘を作る際に誤って命を落とした子供の泣き声がするため、鳴らされることがなかった、という悲しい伝説が秘められている。本堂内陣右手に左甚五郎作と伝えられる真向きの龍が見え、",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.595596,
       "longitude": 135.187434
     },
+    "url": "http://www.nariaiji.jp/",
     "openingHours": "8時～16時30分（参拝時間）",
     "price": "入山料　大人　500円（障害者除く）　中学・高校生　200円　小学生以下　無料※団体30名以上　400円（大人）"
   },
@@ -2010,7 +2070,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-182",
     "name": "大江山",
     "description": "大江山連峰は、鬼退治の伝説で全国にその名を知られており、また広大な大自然に恵まれた大レクリエーションゾーンでもある。新緑や紅葉を眺めながらのハイキングが楽しめる。大江山の登山口一帯は、酒呑童子の里として、鬼にまつわる遺跡などが多数存在している。毎年5月末に大江山一斉登山も開催。2018年春に「大江山",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.453511,
       "longitude": 135.106393
@@ -2025,6 +2085,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.538232,
       "longitude": 135.196462
     },
+    "url": "http://www.charoku.com/",
     "openingHours": "食事　昼席　11時30分～14時（オーダーストップ13時）　夕席（要予約）　17時30分～21時（オーダーストップ19時）※食事は昼食、夕食ともに前日の21時までに要予約"
   },
   {
@@ -2043,21 +2104,23 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-185",
     "name": "文珠荘",
     "description": "天橋立運河に面しており、日本三景天橋立を全客室から天橋立を間近に見ることができる純和風の宿。設計は皇室を手掛けた日本を代表する建築家吉村順三氏。「美人の湯」と称される天橋立温泉を有し、泉質はもちろん、浴場から望む茶庭風の景色も人気の一つ。平成26年（2014）に、敷地内に石窯レストランMONをオープ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.556429,
       "longitude": 135.185622
-    }
+    },
+    "url": "http://www.monjusou.com"
   },
   {
     "id": "spot-186",
     "name": "天橋立ビューランド",
     "description": "文珠山公園にある天橋立ビューランド。モノレールまたはリフトで登る。山頂は遊園地となっており、観覧車やゴーカート、展望レストランなどがある。ここの展望台から見る天橋立は、縦一文字で、天に昇る龍のように見えることから、その眺望は二大展望のひとつ「飛龍観」と呼ばれている。2016イグ・ノーベル賞の研究で話",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.552789,
       "longitude": 135.182118
     },
+    "url": "http://www.viewland.jp/",
     "openingHours": "2/21～7/20　 9時～17時7/21～8/20　 8時30分～18時8/21～10/20　9時～17時10/21～2/20　9時～16時30分※当面の間、営業時間短縮10時～16時30分（リフト・モノレール下り最終16時50分）",
     "price": "大人　850円小人　450円リフト・モノレール往復料金含む※団体30人以上割引有り"
   },
@@ -2065,11 +2128,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-187",
     "name": "京都府立丹後郷土資料館/旧永島家住宅/丹後国分寺跡",
     "description": "〈府立丹後郷土資料館〉国の史跡、丹後国分寺跡に建てられた府の施設で、丹後地方を中心とする考古資料、歴史資料、民俗資料を多数所蔵・展示している。通年の常設展の他、特別展や企画展などを随時開催し、丹後のすばらしい歴史と文化にふれることが出来る。〈旧永島家住宅（府指定有形文化財）〉［上記資料館と道路をはさ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.579691,
       "longitude": 135.178561
     },
+    "url": "http://www.kyoto-be.ne.jp/tango-m/cms",
     "openingHours": "9時～16時30分",
     "price": "普通展示　大人　200円（150円）　小・中学生　50円（40円）特別展示　　大人　250円（200円）　小・中学生　70円（50円）（ ）は団体（20名以上）料金"
   },
@@ -2077,11 +2141,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-188",
     "name": "宮津の湯らゆら温泉",
     "description": "日本三景の一つ特別名勝「天橋立」を一望できる絶好のロケーションの温泉リゾートホテル。露天風呂を備えた大浴場でリフレッシュ。平成25年（2013）に、新しく露天足湯展望デッキ登場。【泉質】ナトリウム-塩化物強塩冷鉱泉【適応症】神経痛、筋肉痛、関節痛など",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.578504,
       "longitude": 135.234231
     },
+    "url": "http://www.daiwaresort.jp/miyazu/",
     "openingHours": "貸切日もあるため、事前に要確認",
     "price": "日帰り入浴　大人　1,000円　小学生　500円"
   },
@@ -2089,18 +2154,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-189",
     "name": "ハクレイ酒造株式会社",
     "description": "天保3年（1832）創業。創業時の天保蔵を、今現在も貯酒蔵として使用している。原料である酒造米は、くず米や外米を一切使用せず、全量京都府産米を使用。香付け、風味付けに地酒を使用した蔵スイーツも販売。代表銘柄「酒呑童子」〈精米歩合〉65％〈主な使用米〉五百万石 〈日本酒度〉5度～10度〈酸度〉1.7【",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.515175,
       "longitude": 135.283284
     },
+    "url": "http://www.hakurei.co.jp",
     "openingHours": "9時～17時"
   },
   {
     "id": "spot-190",
     "name": "成相観音温泉",
     "description": "特別名勝「天橋立」を北側から望む温泉。【泉質】アルカリ性単純高温泉【適応症】神経痛、疲労回復など",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.581441,
       "longitude": 135.196081
@@ -2115,6 +2181,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.5388,
       "longitude": 135.197118
     },
+    "url": "http://www.city.miyazu.kyoto.jp/www/outside/sunmac/sisetupage/rekisi/rekisi.htm",
     "openingHours": "8時～22時（受付8時30分～17時15分）※現在、新型コロナウイルスにより20時まで",
     "price": "文化ホール　8,170円～中央公民館　520円～"
   },
@@ -2127,6 +2194,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.585715,
       "longitude": 135.199036
     },
+    "url": "http://www.hashidate-yh.jp/",
     "openingHours": "チェックイン　16時～22時チェックアウト　10時",
     "price": "相部屋1名　大人　3,150円　小・中学生　2,600円　幼児　900円1室占有利用追加料金　1室　2,100円朝食　650円夕食　1,050円※11月～3月はカニプラン有り。"
   },
@@ -2134,11 +2202,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-193",
     "name": "京都府立丹後海と星の見える丘公園",
     "description": "自然環境に恵まれた、京都・丹後の里山にある公園（入場無料）です。日本海や宮津湾はもちろん、晴れた日には遠く北陸の山々まで見渡せる素晴らしい展望が広がっています。公園では、森で採れた小枝や松ぼっくりで作品を作る創作体験や、ガイド付きの里山ウォーク、夜空の観察会など、子どもから大人まで気軽に楽しめる様々",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.622743,
       "longitude": 135.236085
     },
+    "url": "http://www.eco-future-park.jp/",
     "openingHours": "7月～9月　9時～20時それ以外は9時～17時"
   },
   {
@@ -2150,6 +2219,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.556135,
       "longitude": 135.255207
     },
+    "url": "http://www.kepco.co.jp/corporate/profile/community/pr/miyazu/index.html",
     "openingHours": "9時～17時（当面の間、16時まで）",
     "price": "水族館のみ有料大人300円小・中学生150円小学生未満無料魚と遊べる日本最大級のタッチングプール、電力PR館は無料※団体（30名以上）2割引"
   },
@@ -2157,11 +2227,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-195",
     "name": "宮津天橋立漁師町ととまーと",
     "description": "ととまーとは、煉り製品体験工房、レストラン漁連、とと庵、KANEMASU7、お土産屋大幸、宮魚魚水産の7店舗から成り立つ。宮津で獲れた新鮮な魚介をふんだんに使った食事、ちくわ等の練り製品を製作できる体験工房、食後の美味しいスイーツなど、宮津・丹後地域の食の魅力に触れることができる観光商業施設。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.543391,
       "longitude": 135.190629
     },
+    "url": "https://www.totomart.jp",
     "openingHours": "10時～17時（時短営業10時～15時）",
     "price": "入場無料"
   },
@@ -2169,11 +2240,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-196",
     "name": "地引き網漁体験",
     "description": "みんなで力を合わせて地引き網を引いて漁を体験。捕れた魚はおみやげに持ち帰ることが出来る。所要時間／約1時間",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.579421,
       "longitude": 135.200994
     },
+    "url": "http://www.amanohashidate.info/kurosaki/index.htm",
     "openingHours": "5月～10月中旬",
     "price": "55,000円（税込）"
   },
@@ -2191,22 +2263,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-198",
     "name": "オーベルジュ天橋立",
     "description": "天橋立ホテルに隣接するビジネスタイプの宿泊施設。1階には本格的フレンチをリーズナブルに提供しているレストランピュールもあり、お部屋は、シングル、ダブル、ツイントリプルと各種のルームタイプを用意している。なお、宿泊特典として、天橋立ホテルの温泉大浴場に無料で入浴することができる。※オーベルジュ：フラン",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.558869,
       "longitude": 135.181219
     },
+    "url": "http://www.amanohashidate-htl.co.jp/auberge/",
     "openingHours": "レストランピュール　ランチ　11時30分～14時30分　ディナー　18時～21時"
   },
   {
     "id": "spot-199",
     "name": "天橋立観光協会",
     "description": "京都丹後鉄道宮豊線「天橋立駅」内に事務局及び観光案内所（丹後観光情報センター）がある。日本政府観光局（JNTO）の外国人観光案内所に認定されており、英語に対応。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.557716,
       "longitude": 135.182424
     },
+    "url": "http://www.amanohashidate.jp/",
     "openingHours": "9時～18時"
   },
   {
@@ -2217,17 +2291,19 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.538198,
       "longitude": 135.193977
-    }
+    },
+    "url": "http://michinoeki-miyazu.jp"
   },
   {
     "id": "spot-201",
     "name": "晶子の部屋",
     "description": "与謝野晶子・鉄幹夫妻ゆかりの宿「対橋楼」の一室に設けられたミニギャラリーで、夫妻の作品等を展示し、一般に公開している。与謝野晶子は昭和5年と昭和15年に対橋楼を訪れ、かけ軸など多くの作品を残しました。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.557638,
       "longitude": 135.184867
     },
+    "url": "http://www.taikyourou.com",
     "openingHours": "入場は宿の営業時間（不定休）",
     "price": "入場無料"
   },
@@ -2240,6 +2316,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.538196,
       "longitude": 135.193969
     },
+    "url": "http://www.michinoeki-miyazu.jp",
     "openingHours": "9時～18時",
     "price": "無料"
   },
@@ -2247,11 +2324,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-203",
     "name": "智恵の湯（天橋立温泉外湯施設）",
     "description": "天橋立駅横の外湯「智恵の湯」は、「三人寄れば文殊の知恵」で有名な日本三文殊の一つ智恩寺文殊菩薩の智恵と健康が授かりますようにと命名されました。町家風木造2階建の建物で浴場2（「はしだて」、「ちゑの輪」）、露天1、手足湯1、休憩ホールなどを備える。「はしだて」は枯れ松を一部利用した浴槽及び手足湯・つぼ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.557411,
       "longitude": 135.18299
     },
+    "url": "http://www.viewland.jp/chienoyu/",
     "openingHours": "12時～21時時短営業　13時～19時（19時30分まで入浴可）",
     "price": "入浴料金　大人（中学生以上）700円　子供　350円天橋立駅観光案内所や周辺駐車場等で入浴割引券を常時配布しています。（割引利用で100円引き）また、天橋立2大展望所の一つ「天橋立ビューランド」のモノレール・リフト往復券とセットになったお得な「遊湯チケット」もあります。（通常1,550円が1,000円に）天橋立駅観光案内所や智恵の湯、天橋立ビューランドにて販売中。"
   },
@@ -2259,11 +2337,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-204",
     "name": "田井宮津ヨットハーバー",
     "description": "〈主な施設〉クラブハウス、ボートヤード90隻、艇庫、スロープ　幅20m、揚降機　軌道式電動ウィンチ（揚降能力10t）、桟橋　固定桟橋貸出艇（ディンギー）1人乗り30隻、2人乗り5隻、6人乗り2隻その他　ロッカー、シャワー",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.582787,
       "longitude": 135.229043
     },
+    "url": "http://www.uminoeki.jp",
     "openingHours": "4月～9月　8時～18時10月～3月　8時～17時",
     "price": "施設等の利用区分により料金が異なるため、要問い合わせ"
   },
@@ -2271,11 +2350,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-205",
     "name": "まるやす",
     "description": "天橋立駅徒歩1分、天橋立徒歩4分の宿。日本酒ソムリエである主人が自分の足と舌で選んだ日本酒をお食事と合わせて楽しんでいただく酒鮮スタイルを提供。レンタサイクル（20台）は、アルミフレーム製。衝撃の少ないサスペンション付きの自転車で快適。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.557372,
       "longitude": 135.183512
     },
+    "url": "http://www.a-maruyasu.com",
     "openingHours": "日の出から日没まで",
     "price": "レンタサイクル　1時間300円～　2時間500円～（以降150円/30分）"
   },
@@ -2283,7 +2363,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-206",
     "name": "天橋立府中海水浴場",
     "description": "2021年は8/16で海水浴場開設期間を終了日本三景・天橋立の北側（府中側）の海水浴場。青い海と空、白く美しい砂浜を有し、家族連れや若いグループで賑わう。シャワー、更衣室あり。こちらから海水浴場パンフレットのダウンロードができます\"",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.58137,
       "longitude": 135.203918
@@ -2314,11 +2394,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-209",
     "name": "はしだて茶屋",
     "description": "はしだて茶屋は「天橋立」の中にあるお食事もできるお茶屋さんです。観光で天橋立公園内を散策される方の拠点として大変便利。夏季（7月～８月）は、店の前が海水浴場（天橋立海水浴場）として賑わいます。食事処の名物は天橋立産アサリたっぷりのアサリ丼、自家製焼きたて黒ちくわなど。レンタサイクルは30台あり、子供",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.559494,
       "longitude": 135.186699
     },
+    "url": "http://www.hashidate-chaya.jp",
     "openingHours": "9時30分～17時",
     "price": "レンタサイクル　1時間300円　2時間400円"
   },
@@ -2326,11 +2407,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-210",
     "name": "定置網体験",
     "description": "漁船によるクルージングを楽しみながら定置網漁を体験。さわやかな潮風、かもめの出迎え、飛び跳ねる魚の群など見どころ満載。帰港後は水揚げされた魚や燻製の購入も可。所要時間／往復含み約2時間30分",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.661097,
       "longitude": 135.262897
     },
+    "url": "http://www.tangoweb.co.jp/yoro/index.html",
     "openingHours": "出航時間　夏期　4時30分　冬期　6時30分",
     "price": "朝網体験（定員60名）　大人　1人2,200円　中学生以下　1人1,200円　朝食　1,200円（5名以上）昼網体験（昼食付き）　大人　1人3,700円（30名以上）※朝網・昼網ともに要予約"
   },
@@ -2338,7 +2420,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-211",
     "name": "丹後由良海水浴場",
     "description": "2021年は8/15で海水浴場開設期間を終了宮津市内の海水浴場では、新型コロナウイルス感染症に対して厳格な感染防止対策を行っています。お越しになる場合は、感染拡大防止の取組にご協力をお願いします。若狭湾が目の前に広がる青い海と空、白い砂浜が美しい海水浴場。全長約2kmのロングビーチで、家族連れから若",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.52138,
       "longitude": 135.279339
@@ -2348,7 +2430,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-212",
     "name": "橋本屋",
     "description": "天橋立内（廻旋橋すぐ）にある店。レンタサイクル（台数約100台、子ども用含む）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.557889,
       "longitude": 135.185617
@@ -2360,7 +2442,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-213",
     "name": "松吟",
     "description": "智恩寺山門前のお土産物店です。大きな招き猫が目印。天橋立名物「智恵の餅」の製造・販売の他、各種菓子、海産物、地酒、土産物を販売。2階は天橋立の松並木と廻旋橋を見下ろす眺めのよいレストランです。3階には大広間があり、団体にも対応。冬季（11月～3月）は「松葉がに料理」も提供。レンタサイクルも実施してお",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.557237,
       "longitude": 135.184917
@@ -2372,7 +2454,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-214",
     "name": "ちりめん問屋",
     "description": "「ワインとお宿　千歳」の2軒前隣にある姉妹店。店内は、地元作家を紹介するギャラリーや丹後の特色ある品、ワインなどを販売しています。レンタサイクル（15台）も実施。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.557152,
       "longitude": 135.184747
@@ -2384,11 +2466,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-215",
     "name": "橋立大丸　本店",
     "description": "橋立大丸本店は、人気の観光名所「文殊堂」、「智恵の輪」、「廻旋橋」からもすぐ近くにあるお食事・お土産処です。レンタサイクルも実施しており、30台の貸し出しが可能。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.557352,
       "longitude": 135.184624
     },
+    "url": "http://www.hashidate-daimaru.co.jp/",
     "openingHours": "8時30分～17時30分",
     "price": "レンタサイクル　2時間400円（以降100円/時間）"
   },
@@ -2396,7 +2479,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-216",
     "name": "智恵くらべ",
     "description": "天橋立駅正面にあり、丹後ちりめん小物、宮津焼など郷土色豊かな商品を扱う土産物店。「智恵くらべ」は同じく駅正面の「松和物産」の支店となっており、土産物販売のほか、レンタサイクル（20台）や、手荷物預かりも行う。本店の松和物産では、2階の食事処にて季節の料理を提供しており、特に自家製のひもの、松葉ガニ、",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.558169,
       "longitude": 135.182452
@@ -2408,11 +2491,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-217",
     "name": "田井観光フィッシング",
     "description": "筏釣、カセ釣、磯釣、一文字波止釣釣り堀も完備",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.580459,
       "longitude": 135.229708
     },
+    "url": "http://www.taikankou.com",
     "openingHours": "5月～12月無休磯釣とカセ釣は予約制。1月～4月は全ての釣りが予約制となる。※日の出・日の入により営業時間等変更するため要問合せ",
     "price": "筏釣　4,000円磯釣　4,500円釣り堀釣り放題コース　11,000円※料金体系については要問い合わせ。"
   },
@@ -2420,7 +2504,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-218",
     "name": "橋立観光ビル・マウンティーンマウス",
     "description": "天橋立駅から徒歩1分、智恩寺駐車場の目の前にある喫茶とレンタサイクルの店。オリジナルソフトクリームは幅広い世代に人気。レンタサイクルは41台。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.557864,
       "longitude": 135.18357
@@ -2432,17 +2516,18 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-219",
     "name": "文珠荘　松露亭",
     "description": "元禄時代の創業以来数々の文豪に愛されてきた名旅館。「和の美しさ」を極めた京風数寄屋造りの部屋からは、すぐ目の前の天橋立をとりくんだ風流な庭園が楽しめる。美肌の湯である天橋立温泉の露天風呂あり。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.559611,
       "longitude": 135.184767
-    }
+    },
+    "url": "http://www.shourotei.com/"
   },
   {
     "id": "spot-220",
     "name": "傘松の里",
     "description": "土産物、飲食店、ちりめん小物の手づくり工房も併設。レンタサイクル（台数大人用、子供用含め43台）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.581201,
       "longitude": 135.196129
@@ -2454,7 +2539,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-221",
     "name": "天橋立",
     "description": "松島、宮島と並ぶ日本三景の一つ。日本海と大江山を源流とする野田川が造り出した自然の芸術で、約3.6kmの砂州に、約5,000本の松並木が続く白砂青松の景観は琴線に触れる神秘的な美しさを誇る。当地に伝わる神話では、国生みの男神イザナギが地上に座す女神イザナミのもとに通うために天から架けた橋が倒れてでき",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.569811,
       "longitude": 135.191821
@@ -2464,11 +2549,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-222",
     "name": "舞鶴かき小屋　美味星",
     "description": "舞鶴湾産の天然マガキなどを提供。（12月上旬～3月下旬）夏季は海鮮バーベキューを実施（6月上旬～8月下旬）",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.463392,
       "longitude": 135.327373
     },
+    "url": "http://kdjapan.net/maizuru/kakigoya/",
     "openingHours": "冬季　12月上旬～3月下旬夏季　6月上旬～8月下旬土曜日、日曜日、祝日のみ[1]11時～、[2]12時30分～、[3]14時～、[4]15時30分～（日曜日のみ）、[5]17時～（土曜日のみ）、[6]18時30分～（土曜日のみ）※1回70分入れ替え制",
     "price": "1人2,000円～"
   },
@@ -2476,7 +2562,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-223",
     "name": "まいづる智恵蔵",
     "description": "舞鶴市の近代化産業遺産で数多く残る赤れんが倉庫群の内の1棟で、明治35年（1902）に旧舞鶴海軍砲銃庫として建造され、戦後は民間の倉庫として使用されていましたが、平成19年（2007）4月に舞鶴市が歴史文化資産を生かしたまちづくりの拠点施設としてリニューアルオープンしたものです。日本遺産構成文化財で",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.474707,
       "longitude": 135.385432
@@ -2492,7 +2578,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.469783,
       "longitude": 135.282821
-    }
+    },
+    "url": "http://www.ikekumo.com/"
   },
   {
     "id": "spot-225",
@@ -2503,6 +2590,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.447654,
       "longitude": 135.330559
     },
+    "url": "http://www.city.maizuru.kyoto.jp/",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "一般　100円（団体70円）学生　50円（団体30円）"
   },
@@ -2527,13 +2615,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.442092,
       "longitude": 135.330391
     },
+    "url": "http://www.maizuru-kanko.net",
     "openingHours": "9時～17時30分"
   },
   {
     "id": "spot-228",
     "name": "大浦森林公園",
     "description": "森林浴やバードウォッチングなどが楽しめる森林公園。シデの大木がある「巨木の森」、カエデやサクラの木が多く植えられた「花と紅葉の森」など11のゾーンからなり、ベンチ、テーブル、案内板等も整備されて四季折々の自然が楽しめる。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.540532,
       "longitude": 135.38631
@@ -2544,7 +2633,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-229",
     "name": "東郷邸",
     "description": "舞鶴鎮守府初代司令官長であった東郷平八郎海軍中将が、明治34年（1901）開庁以来2年間を過ごした官邸。木造平屋建で一部洋館となっており、裏庭には長官が「一心池」と命名した心の字の形をした池がある。日本遺産構成文化財。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.478193,
       "longitude": 135.367794
@@ -2556,11 +2645,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-230",
     "name": "青葉山ろく公園",
     "description": "青葉山麓の緑豊かな山々を背に宿泊棟、キャンプ場、パターゴルフ場、陶芸館など青空の下で楽しめるレクリエーション設備が充実。豊かな自然を身近に体験できる自然学習館もある。定員／宿泊棟　90名、キャンプ場　200名",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.499836,
       "longitude": 135.439378
     },
+    "url": "https://www.city.maizuru.kyoto.jp/kurashi/0000001213.html",
     "openingHours": "キャンプ　3月1日～11月30日パターゴルフ　3月1日～11月30日9時～17時陶芸館　9時～17時（月曜日休館）",
     "price": "料金はホームページ（https://www.city.maizuru.kyoto.jp/kurashi/0000001213.html）を参照"
   },
@@ -2573,6 +2663,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.505494,
       "longitude": 135.359231
     },
+    "url": "https://kakushomaru.jimdo.com",
     "openingHours": "2部制　11時～12時30分（90分）　13時～14時30分（90分）その他の時間は完全予約制",
     "price": "1,500円～（1人前15～20個程、約1.5kg）"
   },
@@ -2585,6 +2676,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.455258,
       "longitude": 135.327053
     },
+    "url": "http://maizuru-k.com",
     "openingHours": "14時30分～16時",
     "price": "3名以上　2,000円/人"
   },
@@ -2592,28 +2684,30 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-233",
     "name": "舞鶴赤れんがパーク",
     "description": "1号棟（赤れんが博物館） 世界初の「れんが」をテーマとした博物館。世界各国のれんがやその歴史などを展示している。2号棟（舞鶴市政記念館） 明治から平成に至る舞鶴のあゆみを紹介するコーナーや喫茶コーナー、レンタサイクルがある。3号棟（まいづる智恵蔵） 土産物販売コーナーなどがある。4号棟（赤れんが工房",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.474707,
       "longitude": 135.385432
     },
+    "url": "http://akarenga-park.com/",
     "openingHours": "9時～17時（夜間利用がある場合は22時まで）カフェJAZZ　10時～20時（月曜日は17時まで）"
   },
   {
     "id": "spot-234",
     "name": "舞鶴観光協会（一般社団法人京都府北部地域連携都市圏振興社 舞鶴地域本部）",
     "description": "赤れんがパーク2号棟2階に事務局を置いている。東舞鶴駅観光案内所〈電話番号〉0773-65-2100〈営業時間〉9時30分～17時（ただし12時45分～13時45分は昼休み）〈休日〉年末年始（12/29～1/3）まいづる観光ステーション〈電話番号〉0773-75-8600〈営業時間〉9時～17時30",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.474707,
       "longitude": 135.385432
-    }
+    },
+    "url": "http://www.maizuru-kanko.net/"
   },
   {
     "id": "spot-235",
     "name": "円隆寺",
     "description": "奈良時代に行基が創建、のち長徳年間（998～998）に皇慶上人が中興したと伝えられる。本尊は丹後地方最大の丈六仏で、そのおだやかな表情、ふくよかな体つき、やわらかな衣のラインは定朝式を伝える美しい仏像。また、この仏像のほか、不動明王立像と毘沙門天立像は、重要文化財に指定されている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.443363,
       "longitude": 135.323959
@@ -2623,11 +2717,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-236",
     "name": "たかお温泉　光の湯",
     "description": "露天風呂、寝湯、バイブラバス、水風呂、サウナなどがある日帰り温泉施設。他に、マッサージやレストランもある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.421095,
       "longitude": 135.330609
     },
+    "url": "http://www.hikarinoyu.com/",
     "openingHours": "入浴　10時～22時（受付は21時30分まで）マッサージ　11時～17時レストラン　11時～21時",
     "price": "大人（中学生以上）　720円子供（小学生以下）　360円幼児（2歳未満）無料"
   },
@@ -2635,7 +2730,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-237",
     "name": "冠島",
     "description": "舞鶴港の北東、若狭湾に浮かぶ冠島。オオミズナギドリの繁殖地となっており、毎年3月～11月まで20万羽が生息している。冠島は、国指定天然記念物になっている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.678404,
       "longitude": 135.424333
@@ -2645,7 +2740,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-238",
     "name": "海軍ゆかりの港めぐり遊覧船",
     "description": "舞鶴赤れんがパークに隣接する北吸赤れんが桟橋から旧海軍ゆかりの港をめぐる。（造船所、海上自衛隊桟橋など）所要時間／約30分定員／約60名",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.476097,
       "longitude": 135.38671
@@ -2680,7 +2775,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-241",
     "name": "安寿姫塚",
     "description": "森鴎外の「山椒大夫」で有名な安寿姫と厨子王丸の悲しい物語の舞台となった舞鶴。三庄（山椒）太夫のもとから逃げ出そうとした安寿姫は、非業の最期をとげたが、土地の人々によって手厚く葬られ、今もその塚が残っている。周辺にはアジサイやハナショウブが数多く植えられている。",
-    "congestionLevel": 4,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.459365,
       "longitude": 135.292054
@@ -2690,11 +2785,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-242",
     "name": "エル・マールまいづる",
     "description": "日本初の海上プラネタリウムをもつ舞鶴発電所船舶形のPR館で、さまざまな魅力あふれる施設が充実したアミューズメント搭載の体験館。1階　舞鶴体験館・プラネタリウム（海とともに歩んできた舞鶴の歴史をたどるとともにプラネタリウムで舞鶴の四季を投影）2階　豪華客船の船内をイメージした船の体験館3階 舞鶴湾の美",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.513491,
       "longitude": 135.343966
     },
+    "url": "http://www.kepco.co.jp/corporate/profile/community/pr/elmar/",
     "openingHours": "9時30分～17時30分",
     "price": "入館料無料プラネタリウム観覧料　高校生以上　200円　小・中学生　100円　小学生未満無料※団体割引30名以上2割引※身体障害者無料"
   },
@@ -2712,11 +2808,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-244",
     "name": "舞鶴親海公園",
     "description": "舞鶴湾の入口・千歳地区に整備された公園。港を行き交う船を眺めながら、レストランで名物「黒ハヤシライス」を味わったり、家族で釣りを楽しんだりできます。また、関西電力舞鶴発電所のPR館「エル・マールまいづる」も併設しています。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.513491,
       "longitude": 135.343966
     },
+    "url": "http://www.city.maizuru.kyoto.jp/",
     "openingHours": "公園は終日開放海釣護岸　4月～5月、9月～11月　7時～18時　6月～8月　7時～19時　12月～3月　7時～17時レストランM’s deli（エムズデリ）、エル・マールまいづる　営業時間等はホームページをご確認ください。",
     "price": "無料"
   },
@@ -2724,7 +2821,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-245",
     "name": "多禰寺",
     "description": "西国薬師霊場第30番札所。用明天皇の第3皇子で聖徳太子の異母弟麻呂子親王の開基と伝え、鬼退治の伝説を伴う。宝物殿には国内最大級の仁王像の他、多くの文化財を収蔵している。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.531847,
       "longitude": 135.386668
@@ -2736,11 +2833,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-246",
     "name": "舞鶴ふるるファーム",
     "description": "平成18年（2006）7月22日にオープンした農業公園。安心・安全な地元食材による自然食レストラン「農村レストランふるる」（60種類以上の自然食メニューが楽しめるビュッフェスタイルのレストラン）や、地元農産物や加工品を販売する「ふるるマーケット」、全て手作りで丁寧に仕上げたスイーツを販売する「手作り",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.536442,
       "longitude": 135.347878
     },
+    "url": "http://www.fururufarm.com/",
     "openingHours": "農村レストランふるる　11時～15時、18時～21時（土曜のみ）ふるるマーケット　9時～16時手作りお菓子工房　10時～16時コテージ・バンガロー　チェックイン16時　チェックアウト翌日10時",
     "price": "農村レストランふるる（ランチ）　大人　1,850円（70才以上1,650円）　小学生　980円　幼児　650円（3才以下無料）星のふるるコテージ（要予約）　宿泊施設　最大10名×2棟　平日　4名18,700円　休前日　4名23,200円バンガロー（要予約）　宿泊施設　最大5名×1棟　平日　1名6,050円　休前日　1名7,425円※すべて税込"
   },
@@ -2760,7 +2858,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-248",
     "name": "金剛院",
     "description": "関西花の寺3番礼所。平安時代初頭に高丘親王によって開かれ白河天皇が中興したと伝えられる金剛院。三重の塔、本堂、雲山閣などが周囲の景観と溶けあって、訪れる人たちの心を引きつける。春の新緑や冬の雪景色はもちろん、もえるような紅葉につつまれた姿は見事で、小説「金閣寺」にも美しく描写されている。三重の塔は、",
-    "congestionLevel": 5,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.476224,
       "longitude": 135.447298
@@ -2772,11 +2870,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-249",
     "name": "舞鶴引揚記念館",
     "description": "1945年の第二次大戦終結後に旧ソ連によってシベリアに抑留された人々の体験を描いた絵画や家族へ送った手紙、抑留時に書かれた貴重な日誌などの資料を展示。2015年に収蔵資料の中の570点が「舞鶴への生還」としてユネスコ世界記憶遺産に登録。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.509524,
       "longitude": 135.396691
     },
+    "url": "http://m-hikiage-museum.jp/",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "一般　400円（300円）学生　150円（100円）（ ）は団体（20名以上）料金赤れんが博物館との共通券一般600円、学生200円"
   },
@@ -2789,6 +2888,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.538522,
       "longitude": 135.39699
     },
+    "url": "https://www.city.maizuru.kyoto.jp/kurashi/0000008152.html",
     "openingHours": "ツバキ　3月中旬～9月中旬アジサイ　6月中旬～7月上旬",
     "price": "入場無料ツバキまつり、アジサイまつり開催時は有料大人　500円（400円）小人（小・中学生）　250円（200円）（ ）内は団体（20名以上）料金"
   },
@@ -2796,7 +2896,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-251",
     "name": "舞鶴市立赤れんが博物館",
     "description": "世界各国の珍しいれんがや日本におけるれんがの歴史などを紹介する、世界唯一のれんが博物館。明治36年（1903）に建てられた海軍の兵器倉庫を改装した建物は、れんが建築物としても貴重。国の重要文化財であり、日本遺産構成文化財です。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.476105,
       "longitude": 135.387461
@@ -2808,18 +2908,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-252",
     "name": "大庄屋　上野家",
     "description": "建物は国の登録有形文化財です。書院庭園は京都府の指定文化財として登録されています。資料館（無料）もあり、上野家当主の往時の貴重な資料等をご覧いただけます。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.445587,
       "longitude": 135.215863
     },
+    "url": "http://www.uenoke.com/",
     "openingHours": "10時～16時"
   },
   {
     "id": "spot-253",
     "name": "海上自衛隊海軍記念館",
     "description": "旧海軍の様々な記念品や資料などを展示。明治34年（1901）東郷平八郎を初代司令官として鎮守府が設置された軍港・舞鶴にちなんで設立された記念館。その他「南極の石」や砕氷艦「しらせ」のパネル、模型などもある。日本遺産構成文化財です。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.475201,
       "longitude": 135.372055
@@ -2831,7 +2932,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-254",
     "name": "舞鶴市政記念館",
     "description": "明治35年（1902）に旧海軍の兵器廠倉庫として建設され、戦後、市庁舎の一部として使用された施設を利用した芸術・文化の交流の場。舞鶴市の紹介コーナーや市民サロン、ホールなどがある。国の重要文化財であり、日本遺産構成文化財です。定員／ホール　200名",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.474705,
       "longitude": 135.385434
@@ -2864,7 +2965,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-257",
     "name": "元伊勢外宮豊受大神社",
     "description": "三重県の伊勢神宮外宮の元宮になった神社。元々丹後地方に天下った農耕の神様で、雄略天皇の22年、神夢より伊勢山田原に迎えたのが伊勢宮外宮の始まりとされ、ここ豊受大神社はその元宮だと言われている。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.40257,
       "longitude": 135.151407
@@ -2887,11 +2988,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-259",
     "name": "大雲記念館（大雲の里/旧平野家住宅）",
     "description": "明治42年（1909）に建築。水運業で栄え、由良川流域の歴史を築いた「平野家」を再生したもので、京都府指定有形文化財に指定されている。母屋1階には10畳3間の続き座敷、縁側、式台構え、床・棚・書院を構え、中央には階段と仏間を配している。2階には近代の数寄屋意匠の茶室と座敷があり、2階吹き抜け空間には",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.393035,
       "longitude": 135.176941
     },
+    "url": "http://ooekankou.jp",
     "openingHours": "9時～17時（要予約）",
     "price": "入館料　一般　308円　高校生　209円　小・中学生　154円利用料　和室・茶室（各1室）　9時～13時　1,045円　13時～17時　1,353円　17時～22時　1,870円展示室　9時～22時　5,093円茶道具一式　2,000円"
   },
@@ -2899,11 +3001,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-260",
     "name": "三和荘",
     "description": "豊かな緑と自然に囲まれ、テニスコートやナイター設備もある運動広場や体育館などのスポーツレクリエーション施設が整っている。レストランもあり、地場産野菜を使用した郷土料理も人気がある。また、お風呂のお湯は光明石を利用した温泉水や薬草湯で、日帰り入浴もできる。花崗岩（かこうがん）の風呂と大理石の風呂が日替",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.223314,
       "longitude": 135.222197
     },
+    "url": "http://www.tanba-miwa.net/miwaso/",
     "openingHours": "日帰り入浴　平日　15時～22時　土曜日、日曜日、祝日　11時～22時レストラン　喫茶タイム　14時～17時　ランチタイム　11時～14時　ディナータイム　17時～21時（ラストオーダー20時）",
     "price": "桔梗城御膳（五色天ぷら、丹波地鶏すき焼などの彩豊かな御膳）　宿泊　8,800円　日帰り　2,800円（昼のみ）◇旬の里山会席プラン雅コース　宿泊　11,500円（休前日700円アップ）　日帰り　6,000円彩コース　　宿泊　10,000円（休前日700円アップ）　　日帰り　4,600円和御膳　　日帰り　3,600円◇里山鍋コース（10月～3月）　宿泊　10,000円（休前日700円アップ）　日帰り　4,500円※ぼたん鍋、牛すきやき、牛しゃぶしゃぶ、寄せ鍋（ぼたん鍋のみ11月～3月）の中からお選びいただけます。※各料金は消費税を含んだ総額表示です。その他、要問い合わせ"
   },
@@ -2911,7 +3014,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-261",
     "name": "細野峠",
     "description": "「全国歴史の道百選」に選ばれた、三和町菟原中から大身へ越える全長2kmの峠。古くから山陰道の要衝として数多くの通行者があり、小式部内侍の「大江山いく野の道の遠ければまだふみもみず天の橋立」にも詠まれた、大江山生野道にあたる。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.196219,
       "longitude": 135.266273
@@ -2922,7 +3025,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-262",
     "name": "大江山鬼瓦公園",
     "description": "京都丹後鉄道宮福線大江駅前にある「大江山鬼瓦公園」は、全国の鬼師（鬼瓦制作者）の集大成ともいえる作品が72個、一堂に野外展示されている。ほかにも鬼のプロムナード、鬼の酒噴水、鬼の街灯、鬼のマンホール蓋など、すべてが鬼のデザインで統一されている。また、屋根付き鬼の回廊の壁には町内の小学生が作ったユニー",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.388824,
       "longitude": 135.147681
@@ -2933,7 +3036,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-263",
     "name": "福知山市治水記念館",
     "description": "水害と水防の歴史を語り継ぎ、これからの治水・防災のあり方を共に考え行動していくための施設。建物は、水害に対応した特徴的な構造を持つ町家（明治13年（1880）築）で、建築当初の外観や間取りを維持するよう整備を行い、建物そのものが歴史的な資料となっている。内部は、洪水や治水の歩み、洪水に備えた先人の知",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.303574,
       "longitude": 135.125409
@@ -2945,7 +3048,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-264",
     "name": "円満院",
     "description": "「あじさい寺」として有名。風情あふれる境内に青、ピンク、紫、白など、さまざまな色のあじさいが美しく咲き乱れ息をのむ美しさ。あじさいの見頃は6月中旬～7月上旬頃。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.363242,
       "longitude": 135.024847
@@ -2956,7 +3059,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-265",
     "name": "宝山公園",
     "description": "森林浴やバードウォッチング、紅葉などが楽しめる。また夜久野高原八十八か所の石仏も宝山を中心に点在しており、ハイキングにも最適である。秋には雲海も眺められます。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.346383,
       "longitude": 134.918835
@@ -2966,7 +3069,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-266",
     "name": "元伊勢天岩戸神社",
     "description": "奇岩と清流、うっそうとした古木におおわれた幽境に神々が座して天下ったといわれる巨大な御座石が威容を誇っている。付近の山一帯は、足を踏み入れてはならないとされる神域で、岩戸山京都府歴史的自然環境保全地域に指定されている。川向こうのピラミッド型の山は岩戸山（日室ヶ嶽）と呼ばれる神の降臨を伝える神体山で、",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.431104,
       "longitude": 135.150098
@@ -2977,11 +3080,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-267",
     "name": "日本の鬼の交流博物館・鬼文化研究所",
     "description": "「日本の鬼の交流博物館」は、全国各地の鬼にまつわる資料や大江山の鬼退治伝説に関する資料、古代から現代までの鬼瓦などを展示。鬼の交流ホールでは、鬼をテーマにした絵画や写真を展示している。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.459039,
       "longitude": 135.144461
     },
+    "url": "http://www.city.fukuchiyama.lg.jp/onihaku/",
     "openingHours": "9時～17時（入館16時30分まで）",
     "price": "一般　330円　高校生　220円　小・中学生　160円幼児無料※団体（15名以上）割引有り"
   },
@@ -2989,7 +3093,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-268",
     "name": "二瀬川渓流",
     "description": "「丹後天橋立大江山国定公園」の指定を受けた大江山の奇岩と清流、その季節に折りなす風景はまさに別世界、特に、紅葉の時期はすばらしい。一帯には鬼の足跡、頼光の腰掛け岩、鬼飛岩など大江山酒呑童子伝説にまつわる旧跡が散在している。右岸には「全国歴史の道百選」にも選ばれた参勤交代の石畳道、左岸には探勝路があり",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.450258,
       "longitude": 135.15001
@@ -2999,11 +3103,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-269",
     "name": "元伊勢内宮皇大神社",
     "description": "第10代崇神天皇の39年に大和地方からここに天照大神の神鏡をまつったといわれ、以後全国を転々とした後、54年後に三重県の伊勢神宮に正式に鎮座されたことから元伊勢宮といわれる神社。杉の古木が立ち並ぶ山道を抜けると、壮大な構えの元伊勢内宮皇大神社がある。本殿の両側には、脇宮2社が祀られ、それらを囲むよう",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.430457,
       "longitude": 135.154319
     },
+    "url": "http://motoise-naiku.com/",
     "openingHours": "拝観自由"
   },
   {
@@ -3025,7 +3130,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.296073,
       "longitude": 135.118669
-    }
+    },
+    "url": "https://dokkoise.com/"
   },
   {
     "id": "spot-272",
@@ -3036,6 +3142,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.296885,
       "longitude": 135.129662
     },
+    "url": "https://www.fukuchiyamacastle.jp/",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "福知山城（福知山城天守閣）　大人　330円　小・中学生　100円佐藤太清記念美術館との共通券　大人　480円　小・中学生　190円※障がい者手帳をお持ちの方、及びその介護の方1名は入館料が半額となります。※団体（30名以上）割引有り"
   },
@@ -3055,21 +3162,23 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-274",
     "name": "三段池公園",
     "description": "豊かな自然と松林に囲まれた、桜やツツジの名所として有名な総合公園。広大な敷地内には、動物園、植物園、児童科学館があるほかに、総合体育館、武道館、テニスコート、多目的グラウンドなどの施設も整備され様々なスポーツに利用できます。公園の中心にある池の周りには、四季折々の草花を楽しみながらウォーキングやラン",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.310673,
       "longitude": 135.138732
-    }
+    },
+    "url": "http://www.sandanike-kouen.or.jp/"
   },
   {
     "id": "spot-275",
     "name": "長安寺（もみじ寺）",
     "description": "臨済宗南禅寺派、西国薬師霊場第26番札所、丹波古刹十五ヶ寺霊場13番札所で、「丹波のもみじ寺」として有名。また、重森完途作「薬師三尊四十九燈の庭」もあり、庭園内には水琴窟もある。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.314156,
       "longitude": 135.084404
     },
+    "url": "http://www.chouanji.jp",
     "openingHours": "拝観時間　9時～16時30分",
     "price": "拝観料　大人　300円　中学・高校生　100円"
   },
@@ -3088,11 +3197,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-277",
     "name": "酒呑童子の里バンガロー村",
     "description": "大江山の麓に開かれた野外活動施設。バンガロー9棟、温水シャワー、水洗トイレ、ミニキッチン（冷蔵庫）、エアコン定員／1棟6名",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.458778,
       "longitude": 135.145558
     },
+    "url": "http://ooekankou.jp",
     "openingHours": "チェックイン　15時チェックアウト　10時",
     "price": "1棟　15,070円"
   },
@@ -3100,7 +3210,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-278",
     "name": "養泉寺（はぎ寺）",
     "description": "醍醐寺と同じ三光国師（孤峰覚明）の開山による禅寺。四季を通じて花を楽しむ事ができ、初秋には境内一面に萩の花が咲く。観音堂格天井は福知山城の舞殿に使用されていたと伝えられ百花百鳥が色鮮やかに描かれている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.313303,
       "longitude": 135.131314
@@ -3111,11 +3221,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-279",
     "name": "觀音寺（丹波あじさい寺）",
     "description": "養老4年（720）にインドの帰化僧、法道仙人によって一霊木から十一面千手千眼観世音菩薩像を刻んで草堂に安置されたのが当山の開基。本堂は丹波を代表する密教建築。（府指定文化財）約1万株のあじさいが咲く「あじさい寺」として有名。せせらぎの流れる境内は新緑や紅葉もみごと。冬のロウバイも魅力的。〈法話〉事前",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.300665,
       "longitude": 135.192395
     },
+    "url": "https://tanba-ajisaidera.com/",
     "openingHours": "9時～17時",
     "price": "団体は要問合せ（6～7月中旬以外）6～7月中旬（あじさいが咲く期間）大人　400円中学・高校生　200円小学生以下無料団体30名以上350円"
   },
@@ -3134,11 +3245,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-281",
     "name": "福知山市児童科学館",
     "description": "三段池公園内にある児童向けの科学施設。プラネタリウムや力のダイナミックタワーなどの体験コーナーで、学びを見て触って楽しみながら体験できます。キッズ広場もあって、小さなお子さま連れのご家族も楽しめます。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.312219,
       "longitude": 135.136304
     },
+    "url": "http://www.sandanike-kouen.or.jp/science.php",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "入場料（プラネタリウム観覧料含む）　大人　330円　　小人（4歳～中学生）160円共通入場チケット（科学館・動物園・植物園）　大人　770円　　　小人（4歳～中学生）380円※30人以上は1割引"
   },
@@ -3146,11 +3258,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-282",
     "name": "福知山市都市緑化植物園",
     "description": "三段池公園内にある施設で、サボテン温室、熱帯果樹温室、ラン温室からなる植物園。屋外にはバラ園やハーブ園などもあり、色とりどりの多様な植物を見ることができます。毎年実をつけるマンゴーやバナナの試食ができることもあります。月に1度、季節に合わせた植物観察会を実施しています。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.311921,
       "longitude": 135.136978
     },
+    "url": "http://www.sandanike-kouen.or.jp/garden.php",
     "openingHours": "9時～17時（入園は16時30分まで）",
     "price": "大人　330円　小人（4歳～中学生）160円共通入場チケット（科学館・動物園・植物園）大人　770円　　小人（4歳～中学生）380円※30人以上は1割引"
   },
@@ -3169,11 +3282,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-284",
     "name": "福知山市動物園",
     "description": "三段池公園内にある北近畿で唯一の動物園。小さい動物園ならではのアットホーム感で、レッサーパンダやシロテテナガザルの希少な動物、リャマ、カンガルー、フラミンゴなどのかわいい動物に出会えます。ふれあい広場では、ヤギ、ウサギなどと触れあい体験もできて、動物を身近に感じることができます。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.309717,
       "longitude": 135.138452
     },
+    "url": "http://www.sandanike-kouen.or.jp/zoo.php",
     "openingHours": "9時～17時（入園は16時30分まで）",
     "price": "大人　220円　小人（4歳～中学生）110円共通入場チケット（科学館・動物園・植物園）大人　770円　　小人（4歳～中学生）380円※30人以上は1割引"
   },
@@ -3193,7 +3307,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-286",
     "name": "顕龍山興雲寺",
     "description": "慶安元年（1648）に福知山藩 稲葉騒動で自害した藩主 稲葉紀通公の菩提寺。稲葉氏の遠縁にあたり臨済宗妙心寺の十傑と称された回天和尚ゆかりの古刹。天田郡西国第七番札所。〈写経、法話、坐禅〉要予約（予約時に利用可能人数、時間を要確認）",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.194695,
       "longitude": 135.218841
@@ -3210,17 +3324,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.296387,
       "longitude": 135.131412
     },
+    "url": "http://yurano-garden.jp/",
     "openingHours": "店舗により異なる"
   },
   {
     "id": "spot-288",
     "name": "酒呑童子の里　大江山グリーンロッジ",
     "description": "「丹後天橋立大江山国定公園」の指定を受けた大江山連峰の広大な自然や鬼伝説・民話といったユニークな風土を活かした酒呑童子の里内に位置し、近くには日本の鬼の交流博物館がある。また、バンガロー、キャンプ場、テニスコート、グラウンド、食堂が併設。宿泊用の風呂は立ち寄り湯としても利用できる。（11時～16時3",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.458714,
       "longitude": 135.145558
     },
+    "url": "http://ooekankou.jp",
     "openingHours": "チェックイン　15時チェックアウト　10時",
     "price": "宿泊　大　人　4,070円～　高校生　3,300円～　中学生　2,750円～　小学生以下　2,420円～食事　寄せ鍋（冬期のみ）　3,850円～　松花堂弁当　1,100円～　会席料理　3,300円～　鬼ぎり弁当　660円（5個以上から注文可）※その他、詳細は要問い合わせ"
   },
@@ -3233,6 +3349,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.29177,
       "longitude": 135.118803
     },
+    "url": "http://www.nikonikoplaza.com/",
     "openingHours": "10時～24時（最終受付23時30分）土曜日、日曜日は朝風呂8時～",
     "price": "大人　630円小学生以下　370円"
   },
@@ -3245,6 +3362,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.29745,
       "longitude": 135.129163
     },
+    "url": "https://www.city.fukuchiyama.lg.jp/soshiki/7/2026.html",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "入館料無料"
   },
@@ -3252,7 +3370,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-291",
     "name": "東和酒造有限会社",
     "description": "享保2年（1717）創業の老舗酒蔵。女性杜氏がつくる看板商品「福知三萬二千石」は、まろやかな口当たりが特徴的。少人数で昔ながらの製法にこだわった福知山の味をご賞味ください。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.242993,
       "longitude": 135.215153
@@ -3263,11 +3381,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-292",
     "name": "福知山温泉　養老の湯",
     "description": "約6,000坪の敷地に樹齢200年のサクラの大樹がある。また、紅葉や苔も必見。天然岩を配した庭にある露天風呂、足裏泡風呂、サウナ、足湯蒸し風呂、ヒノキ風呂、壺風呂、檜桶風呂など完備。韓国式アカスリ・マッサージ有り。（有料）【泉質】ナトリウム-塩化物泉、高成分療養泉【適応症】神経痛、うちみ、くじき、冷",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.280423,
       "longitude": 135.157777
     },
+    "url": "http://www.fukuchiyamaonsen.com/",
     "openingHours": "10時～23時（入館22時30分まで）レストラン　平日　11時～14時30分（ラストオーダー14時）、17時～21時30分（ラストオーダー21時）　土曜日、日曜日、祝日　11時～21時30分（ラストオーダー21時）",
     "price": "日帰り入浴入泉料　大人（中学生以上）800円　小人（小学生以下）400円　幼児（2歳未満）無料　一日入泉券　1,100円"
   },
@@ -3275,7 +3394,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-293",
     "name": "やくの玄武岩公園",
     "description": "溶岩が冷え固まってできた「玄武岩」の柱状節理が露出しており、自然が造った造形美を観察できる。独特の美しさをもつ柱状節理は、今から30～40万年前、京都府唯一の火山といわれる宝山の火山噴火で流出した溶岩が冷えて固まる時に六角形の割れ目が入ってできたもの。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.327883,
       "longitude": 134.937092
@@ -3298,11 +3417,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-295",
     "name": "酒呑童子の里　大江山鬼瓦工房",
     "description": "「丹後天橋立大江山国定公園」の指定を受けた、大江山連峰の雄大な自然や鬼伝説・民話といったユニークな風土を生かした酒呑童子の里内に位置し、近くには日本の鬼の交流博物館がある。工房では鬼瓦製作及び瓦表札等製作が体験できる。完全予約制。作成後、乾燥、火入れを含め完成まで2～3ヶ月かかる。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.458711,
       "longitude": 135.145558
     },
+    "url": "http://ooekankou.jp",
     "openingHours": "9時～16時",
     "price": "型押鬼瓦制作体験料　1枚1,100円～瓦表札等制作体験は要相談"
   },
@@ -3357,11 +3477,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-300",
     "name": "あしぎぬ大雲の里",
     "description": "由良川に架かる大雲橋のたもとに位置する「あしぎぬ大雲の里」。宿泊研修施設「大雲塾舎」、旧平野家住宅を再生した京都府有形文化財「大雲記念館」、由良川流域の素材を使った料理を提供するレストラン「鬼力亭（きりょくてい）」からなっている。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.393034,
       "longitude": 135.176943
     },
+    "url": "http://ooekankou.jp",
     "openingHours": "大雲塾舎（宿泊）　チェックイン　15時　チェックアウト　10時大雲記念館（要予約）　9時～17時鬼力亭　11時～21時（ラストオーダー20時30分）",
     "price": "大雲塾舎（宿泊）　2名1室利用　大人　5,500円　子供（小学生）　3,300円　（食事別途　朝食880円、会席料理4,000円～）　※研修室利用料については要問い合せ大雲記念館（入館料）　一般　308円　高校生　209円　小・中学生　154円　和室・茶室、展示室の利用料については要問い合せ"
   },
@@ -3369,7 +3490,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-301",
     "name": "天祥山長橋寺",
     "description": "水琴窟（山門を入り左側、水子地蔵横）があることで有名な寺院。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.387791,
       "longitude": 135.179969
@@ -3392,11 +3513,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-303",
     "name": "福知山市芦田均記念館",
     "description": "福知山市出身である第47代芦田均首相の記念館。現憲法の制定に深く携わった芦田元首相の功績を当時の資料・著書やパネル等で紹介する。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.260176,
       "longitude": 135.178639
     },
+    "url": "https://www.city.fukuchiyama.lg.jp/soshiki/7/2019.html",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "入館料無料"
   },
@@ -3426,11 +3548,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-306",
     "name": "福知山温泉「福湶源湯」",
     "description": "福知山市街地を見下ろす丘の上に立つ「ホテルロイヤルヒル福知山」にある天然温泉。露天檜風呂やサウナがある。エステ、マッサージ有り。（有料）【泉質】ナトリウム・カルシウム-塩化物泉【適応症】筋肉痛、神経痛、慢性消化器病など",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.286045,
       "longitude": 135.150982
     },
+    "url": "http://www.royalhill-fukuchiyama.com/",
     "openingHours": "日帰り入浴　平日　6時30分～9時（最終受付8時30分）、17時～22時（最終受付21時30分）　土曜日、日曜日、祝日　6時30分～22時（最終受付21時30分）",
     "price": "日帰り入浴入泉料　大人　800円　小人（2歳～小学生）400円「ホテルロイヤルヒル福知山」の宿泊客については入泉料無料"
   },
@@ -3443,13 +3566,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.304658,
       "longitude": 135.258343
     },
+    "url": "http://www.ayabe-gunze-square.com",
     "openingHours": "9時～17時"
   },
   {
     "id": "spot-308",
     "name": "若宮酒造株式会社",
     "description": "大正9年（1920）にそれまでの三丹酒造を市内にある若宮神社の宮水で仕込みを始めたこともあり「若宮酒造株式会社」と改める。良質の水と米に加えて一貫した手作りによって質の高い酒造りを守っている。代表銘柄「純米大吟醸　綾小町」〈精米歩合〉50％〈主な使用米〉祝 〈日本酒度〉+1〈酸度〉1.2〈特徴〉優し",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.293233,
       "longitude": 135.267939
@@ -3472,7 +3596,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-310",
     "name": "綾部市資料館",
     "description": "綾部の重要な文化財について調べ、見て学ぶ施設。府内最大級の円墳「私市円山古墳」から出土した甲胄・埴輪なども展示。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.313091,
       "longitude": 135.264385
@@ -3489,6 +3613,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.304659,
       "longitude": 135.258343
     },
+    "url": "http://www.ayabe-gunze-square.com",
     "openingHours": "9時～17時",
     "price": "無料"
   },
@@ -3513,6 +3638,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.305098,
       "longitude": 135.25842
     },
+    "url": "http://www.ayabe-gunze-square.com",
     "openingHours": "9時～17時",
     "price": "無料"
   },
@@ -3520,7 +3646,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-314",
     "name": "私市円山古墳公園",
     "description": "舞鶴若狭自動車道のトンネル上に府内最大の円墳を往時の姿に復元し、史跡公園として整備。週末の夜はライトアップされる。私市円山古墳公園は、由良川とその流域を見下ろす丘の上にあり、今からおよそ1,600年前（古墳時代の中頃）由良川流域に王の墓として造られたもの。古墳の形は円墳で、直径が約71mあり、埋葬の",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.314402,
       "longitude": 135.19639
@@ -3532,7 +3658,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-315",
     "name": "紫水ヶ丘公園",
     "description": "市街地東側の小高い丘（標高約100メートル）に位置する紫水ヶ丘公園は、由良川を眼下に望む眺望が素晴らしく、対岸の藤山公園と相対し、地形的にも恵まれた山紫水明の地というところから名付けられる。春は桜やつつじが咲き誇り、夏は新緑、秋は紅葉など、四季それぞれの美しい風景と、市街地を一望できる絶景を楽しむこ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.297409,
       "longitude": 135.270009
@@ -3543,7 +3669,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-316",
     "name": "綾部市総合運動公園",
     "description": "あやべ球場は府内最大のグラウンドを有する野球場で中堅123m、両翼101m。ゲームをリアルタイムで表示する磁気反転式のスコアボードを設置。体育館（バレーボール3面、バスケットボール2面、トレーニング室、その他会議室ほか）第2体育館（バレーボール1面ほか）弓道場（近的10射、遠的6射）グラウンド（サッ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.363182,
       "longitude": 135.314561
@@ -3555,7 +3681,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-317",
     "name": "正暦寺",
     "description": "平安時代の天慶5年（942）、空也上人によって開基された。寺宝の絹本著色仏涅槃図は鎌倉時代の作で、重要文化財に指定されている。※ご利益：交通安全",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.292155,
       "longitude": 135.26291
@@ -3566,7 +3692,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-318",
     "name": "綾部市丸山スポーツ公園／グラウンドゴルフ",
     "description": "グラウンドゴルフ（天然芝8ホール2コース）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.316256,
       "longitude": 135.273416
@@ -3578,7 +3704,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-319",
     "name": "岩王寺",
     "description": "岩王寺は、平安時代の天暦3年（949）に空也上人によって創建されたと伝えられている。寺宝の永享4年（1432）の施入銘のあるきゅう漆卓（きゅうしっしょく）は本尊様の前机で、高さ約102.7cm、幅151cm43.9cm。卓に施された彫刻は室町時代の禅宗様の経卓の一品として有名で、重要文化財に指定され",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.36415,
       "longitude": 135.29735
@@ -3671,7 +3797,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-327",
     "name": "安国寺",
     "description": "足利尊氏出生の地と伝えられる。春の桜、秋の紅葉が美しい由緒ある寺。辺りには、尊氏の産湯井戸や尊氏夫妻とその母の墓が残っている。また、この寺の地蔵菩薩は、尊氏の母清子が男子出生を祈願したと伝えられ、今も子安地蔵として信仰を集めている。寺宝中、恵心僧都の作と伝える木像地蔵菩薩半跏像（平安時代）と、康永元",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.340955,
       "longitude": 135.307159
@@ -3683,7 +3809,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-328",
     "name": "国宝光明寺二王門",
     "description": "聖徳太子の創建と伝えられる光明寺は、君尾山の中腹にある。鎌倉時代の宝治2年（1248）建立の二王門は、ベンガラ塗りの色彩が味わい深く京都府北部の建造物としては唯一国宝に指定されている。三間一戸の二重門で、入母屋造り、とち葺きで、創建当初の姿をよく留めている。門内の二王像は重要文化財。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.387399,
       "longitude": 135.442087
@@ -3711,17 +3837,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.301955,
       "longitude": 135.252128
     },
+    "url": "https://www.ayabe-kankou.net/",
     "openingHours": "8時30分～18時"
   },
   {
     "id": "spot-331",
     "name": "綾部市天文館「パオ」",
     "description": "天文分野だけでなく、様々な体験教室や物作り教室、コンサートなどの多彩な内容のイベントを開催し、大人から子どもまで楽しんでいただける天文館。豊かな自然環境を生かし、口径95cmの大型天体望遠鏡を使った天体観察会を毎週末に実施しています。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.311224,
       "longitude": 135.263945
     },
+    "url": "http://www.city.ayabe.lg.jp/shakaikyoiku/tenmonkan/index.html",
     "openingHours": "9時～16時30分金曜日、土曜日、日曜日　9時～21時30分",
     "price": "一般　300円（240円）小・中学生　150円（120円）（ ）内は団体（30名以上）料金※障がい者手帳をお持ちの方は、本人と同伴者1名が半額になります。（入館時に受付で手帳をご掲示ください。）"
   },
@@ -3741,7 +3869,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-333",
     "name": "乙味渓流荘",
     "description": "〈品種〉マス・アマゴ",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.300173,
       "longitude": 135.35357
@@ -3764,7 +3892,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-335",
     "name": "黒谷和紙会館",
     "description": "800年の伝統を持つ黒谷和紙は現在でも手漉きの技術を守り続けている。実演の他和紙会館には資料展示、和紙工芸品の販売コーナーがあり、和紙の手漉き体験ができる。和紙会館 1階　和紙工芸品販売コーナー 2階　資料展示コーナー団体（20名様以上）のみ受付の黒谷和紙工芸の里もあります。詳細は黒谷和紙会館へお問",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.381041,
       "longitude": 135.313614
@@ -3796,7 +3924,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-338",
     "name": "質美八幡宮",
     "description": "産土神として信仰を集めている。京都祇園祭りのミニ版といわれ、　府の無形民俗文化財に指定されている「ひき山鉾祭り」は、毎年10月下旬の日曜日にこの神社で行われる。虎や竜、天女、獅子の見送りで飾られた四基の引き山鉾と、四台の屋台が引き出される豪華なもので、笛や太鼓を演奏しながら同宮の前から本殿まで、約4",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.216949,
       "longitude": 135.381798
@@ -3807,7 +3935,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-339",
     "name": "京都府立丹波自然運動公園",
     "description": "○設置目的[1]丹波高原の自然を生かして府民への運動と憩いの場を提供する。[2]府民の心身の健全な発達に寄与する。○施設の特色各種スポーツ施設・京都トレーニングセンターのほか、こどもの広場や、自然林ゾーン、宿泊施設をもつトータルなレクリエーション施設。自然林ゾーンの桜の道や紅葉の道等遊歩道を散策すれ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.166214,
       "longitude": 135.415744
@@ -3819,7 +3947,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-340",
     "name": "天足山祥雲寺",
     "description": "樹齢300年のヒノキの双樹を長生きの霊木とする天足さん祥雲寺。寛文9年（1669）に閑居された天足禅師が、村人の悩みを救ったといわれている。地元の人々から「天足さん」と親しまれ、頭痛やボケにご利益があると伝えられている。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.268724,
       "longitude": 135.436556
@@ -3830,7 +3958,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-341",
     "name": "長老ヶ岳",
     "description": "標高917mの頂上からは、遠く日本海が望め、丹波地域では最も高い山。また、この一帯は、高山植物の宝庫と言われ、4月から5月にかけてシャクナゲやイワカガミなど色とりどりの花が咲き乱れる。ハイキングコースも整い、ふもとから2時間ほどで頂上に登ることができる。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.303016,
       "longitude": 135.474909
@@ -3840,7 +3968,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-342",
     "name": "長源寺",
     "description": "臨済宗の寺院で、文徳天皇の皇子、惟喬親王が「観世音菩薩」を祀られ、この地を去るとき村人へのお礼として癌封じの秘法を授けられたと伝えられる。毎年7月の第1日曜日に行われる観音まつりは、ガン封じのご祈祷が行われ、ガン封じ茶やそうめん流しなどがふるまわれ、願かけの人々でにぎわう。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.271308,
       "longitude": 135.3592
@@ -3851,7 +3979,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-343",
     "name": "アグリパークわち",
     "description": "アグリパークわちの観光スポット",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.259105,
       "longitude": 135.446295
@@ -3874,11 +4002,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-345",
     "name": "グリーンランドみずほ",
     "description": "広大な敷地内に多目的グラウンドやテニスコートがあり、コテージ（5棟）、ガーデンロッジや和室で宿泊もできる。宿泊定員／コテージ　44名、ガーデンロッジ　36名、和室　30名",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.164242,
       "longitude": 135.365307
     },
+    "url": "http://www.greenlandmizuho.co.jp",
     "openingHours": "9時～22時",
     "price": "多目的グラウンド（全面）　平日　2,500円　土曜日、日曜日　3,000円テニスコート（1面、1時間）　平日　（昼）1,200円　土曜日、日曜日　（昼）1,500円、（夜）2,000円体育館　（全面、1時間）　平日　2,000円　土曜日、日曜日　2,500円プール（1時間）　大人　500円　中校生以下　200円※各施設休日料金の設定有り"
   },
@@ -3886,7 +4015,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-346",
     "name": "道の駅　丹波マーケス",
     "description": "スーパーマーケットをはじめ15の専門店と、ハンバーガーショップの他6つの飲食店があり、食事やお買い物ができる。火曜日、木曜日、土曜日、日曜日の午前8時から正午までは「丹波高原朝採り野菜市」が開催され、新鮮な丹波高原の四季折々の食材が並ぶ。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.154981,
       "longitude": 135.428696
@@ -3897,7 +4026,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-347",
     "name": "道の駅　瑞穂の里・さらびき",
     "description": "丹波松茸、栗やしいたけ、山菜を始めとする新鮮野菜などを販売。隣接するグリーンランドみずほは、宿泊施設やレストラン、スポーツ施設が充実。店内では地元産のそば粉使用の「十割そば」が味わえる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.167296,
       "longitude": 135.361375
@@ -3908,7 +4037,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-348",
     "name": "御菓子司　山下秀製菓",
     "description": "瑞穂ならではの銘菓「いが栗」が看板の御菓子司山下秀製菓。このお菓子は、白あんの中に栗を入れて、ココナッツフレークをまぶして焼きあげた手作り菓子。あっさりとした甘さで、サクサク香ばしい歯ざわりが楽しめる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.179823,
       "longitude": 135.379516
@@ -3920,7 +4049,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-349",
     "name": "石井食品株式会社　京丹波工場",
     "description": "主力商品であるハンバーグ、ミートボールの生産工程〈製造原料処理から箱詰めまで〉を見学者用通路から見学できる。説明、資料配布あり。所要時間／約90分定員／最大収容数　約40名（要予約）※小学生の社会見学は別途対応",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.179891,
       "longitude": 135.419298
@@ -3943,7 +4072,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-351",
     "name": "質志鐘乳洞公園",
     "description": "※新型コロナウイルス感染症拡大防止のため、令和3年4月25日（日）から当面の間、休園http://www.town.kyotamba.kyoto.jp/0000006295.html洞窟探検とアウトドアが楽しめる公園。質志鐘乳洞は京都府唯一の鍾乳洞で昭和2年（1927）に発見された。総延長52.5m",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.237081,
       "longitude": 135.320229
@@ -3955,7 +4084,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-352",
     "name": "塩谷古墳公園",
     "description": "小高い丘の上に築かれた、直径8mから最大15.5mの12基の古墳から成り立つ古墳群。平成元年（1989）8月に、一番大きな5号古墳から、全国でも貴重な人物埴輪（巫女埴輪）2体が発掘され、一躍脚光を浴びた。身近に歴史を感じ、親しめるスポットとなっている。※隣接の京丹波味夢の里にて古墳教室開催（詳細は京",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.157524,
       "longitude": 135.414846
@@ -3967,7 +4096,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-353",
     "name": "咲家つる丸",
     "description": "京丹波町瑞穂地区を中心に栽培されている瑞穂そばの専門店。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.180529,
       "longitude": 135.384902
@@ -3978,18 +4107,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-354",
     "name": "菓歩菓歩",
     "description": "安全で安心な原材料を使用したおいしい食べ物を提案するお店。地元産の食材を使ってナチュラルな洋菓子などを販売。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.266096,
       "longitude": 135.398337
     },
+    "url": "http://www.capocapo.com",
     "openingHours": "11時～18時ランチ　12時～14時"
   },
   {
     "id": "spot-355",
     "name": "ふるさと",
     "description": "鮎の懐石やぼたん鍋、季節の料理など和知の山の幸・川の幸を使った料理が楽しめる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.259936,
       "longitude": 135.39714
@@ -4011,7 +4141,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-357",
     "name": "道の駅　和（なごみ）",
     "description": "大自然がパノラマ式に展望できる由良川左岸に位置し、本町の風土で培われた特産物や農産加工品を提供。わち山野草の森まで徒歩3分程度。道路情報センター、レストラン、バーベキューガーデンなども併設。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.270231,
       "longitude": 135.397569
@@ -4022,11 +4152,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-358",
     "name": "京丹波町観光協会",
     "description": "レンタサイクル有り。（電動アシスト自転車7台）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.154304,
       "longitude": 135.427615
     },
+    "url": "http://www.kyotamba.org",
     "openingHours": "9時～17時",
     "price": "レンタサイクル　1台1日　700円　保証金　1,000円※保証金の1,000円は自転車返却時に返金します。"
   },
@@ -4034,7 +4165,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-359",
     "name": "cafe　MOKA",
     "description": "京丹波食の祭典2013で屋台グランプリチャンピオンに輝いた「丹波牛ロコモコ丼」を取り扱うお店。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.180505,
       "longitude": 135.420649
@@ -4045,7 +4176,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-360",
     "name": "ウッディ・パルわち",
     "description": "桜並木の合間にあるキャンプ・宿泊施設。前の清流では、水遊び・魚つかみも楽しめる。手作り石窯でパン・ピザ焼き（要予約）コテージ4、研修棟1、テント利用可能。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.302409,
       "longitude": 135.426027
@@ -4057,11 +4188,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-361",
     "name": "瑞穂マスターズ農園",
     "description": "京丹波町瑞穂の里で野菜農園にチャレンジ体験できます。農機具貸出無料、牛糞堆肥無料、水道完備。近くに、食事や休憩ができる「道の駅瑞穂の里さらびき」や森林浴レストラン、宿泊施設、スポーツ施設もあります。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.16424,
       "longitude": 135.365308
     },
+    "url": "http://www.greenlandmizuho.co.jp",
     "openingHours": "要問い合わせ",
     "price": "1区画50平方メートル　年20,000円"
   },
@@ -4069,7 +4201,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-362",
     "name": "明隆寺観音堂",
     "description": "建立された時代の判明している村堂としては丹波地方で最も大きく、古い建造物として、国重要文化財に指定されている。本尊の木造観音菩薩立像（町指定文化財）は平安時代後期作の一本造り。御開帳（60年に1回）、三十三体の観音像と四天王像が祀られている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.303823,
       "longitude": 135.424238
@@ -4080,7 +4212,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-363",
     "name": "みずほ人形の家みやび",
     "description": "懐かしい土人形や昔の名力士の人形など約2,000体が飾られている。3月下旬～4月上旬にふるさと人形展開催。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.211554,
       "longitude": 135.387607
@@ -4092,11 +4224,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-364",
     "name": "わち山野草の森",
     "description": "総面積12万平方メートルにも及ぶ、自然をそのまま生かした公園。山野草や樹木、果樹など合わせて約900種類の植物があり変化に富んだ四季折々の花などが楽しめる。年間15回を超える山野草展をはじめ、木工クラフト、苔玉・寄せ植えなどの体験メニューも豊富。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.265826,
       "longitude": 135.398087
     },
+    "url": "http://www.ktb.zaq.ne.jp/gfals309/",
     "openingHours": "9時～17時（16時までに入園）",
     "price": "大人310円、小人210円※団体（15人以上）割引有り"
   },
@@ -4104,11 +4237,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-365",
     "name": "ステンドグラス遊園地　JAHPON LAND",
     "description": "まるで美術館のような工房。ワクワクするような、ちょっと変わったステンドグラス作品に囲まれた工房で体験が出来ます。製作ももちろんですが、工房内の様々な作品を目で見て楽しんで頂くこともできる体験施設です。ジャーポンランドは京丹波の自然豊かな場所にあります。天気のいい日は外で体験をしていただくことも可能で",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.176246,
       "longitude": 135.376048
     },
+    "url": "http://www.jahpon.com",
     "openingHours": "10時～17時（体験受付は前日の17時まで）",
     "price": "3,000円～お子様は6歳から（保護者同伴）"
   },
@@ -4116,7 +4250,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-366",
     "name": "丹波高原朝採り野菜市",
     "description": "採れたて野菜、丹波黒大豆、丹波大納言、丹波黒枝豆、丹波栗、特産物加工品などを販売。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.154977,
       "longitude": 135.428699
@@ -4127,7 +4261,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-367",
     "name": "有限会社長老",
     "description": "1903年創業。京丹波の豊かな清流と品質の良い米を使った、飲みやすく、まろやかな口当たりの清酒。代表銘柄「長老」〈主な使用米〉五百万石・京の輝き〈特徴〉ほど良い香りの旨口【販売店舗】蔵元・小売店京丹波町各道の駅ネット販売有り",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.259787,
       "longitude": 135.401794
@@ -4138,11 +4272,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-368",
     "name": "京丹波　味夢の里",
     "description": "古民家のシルエットをモチーフにした外観と温かみのある桧を使用した木の香りとぬくもりが感じられる癒しの空間として、京丹波マルシェ、京丹波ステーション、丹波里山レストラン、大食堂、特産品工房、オープンカフェ、コンコース、交流広場、パウダールームトイレなどを設置しています。また、高速道と一般道の両方から共",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.155992,
       "longitude": 135.41615
     },
+    "url": "http://ajim.info/",
     "openingHours": "京丹波マルシェ　6時～21時レストラン　11時～15時、17時～20時（ラストオーダー19時30分）フードコート　10時～20時（ラストオーダー19時30分）京丹波ステーション　7時～20時（コンシェルジュ対応時間は9時～18時）※季節により営業時間が異なります。"
   },
   {
@@ -4161,11 +4296,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-370",
     "name": "蔵元直売店　美山路「酒の館」美山蔵",
     "description": "日本酒直売店、お酒関連グッズ、調味料や漬物、地場産品など",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.304544,
       "longitude": 135.623904
     },
+    "url": "http://okinazuru.co.jp/",
     "openingHours": "9時～17時"
   },
   {
@@ -4177,6 +4313,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.318651,
       "longitude": 135.65171
     },
+    "url": "https://sites.google.com/view/ewaland",
     "openingHours": "契約期間　4/1～12月末",
     "price": "農園1区画　10,000円"
   },
@@ -4184,11 +4321,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-372",
     "name": "京都イルミネーション　シナスタジアヒルズ　るり渓温泉",
     "description": "共感覚をコンセプトに一年中楽しめるナイトスポット。光のアートに壮大な音楽が融合し、光の森に迷い込んだかのような感覚に誘います。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.031229,
       "longitude": 135.397442
     },
+    "url": "http://www.synesthesia-hills.jp",
     "openingHours": "日没～22時（最終入場21時30分）",
     "price": "大人（小人半額）　平日　1,000円　土曜日、日曜日、祝日　1,200円※クリスマス（12/21～12/25）は1,800円"
   },
@@ -4201,6 +4339,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.079796,
       "longitude": 135.507028
     },
+    "url": "http://birds-para.com/",
     "openingHours": "9時30分～16時（気象により変更有り）※要予約",
     "price": "チャレンジコース　7,000円入門コース（3ヶ月）　4回25,000円※税別"
   },
@@ -4208,7 +4347,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-374",
     "name": "JR日吉駅レンタサイクル",
     "description": "JR日吉駅レンタサイクルの観光スポット",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.16288,
       "longitude": 135.503225
@@ -4219,22 +4358,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-375",
     "name": "道の駅　京都新光悦村",
     "description": "京都縦貫自動車道園部ICをおりてすぐにある道の駅。地元特産品を豊富に取りそろえた物産コーナー、園部町つつじの会の加工品コーナー、寿し・弁当の販売や喫茶コーナーなどが整備されている。また、地元で収穫した野菜の朝市も開かれる。地元産米は好みに応じて精米（有料）できる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.123787,
       "longitude": 135.48219
     },
+    "url": "http://www.ekikouetsu.com",
     "openingHours": "9時～18時"
   },
   {
     "id": "spot-376",
     "name": "GRAX HANARE　京都るり渓",
     "description": "アウトドアの開放感と離れ\"のようなくつろぎ。自然の中で体感するバケーションの贅沢、快適に楽しむグランピングが体験できる。\"",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.031466,
       "longitude": 135.39765
     },
+    "url": "http://www.graxhanare.jp",
     "openingHours": "14時～翌11時",
     "price": "グランピングヴァケーションヴィラ　14,000円～グランピングヴァケーションヴィラ・ツキヨテラス　15,000円～※すべて税別夕・朝食付き、シナスタジアヒルズ入場料込み（土・日・祝日は500円）※滞在中、るり渓温泉が無料で利用できる。（ランタンテラスを含む）"
   },
@@ -4242,11 +4383,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-377",
     "name": "株式会社山田製油　胡麻工場",
     "description": "胡麻油製造見学。所要時間／約30分※要事前予約",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.203489,
       "longitude": 135.460299
     },
+    "url": "http://www.henko.co.jp/",
     "openingHours": "9時～17時",
     "price": "無料"
   },
@@ -4254,11 +4396,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-378",
     "name": "虹の湖パターゴルフ場",
     "description": "天然芝の1コース（18ホール）で、パターゴルフが楽しめる。その他、グラウンドゴルフ3コース、シクロクロス練習用コースがある。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.267522,
       "longitude": 135.468006
     },
+    "url": "https://miyamaoono.com/putter%20golf",
     "openingHours": "4月～6月、9月～11月の土曜日、日曜日、祝日、イベント時営業9時～16時",
     "price": "パターゴルフ　大人　800円　　小学生以下　200円グラウンドゴルフ　400円シクロクロス　500円"
   },
@@ -4271,6 +4414,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.310653,
       "longitude": 135.639524
     },
+    "url": "http://miyama-kajika.com",
     "openingHours": "チェックイン　15時チェックアウト　10時PIZZA&CAFEカジカーノは4月～11月の土曜日、日曜日、祝日のみ営業※ゴールデンウィーク、夏休みは臨時営業有り",
     "price": "大人１泊２食11,000円～"
   },
@@ -4283,6 +4427,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.137186,
       "longitude": 135.52976
     },
+    "url": "http://forest-hiyoshi.jp/",
     "openingHours": "9時～16時30分宿泊　　チェックイン　15時　チェックアウト　10時",
     "price": "メインキャビン　大人1人3,060円サブキャビン　1棟15,300円キャンプ場　3,060円～デイキャンプ　1,530円～木工研修館　大人300円（別途材料費）ドッグラン　1頭510円ツリークライミング　小学生以上2,000円"
   },
@@ -4301,11 +4446,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-382",
     "name": "GOMA",
     "description": "初心者向けスポーツバイク体験（1日、2日間）インバウンド向けスポーツバイク体験（1日、2日間）カスタムサイクリングツアーレンタサイクル",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.191328,
       "longitude": 135.482034
     },
+    "url": "https://www.goma.life/tour",
     "openingHours": "9時～17時※要事前予約（6名まで）",
     "price": "レンタサイクル（身長140cm以上）　半日（3時間）　3,000円　1日（3時間以上）　4,000円"
   },
@@ -4313,11 +4459,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-383",
     "name": "るり渓温泉「心と身体の癒しの森」",
     "description": "宿泊・温泉施設を備えた健康増進施設。大浴場の他、水着着用の露天風呂等のバーデゾーンや、岩盤浴、酵素浴等のランタンテラスでゆっくりと1日過ごせる施設。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.032919,
       "longitude": 135.398059
     },
+    "url": "http://www.rurikei.jp/",
     "openingHours": "日帰り入浴　7時～22時宿泊　チェックイン　14時　チェックアウト　11時",
     "price": "宿泊（税別）　大人11,500円～、小人7,500円～※平日、土曜日、祝前日、ハイシーズンにより異なる日帰り入浴お気軽入浴プラン（大浴場+露天風呂+バーデゾーン+プール）　平日　大人700円、小人350円　土曜日、日曜日、祝日　大人800円、小人400円全館利用プラン（お気軽プラン+ランタンテラス、タオル、バスタオル、リラックスウェア）　平日　大人1,500円、小人1,000円　土曜日、日曜日、祝日　大人1,800円、小人1,300円"
   },
@@ -4325,11 +4472,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-384",
     "name": "GRAX　京都るり渓",
     "description": "手ぶらで快適に楽しめる新しいスタイルのキャンプ。グランピングテントやトレーラーハウス、キャビンなど9種類のサイトがある。大自然の中での遊びやバーベキュー、夜には満点の星空。いつもの生活とは全く違う贅沢な時間を過ごせます。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.032071,
       "longitude": 135.398675
     },
+    "url": "http://www.grax.jp",
     "openingHours": "14時～翌10時",
     "price": "コンフォート／ホビーズ　8,200円～デラックス／ジュニアスイート　9,700円～キャンパスドミトリー　7,700円～ルミエールキャビン　6,700円～デラックスキャビン　13,200円～ハイグレード　9,200円～GRAXドームエア　10,700円～※すべて税別※外・朝食付、滞在中、るり渓温泉が無料で利用できる。（お気軽入浴）"
   },
@@ -4337,7 +4485,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-385",
     "name": "ほのぼの八木の湯　温泉スタンド",
     "description": "八木町氷所の農村環境公園「氷室の郷」の近くに設置された温泉スタンド。【泉質】ナトリウム-塩化物・炭酸水素塩冷鉱泉【適応症】きりきず、胃腸機能の低下、皮膚乾燥症、神経痛、筋肉痛、関節痛、冷え性、疲労回復、ストレスによる諸症状（うつ状態、睡眠障害）など",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.09082,
       "longitude": 135.543094
@@ -4349,7 +4497,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-386",
     "name": "美山エビスウッズガーデン・カフェ",
     "description": "〈CAFE部門〉カレー、パスタ、ケーキ、コーヒー〈ストーブ部門〉ペレット・薪ストーブ（1台あたり40万～50万円）、薪販売※施工工事については、設置内容によるがストーブ価格の倍ほどかかる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.275037,
       "longitude": 135.55164
@@ -4360,7 +4508,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-387",
     "name": "平田酒店",
     "description": "嘉永元年（1848）創業。代表銘柄「琉璃乃誉」〈精米歩合〉70％〈主な使用米〉五百万石 ・日本晴〈日本酒度〉-2〈酸度〉1.8〈特徴〉さっぱりとした飲みよい口当りの酒。【販売店舗】蔵元",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.058279,
       "longitude": 135.446708
@@ -4370,11 +4518,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-388",
     "name": "美山かやぶき美術館・郷土資料館",
     "description": "絵画を中心に美山にゆかりの芸術家達の作品を季節ごとに公開・展示する美術館と、町内の貴重な民具などを展示する郷土資料館がある。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.268316,
       "longitude": 135.551508
     },
+    "url": "http://miyama-kayabuki.org/",
     "openingHours": "10時～16時30分",
     "price": "500円（2棟分）"
   },
@@ -4382,11 +4531,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-389",
     "name": "ひよしフォレストリゾート山の家",
     "description": "宿泊、宴会、食事、バーベキュー、アクティビティ、コテージ、キャンプサイトほか、イベントも開催。天然温泉有り。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.184543,
       "longitude": 135.547021
     },
+    "url": "https://yamanoie.kyoto/",
     "openingHours": "宿泊　チェックイン　15時　チェックアウト　10時キャンプサイト　チェックイン　13時　チェックアウト　11時",
     "price": "1泊2食　5,980円～（税別）コテージ1棟（6人用）　平日　18,000円～（税別）　土曜日、日曜日、祝前日　26,000円～（税別）※シーズンにより異なります。その他プランもご相談ください。"
   },
@@ -4394,7 +4544,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-390",
     "name": "氷室の郷",
     "description": "広大な敷地に、様々な農村文化に出会う施設があり、「草木工房」、「農食館」などには多彩な体験プランがある。食品加工体験なら、パン作り、味噌作り（冬季限定）、漬物作り、しいたけ筒打ち（時期限定）など。他に、間伐材を利用した木工加工（スリッパ立て・プランターケース・ミニイス等）や、ふれあい広場でダチョウに",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.090818,
       "longitude": 135.543092
@@ -4406,7 +4556,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-391",
     "name": "普済寺",
     "description": "本殿、庫裏、山門などに囲まれた境内は静かな緑陰につつまれ、禅味ゆたかな寺。寺伝では足利直義が足利基氏の娘のために建てたといい、また一説では足利尊氏が延文二年（1357）に夢窓国師を開山として創始したともいわれている。また、重要文化財に指定されている観音堂は、代表的な禅宗様式で、その荘美な建築様式は府",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.056608,
       "longitude": 135.457993
@@ -4422,6 +4572,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.137491,
       "longitude": 135.530985
     },
+    "url": "http://www.be.city.nantan.kyoto.jp/hiyoshi-shiryokan",
     "openingHours": "3月～11月　9時～17時12月～2月　10時～16時30分",
     "price": "郷土資料館入館料　大人　200円　高校・大学生　150円　小・中学生　100円※南丹市在住の小・中学生は無料※20名以上2割引"
   },
@@ -4429,7 +4580,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-393",
     "name": "大山祇神社",
     "description": "田んぼ道から少し小道を登った所に周囲を木立に囲まれて鎮座している。藤原純友の弟純索が、現地に熊野三所権現を祀ったのに始まり、後に文中3年（1374）楠木正成の弟、正季が現在の社地を定めたといわれている。本殿は応永26年（1419）のもので一間社流造り。屋根は桧の薄い板を並べて葺いた柿葺きで、重要文化",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.054531,
       "longitude": 135.406717
@@ -4440,7 +4591,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-394",
     "name": "美山民俗資料館",
     "description": "平成12年（2000）5月の火災で母屋と納屋が焼失したが平成14年（2002）秋に再建・復元された。約200年前の中層農家住宅の形を残した建物で、主屋を中心に納屋、倉の3棟で家を構えている。展示物は地元を中心に町内外から提供されている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.313865,
       "longitude": 135.623052
@@ -4463,7 +4614,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-396",
     "name": "京都帝釋天",
     "description": "船枝の帝釈天山の中腹にある。本尊には帝釈天、わき立ちには毘沙門天像、増長天像が祀られている。700mの参道には108つの鐘が並び、その音が山々に響きわたる。※ご利益：交通安全、家内安全、社運隆盛、小遣い不自由なし、合格成就、縁結び、子宝恵授、運命好転、心身健康、悩みごと解消、病気平癒、ぼけ封じ等",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.114453,
       "longitude": 135.522231
@@ -4474,11 +4625,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-397",
     "name": "京都府立るり渓少年自然の家「グリーンパルるり渓」",
     "description": "四季折々の自然のなかで林間学校、クラブ活動、企業研修などに利用できる社会教育施設。自然のなかでの集団生活や野外活動を通じ、豊かな人間性を持つ心身共に健全な子供の育成を目的とする。宿泊室（18室）、リーダー室（4室）、研修室、プレイホール、キャンプ場定員／宿泊室　300名、キャンプ場　150名",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.029497,
       "longitude": 135.399543
     },
+    "url": "https://www.kyoto-rurikei.jp/",
     "openingHours": "9時～17時",
     "price": "団体10名以上　1泊3食　小・中学生　1,940円～　高校生　　2,250円～　一般　　　2,660円～※季節により別途冷暖房費がかかる。"
   },
@@ -4486,7 +4638,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-398",
     "name": "清源寺",
     "description": "ユニークな表情を持つ十六羅漢像をはじめ、釈迦三尊や住吉明神があることで知られている。これらはすべて木喰上人五行明満によるもので、全国行脚の途中、ここに5ヶ月間滞在した時に刻まれた。素朴で力強い作風は今なお脚光を浴びている。ちなみに、木喰上人とは、蕎麦粉や木の実を食べ五穀を断ち肉や野菜を食べない修業を",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.104744,
       "longitude": 135.534357
@@ -4503,6 +4655,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.152819,
       "longitude": 135.516202
     },
+    "url": "http://www.springs-hiyoshi.co.jp",
     "openingHours": "温泉、温水プール　10時～21時30分（受付は21時まで）レストラン桂川　平日　11時～18時（ラストオーダー17時）　3月～11月の土曜日、日曜日、祝日　11時～20時（ラストオーダー19時）　12月～2月の土曜日、日曜日、祝日　11時～19時（ラストオーダー18時）里の市（特産品販売）　3月～11月の土曜日、日曜日、祝日　9時30分～19時　12月～2月の平日　10時～18時　12月～2月の土曜日、日曜日、祝日　10時～19時",
     "price": "大人　800円小人（3歳以上小学生以下）　400円※温泉と温水プールの両方をご利用いただけます。岩盤浴　550円（専用室内着のレンタル含む）※岩盤浴のみのご利用はできません。※岩盤浴は小学生以下の方はご利用できません。"
   },
@@ -4515,6 +4668,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.104181,
       "longitude": 135.474339
     },
+    "url": "http://www.ikimi.jp/",
     "openingHours": "拝観自由"
   },
   {
@@ -4526,6 +4680,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.1067,
       "longitude": 135.471359
     },
+    "url": "http://www.be.city.nantan.kyoto.jp/hakubutukan/",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "大人　310円高校・大学生　200円小・中学生　100円"
   },
@@ -4533,7 +4688,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-402",
     "name": "大堰川緑地公園",
     "description": "JR嵯峨野線八木駅近くの大堰川沿いにある大堰川緑地公園は、テニスコートや多目的グラウンド、そしてグラウンドゴルフ場などのスポーツ施設を中心に備えた公園。また、芝生公園は家族連れで一日のんびり遊べる。付近には体育館の施設もある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.071071,
       "longitude": 135.53757
@@ -4543,11 +4698,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-403",
     "name": "雪印メグミルク株式会社　京都工場池上製造所",
     "description": "牛乳・乳製品・清涼飲料水等の製造現場、展示コーナーなどを見学できる。ビデオ上映、説明あり。所要時間／1時間定員／1回あたり80名まで",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.085275,
       "longitude": 135.538475
     },
+    "url": "http://www.meg-snow.com/",
     "openingHours": "10時～、13時30分～※希望があれば要相談",
     "price": "無料※要予約"
   },
@@ -4555,7 +4711,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-404",
     "name": "西光寺",
     "description": "奈良時代（天平勝宝8年）創建といわれ、かつては高雄の神護寺の末寺として栄えた。毎年8月16日に奉納される六斎念仏踊りは府の無形民俗文化財に指定されている。丹波の名彫物師・中井権次作の龍の欄間は見ごと。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.097931,
       "longitude": 135.504545
@@ -4566,11 +4722,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-405",
     "name": "雪印メグミルク株式会社　京都工場",
     "description": "牛乳やヨーグルトの製造現場、展示コーナーなどを見学できる。ビデオ上映、説明あり。所要時間／約90分程度定員／最大収容数80名前後",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.094837,
       "longitude": 135.508013
     },
+    "url": "http://www.meg-snow.com/",
     "openingHours": "10時～、13時30分～※希望があれば要相談",
     "price": "無料※要予約"
   },
@@ -4578,7 +4735,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-406",
     "name": "春日神社",
     "description": "藤原氏の氏神である奈良春日神社と縁故があるといわれ、創立は平安時代、後の仁平2年（1152）に再建された。重要文化財に指定されている本殿は、一間社流造り、桧皮葺、小づくりのものながら、蟇股の彫刻や瓦模様に時代の特長がみられる貴重なもの。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.124193,
       "longitude": 135.500237
@@ -4594,13 +4751,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.276648,
       "longitude": 135.588275
     },
+    "url": "https://miyamanavi.com/",
     "openingHours": "9時～17時"
   },
   {
     "id": "spot-408",
     "name": "龍興寺",
     "description": "享徳元年（1452）、細川勝元によって建立された名刹。八木城主内藤家の菩提寺で、京都三龍（龍安寺、龍潭寺、龍興寺）のひとつに数えられている。七堂伽藍が整い、鐘楼は古く18世紀中頃のものといわれている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.068554,
       "longitude": 135.52378
@@ -4611,18 +4769,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-409",
     "name": "日吉町観光協会",
     "description": "南丹市日吉町エリアに関する観光案内等を行っている。JR日吉駅構内に事務所兼案内所がある。（美山行き市営バスの発着所）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.162857,
       "longitude": 135.503194
     },
+    "url": "http://www.hiyoshikanko.com/",
     "openingHours": "9時～16時"
   },
   {
     "id": "spot-410",
     "name": "多治神社",
     "description": "南丹市日吉町の中央部にあり、慶雲年間（704～708）の創始と伝えられている。現在の本殿は、宝暦5年（1755）の二間社流造りの建物で、丹波地方最大級の規模を誇っている。また、国の無形民俗文化財に指定されている「御田」や府の無形民俗文化財の「カッコスリ」という民俗芸能が伝わっており、毎年盛大にお祭り",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.198917,
       "longitude": 135.520873
@@ -4655,11 +4814,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-413",
     "name": "天体観測施設　遊星館",
     "description": "寝ころびながら星を見ることができるプラネタリウムと家族や仲間だけで楽しめる個室天体ドームがある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.032992,
       "longitude": 135.394908
     },
+    "url": "https://rurikei.jp/activity",
     "openingHours": "土曜日、日曜日、祝日のみ15時～21時30分",
     "price": "プラネタリウム（1回約15分）　大人　300円　小人　100円個室天体観測ドーム　20分　1,500円"
   },
@@ -4667,11 +4827,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-414",
     "name": "かやぶきの里",
     "description": "かやぶき屋根の民家が現存していることで名高い美山町だが、特に北村にはそれらが多く集まり、かやぶき屋根の集落が形成されている。のどかな田園風景とかやぶき屋根がマッチして、心がなごむ光景となっている。北村は、平成5年（1993）12月8日に重要伝統的建造物群保存地区に選定された。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.312908,
       "longitude": 135.622493
-    }
+    },
+    "url": "https://kayabukinosato.jp/"
   },
   {
     "id": "spot-415",
@@ -4682,13 +4843,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.171625,
       "longitude": 135.49632
     },
+    "url": "http://www.kuromamenosato.jp",
     "openingHours": "直売所　10時～18時"
   },
   {
     "id": "spot-416",
     "name": "九品寺",
     "description": "白河天皇の皇子、仁和寺第三世覚行法親王が承歴3年（1079）に開基。戦国時代の戦乱で七堂伽藍を焼失したが、仁王門のみは、災いを免れた。仁王門は、三間一戸の楼門で、入り母屋造り、檜皮茸。鎌倉時代の優れた建造物として重要文化財に指定されている。弘仁元年（810）空海によって創建されたと伝えられている。",
-    "congestionLevel": 5,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.101485,
       "longitude": 135.440208
@@ -4704,17 +4866,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.0706,
       "longitude": 135.532476
     },
+    "url": "https://nantanyaginavi.com/",
     "openingHours": "月曜日、水曜日、金曜日9時～12時"
   },
   {
     "id": "spot-418",
     "name": "美山芦生山の家",
     "description": "〈設置目的〉青少年が健全な野外活動を通じ心身を鍛え、仲間づくりを行う場を提供する。〈施設の特徴〉近くに芦生原生林があり、散策できる。定員／32名",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.310555,
       "longitude": 135.714051
     },
+    "url": "https://ashiuyamanoie.com/",
     "openingHours": "チェックイン　15時30分チェックアウト　10時※要予約",
     "price": "7,700円～"
   },
@@ -4722,7 +4886,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-419",
     "name": "氷室の郷　新鮮やぎ朝採り市",
     "description": "朝採り野菜や、氷室の郷で加工した昔懐かしおかきや団子また焼きたてパンを販売している。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.090819,
       "longitude": 135.543095
@@ -4749,13 +4913,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.276746,
       "longitude": 135.587932
     },
+    "url": "https://miyamanavi.com/sightseeing/fureaihiroba",
     "openingHours": "4月～9月　8時30分～18時10月～3月　8時30分～17時"
   },
   {
     "id": "spot-422",
     "name": "南丹市日吉総合運動広場",
     "description": "テニスコート4面、800人収容可能な野外ステージ、アーチェリー場、グラウンド、体育館などの設備が整っている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.190314,
       "longitude": 135.483684
@@ -4771,6 +4936,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.03139,
       "longitude": 135.401327
     },
+    "url": "http://www.rurikei.com/",
     "openingHours": "夏期　7時～18時冬期　7時～17時",
     "price": "平日　桟橋1日　男性3,800円、女性　3,000円　ボート1人乗り　1日5,500円土曜日、日曜日、祝日　桟橋1日　男性4,500円、女性　3,500円　ボート1人乗り　1日6,500円他、各種料金設定あり"
   },
@@ -4793,6 +4959,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.268185,
       "longitude": 135.571507
     },
+    "url": "https://seike-yuba.com/miyama/",
     "openingHours": "11時30分～14時30分※要予約",
     "price": "湯葉尽くし膳　6,060円、4,180円"
   },
@@ -4800,11 +4967,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-426",
     "name": "るり渓温泉「こぶし荘花あかり」",
     "description": "純和風の落ちついた空間、季節を感じる料理を部屋でゆっくりいただける。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.03173,
       "longitude": 135.397621
     },
+    "url": "https://rurikei.jp/stay/kobushisou-hanaakari",
     "openingHours": "チェックイン　14時チェックアウト　11時",
     "price": "宿泊（1泊2食付、税別）　平日大人　11,000円～、小人　7,000円～"
   },
@@ -4812,7 +4980,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-427",
     "name": "成願寺",
     "description": "「中風除け」の寺として有名。真言宗の寺で、その起源は明らかではないが、元禄4年（1691）に本堂・山門・弥勒堂が再建された。とりわけ山門と弥勒堂は、精巧な建築で、彫刻はすぐれた作品と言われている。また、寺宝として、像高90.3cmの寄せ木造りの弥勒菩薩をはじめ、四天王像、薬師如来、日光風光両菩薩、十",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.330262,
       "longitude": 135.542267
@@ -4822,11 +4990,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-428",
     "name": "ちいさな藍美術館",
     "description": "重要伝統的建造物群保存地区の選定を受けている美山町北の「かやぶきの里」にあるちいさな美術館。地元在住の藍染作家新道弘之氏が自宅を開放し、世界各地から収集した藍染コレクションを展示している。この建物は、寛政8年（1796）に建てられたかやぶきの民家で、藍染工房も見学できます。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.313898,
       "longitude": 135.623571
     },
+    "url": "http://shindo-shindigo.com/",
     "openingHours": "10時～17時",
     "price": "一般　300円高校生以下無料"
   },
@@ -4850,6 +5019,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.276795,
       "longitude": 135.588964
     },
+    "url": "http://www.miyama-gyokyou.jp",
     "openingHours": "アユ　友釣解禁日　6月上旬予定　網解禁日　8月下旬アマゴ　3月下旬～9月末日（特別区の芦生、河内谷を除く）",
     "price": "アユ　年券13,500円（写真が必要）　日券3,500円アマゴ　年券7,500円　日券3,000円"
   },
@@ -4857,7 +5027,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-431",
     "name": "大堰川の魚釣り",
     "description": "〈品種〉アユ、雑魚",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.143359,
       "longitude": 135.520481
@@ -4879,7 +5049,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-433",
     "name": "文覚ふれあい公園",
     "description": "三方を山に囲まれた自然いっぱいの公園。文覚池を中心に、芝生広場、キャンプ場がある。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.099592,
       "longitude": 135.52194
@@ -4889,11 +5059,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-434",
     "name": "唐戸渓谷",
     "description": "北桑十景のひとつに数えられている景勝地。大小さまざまな奇岩や巨石に波しぶきをたたきつけ流れる清流と、春は一面の緑とツツジ、シャクナゲ、秋は紅葉と、四季を通じて人々の心をなごませ、自然の雄大さを楽しむことができる。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.30756,
       "longitude": 135.699099
-    }
+    },
+    "url": "https://miyamanavi.com/"
   },
   {
     "id": "spot-435",
@@ -4929,22 +5100,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-438",
     "name": "ひえ田野神社",
     "description": "創建は和銅2年（709）といわれ、衣食住の神を祀っている。また女性の守り神として婦人の参拝者が多い。毎年8月14日に行われる佐伯灯籠は、貞観5年（859）京都御所清涼殿より灯籠を賜って以来、五穀豊穣を願う農民の祭りとして国の無形民俗文化財に指定されている。境内のこぶのできた樫の木はがん封じの木として",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.017584,
       "longitude": 135.534948
     },
+    "url": "http://www.kyoto-jinjacho.or.jp/shrine/14/60/",
     "openingHours": "拝観自由"
   },
   {
     "id": "spot-439",
     "name": "松園荘保津川亭",
     "description": "京の奥座敷、いで湯の里の静かな温泉地に佇む、京町家の家並みを思わせる趣あるエントランスが印象的な和風旅館。豊富で良質を誇る「湯の花温泉」のぬくもりが楽しめる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.020134,
       "longitude": 135.508525
     },
+    "url": "http://www.syoenso.com/",
     "openingHours": "宿泊　チェックイン　15時　チェックアウト　10時"
   },
   {
@@ -4956,27 +5129,30 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.024627,
       "longitude": 135.485122
     },
+    "url": "http://www.honmenosato.com/",
     "openingHours": "宿泊　チェックイン　15時　チェックアウト　10時"
   },
   {
     "id": "spot-441",
     "name": "湯の花温泉",
     "description": "山間の静寂の中に包まれたいで湯。古く戦国時代には傷ついた武士がその刀傷を癒したとの伝説も残る歴史ある温泉郷。澄みきった空気と、素朴な風情が残されている。【泉質】単純弱放射能温泉【適応症】神経痛、筋肉痛、関節痛、慢性消化器病、疲労回復、痛風など",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.021051,
       "longitude": 135.506016
-    }
+    },
+    "url": "http://www.yunohana-onsen.com/"
   },
   {
     "id": "spot-442",
     "name": "里山の休日　京都・烟河",
     "description": "広大な里山の地に立ち、自然に囲まれた癒しの空間で心地よい時間が過ごせる。露天風呂も整備されており、湯の花温泉の湯と豊かな自然を満喫できる。信楽焼製の専用露天風呂がついた和モダンの部屋では、自分だけのゆったりとした時を過ごすことができる。日帰り入浴のみの利用も可能。",
-    "congestionLevel": 5,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.021898,
       "longitude": 135.499873
     },
+    "url": "https://www.kyoto-keburikawa.jp/",
     "openingHours": "宿泊　チェックイン　15時　チェックアウト　10時日帰り温泉　11時～16時（入館は15時まで）",
     "price": "日帰り入浴　大人　700円　小人　500円里山ランチバイキング　1,980円～"
   },
@@ -4984,29 +5160,31 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-443",
     "name": "鍬山神社",
     "description": "和銅2年（709）に建てられた神社で、鍬山大明神とも矢田神社とも呼ばれている。昔このあたり一帯が泥湖であったのを、祭神の大己貴命が鍬で請田峡を切り開いて水を流し耕作田として民に穫りをあたえた。そのことに感謝した住民が鍬山大明神として祀ったのが起こりと伝えられている。紅葉の名所としても知られている。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.996194,
       "longitude": 135.577301
     },
+    "url": "http://www.kuwayama-jinjya.jp",
     "openingHours": "拝観自由"
   },
   {
     "id": "spot-444",
     "name": "すみや亀峰菴",
     "description": "京の田舎、湯の花温泉に建つ旅館。山間に佇む茅葺きの門が懐かしい故郷のぬくもりで出迎える。客室は京唐紙を使った和室や土壁の部屋など、それぞれに趣の異なるしつらえが楽しめる。人気の温泉かけ流しの露天風呂付き客室に加え、貸切露天風呂ではプライベートな時間が満喫できる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.02158,
       "longitude": 135.505917
     },
+    "url": "http://www.sumiya.ne.jp/",
     "openingHours": "宿泊　チェックイン　15時　チェックアウト　11時食事　昼食　11時30分～14時30分　夕食　18時～21時30分"
   },
   {
     "id": "spot-445",
     "name": "千手寺",
     "description": "大同2年（807）弘法大師によって建てられた寺で、本尊に千手観音が置かれているところから千手寺と呼ばれている。目の神様で知られていて、境内より湧き出る清水で目を洗い、または飲むことによって眼病が治るとされている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.035811,
       "longitude": 135.52098
@@ -5017,11 +5195,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-446",
     "name": "亀岡市文化資料館",
     "description": "亀岡における先人の遺産を調査研究し、その成果を展示公開している。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.013542,
       "longitude": 135.585467
     },
+    "url": "https://www.city.kameoka.kyoto.jp/kurashi/kyoiku/bunka/shiryokan/index.html",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "大人　210円（189円）小人　100円（90円）（ ）内は団体（30名以上）料金※企画展、特別展は別料金"
   },
@@ -5044,23 +5223,25 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.059135,
       "longitude": 135.578307
     },
+    "url": "http://www.izumo-d.org/",
     "openingHours": "拝観自由"
   },
   {
     "id": "spot-449",
     "name": "一般社団法人亀岡市観光協会",
     "description": "JR亀岡駅観光案内所、物産店（かめまるマート）〈電話番号〉0771-22-0691〈営業時間〉9時～17時30分〈休日〉年末年始（12/29～1/3）トロッコ亀岡駅観光案内所〈電話番号〉0771-24-6148〈営業時間〉9時30分～16時30分〈休日〉トロッコ列車の運休日と同じ城下町歴史街並み案内",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.01663,
       "longitude": 135.582479
-    }
+    },
+    "url": "http://kameoka.info"
   },
   {
     "id": "spot-450",
     "name": "穴太寺",
     "description": "西国33ケ所第21番札所。本堂には諸病を癒すといわれている等身大の木造釈迦涅槃像（なで仏）があり、人々の信仰をあつめている。境内の庭園は室町時代末期のものといわれ、丹波名庭の一つで、府の文化財に指定されており、静寂のなか佗、寂を感じることができる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.006637,
       "longitude": 135.549223
@@ -5072,21 +5253,23 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-451",
     "name": "亀岡運動公園",
     "description": "陸上競技場、体育館、野球場、プール、テニスコート（9面）などのスポーツ施設の他、野外ステージ、レジャープール、多目的広場を備えたファミリーで楽しめる総合運動公園。緑いっぱいの中、気持ちいい汗が流せる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.01388,
       "longitude": 135.548423
-    }
+    },
+    "url": "https://park-kameoka.jp"
   },
   {
     "id": "spot-452",
     "name": "森のステーションかめおか",
     "description": "地域の魅力を発信する展示・体験施設。匠ビレッジ、チョロギ村、鳥の巣ロッジ、カメロックスで構成されており、「匠ビレッジ」では様々なジャンルの「匠」を紹介し、天然砥石使った研ぎ体験ができる。チョロギ村が運営する薬膳レストラン「お家薬膳忘れな」では心と身体に効く家庭薬膳料理を味わうことができる。薬草庭園に",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.056124,
       "longitude": 135.515129
     },
+    "url": "https://www.city.kameoka.kyoto.jp/kankou/m/morinostation.html",
     "openingHours": "匠ビレッジ　木曜日～日曜日　10時～16時薬膳レストラン　木曜日～日曜日　10時～15時鳥の巣ロッジ　昼間利用　9時～17時　宿泊利用　　　チェックイン　14時～17時　　チェックアウト　10時カメロックス　午前　9時～13時　午後　13時～17時　夜間　17時～21時",
     "price": "「匠ビレッジ天然砥石」セルフ研ぎ体験　大人　500円　中学生以下　300円チャレンジ包丁研ぎ講習　2,000円砥石制作DIY　1,500円～（選ぶ砥石による）「鳥の巣ロッジ」コテージ　昼間（9時～17時）　5,290円/1棟（亀岡市内在住の人は4,070円）　宿泊（14時～10時）　10,580円/1棟（亀岡市内在住の人は8,140円）キャンプサイト　昼間（9時～17時）　2,140円/1棟（亀岡市内在住の人は1,650円）　宿泊（14時～10時）　4,290円（亀岡市内在住の人は3,300円）「カメロックス」　大人　880円（亀岡市在住の人は680円）　小人　440円（亀岡市在住の人は330円）　レンタル品　　シューズ　220円　　ハーネス　220円　　滑り止め　110円"
   },
@@ -5099,13 +5282,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.014376,
       "longitude": 135.567091
     },
+    "url": "http://www.galleria.city.kameoka.kyoto.jp/",
     "openingHours": "9時～22時"
   },
   {
     "id": "spot-454",
     "name": "丹波亀山城跡",
     "description": "1577年に明智光秀によって築城されました。1610年、岡部長盛の時代に城郭・城下町がほぼ完備されました。明治維新のあと廃城令により解体されましたが、現在の所有者である宗教法人大本の手により石垣などが修復され、往時を偲ぶことができます。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.013284,
       "longitude": 135.581467
@@ -5117,11 +5301,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-455",
     "name": "京　YUNOHANA RESORT　翠泉",
     "description": "ひっそりと佇む和のオーベルジュ。緑を望むテラスや露天風呂で夢見心地の時間が過ごせる。また、夏のハモ、秋の松茸など旬の食材を使った京会席もお楽しみいただける。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.020049,
       "longitude": 135.511688
     },
+    "url": "http://www.kyoto-suisen.com",
     "openingHours": "宿泊　チェックイン　14時　チェックアウト　11時"
   },
   {
@@ -5144,28 +5329,31 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.071826,
       "longitude": 135.565257
     },
+    "url": "http://www.pref.kyoto.jp/tisantisho/asahi.html",
     "openingHours": "9時～17時（11月～3月は16時まで）"
   },
   {
     "id": "spot-458",
     "name": "大石酒造",
     "description": "元禄年間（1688～1704）創業。昭和に大石酒造として清酒翁鶴を醸造販売。酒蔵見学のできる「酒の館」を一般公開している。代表銘柄「翁鶴」〈精米歩合〉65％〈主な使用米〉五百万石・日本晴 〈日本酒度〉-1〈酸度〉1.8〈特徴〉甘口本醸造【販売店舗】酒の館亀岡駅前店蔵元アルプラザ亀岡（TEL.0771",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.01738,
       "longitude": 135.535989
     },
+    "url": "http://okinazuru.co.jp/",
     "openingHours": "8時30分～18時"
   },
   {
     "id": "spot-459",
     "name": "「離れ」にのうみ",
     "description": "旧丹波亀山城の城下町の一角にある築約100年の古民家を、古民家再生の第一人者アレックス・カーさん監修のもと、亀岡市がリノベーションした1棟貸しスタイルの宿泊施設。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.008675,
       "longitude": 135.585196
     },
+    "url": "https://www.hanare-ninoumi.jp/",
     "openingHours": "チェックイン　15時～18時チェックアウト　10時",
     "price": "1人6,110円～（宿泊時期、人数、部屋により変動あり）"
   },
@@ -5178,24 +5366,26 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.068398,
       "longitude": 135.568801
     },
+    "url": "http://birds-para.com",
     "openingHours": "天候による"
   },
   {
     "id": "spot-461",
     "name": "丹山酒造",
     "description": "明治39年（1906）5月創業。蔵に5つの井戸があり良質の豊かな水をたたえている。寶満吉祥の井戸という名の名水。代表銘柄「丹山」〈精米歩合〉70％〈主な使用米〉五百万石・山びこ 〈日本酒度〉+-0〈酸度〉1.2〈特徴〉すっきりとした飲み口【販売店舗】蔵元ジェイアール京都伊勢丹（B1階）酒売場（TEL",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.009149,
       "longitude": 135.583671
     },
+    "url": "http://www.tanzan.co.jp/",
     "openingHours": "9時～18時"
   },
   {
     "id": "spot-462",
     "name": "関酒造",
     "description": "明治2年（1869）創業。城下町の面影を残したまちなみで、手造り醸造に専念する蔵。代表銘柄「この花桜」、「古春」〈精米歩合〉70％〈主な使用米〉日本晴 〈日本酒度〉+4〈酸度〉1.9【販売店舗】蔵元",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.011412,
       "longitude": 135.577612
@@ -5210,6 +5400,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.014372,
       "longitude": 135.567093
     },
+    "url": "http://www.galleria.or.jp/roadstation/atorio",
     "openingHours": "9時～17時"
   },
   {
@@ -5221,6 +5412,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.05913,
       "longitude": 135.578308
     },
+    "url": "http://www.izumo-d.org/",
     "openingHours": "参拝自由",
     "price": "参拝自由"
   },
@@ -5240,7 +5432,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-466",
     "name": "温泉スタンド",
     "description": "京の奥座敷、湯の花の天然温泉を自宅のお風呂で味わうことができる。【泉質】単純弱放射能温泉ラドン（Rn）36.210-10乗キュリー/kg【適応症】神経痛、筋肉痛、関節痛、慢性消化器病、疲労回復、痛風など",
-    "congestionLevel": 5,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.01893,
       "longitude": 135.517227
@@ -5252,18 +5444,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-467",
     "name": "犬甘野風土館「季楽」",
     "description": "地元農家組合が手がけた「犬甘野そば」と新鮮な野菜の販売を行う直売所で、手づくりのそばを食べられる。白い花が咲く一面のソバ畑観賞（9月）や、ソバ打ち体験もできる。（要予約）",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.973597,
       "longitude": 135.510117
     },
+    "url": "http://www.inukanno.jp/kira/",
     "openingHours": "9時～17時（飲食は10時～16時）"
   },
   {
     "id": "spot-468",
     "name": "楽々荘",
     "description": "楽々荘は、貴族院議員で明治時代の京都の政財界の立役者で、現在トロッコ列車が運行している旧山陰本線を敷いた実業家田中源太郎の邸宅として明治33年（1900）頃完成。迎賓館として建てられた書院造りの日本家屋とトロッコ列車のトンネルと同じレンガで造られた洋館は、平成9年（1997）に国の有形文化財に登録さ",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.016009,
       "longitude": 135.576533
@@ -5291,6 +5484,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.958919,
       "longitude": 135.688003
     },
+    "url": "http://www.city.muko.kyoto.jp/rekimachi/kankomap/takenomichi.html",
     "price": "無料"
   },
   {
@@ -5314,6 +5508,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.948748,
       "longitude": 135.698289
     },
+    "url": "http://www.muko-kankou.jp/",
     "openingHours": "8時30分～17時15分"
   },
   {
@@ -5357,6 +5552,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.944038,
       "longitude": 135.713045
     },
+    "url": "http://www.ogsports.co.jp/corp/accept/facility/detail.php?id=7",
     "openingHours": "開館時間　9時～22時利用時間　9時～21時45分",
     "price": "健康増進センター　登録料　1,000円（会員制のため初回利用時必要、都度会員の場合は永久会員となり、友の会員の場合は毎年更新料1,000円が必要）　都度利用　1回　1,000円、向日市在住・65歳以上の方・向日市在住の心身障がい者の方は700円市民温水プール全日　一般　600円　中学・高校生　450円　小学生以下　300円入場から1時間30分まで　一般　350円　中学・高校生　250円　小学生以下　200円※3歳以下は無料※健康増進センター都度利用者は無料でプールが利用できる※ロッカー使用料　1回　100円（リターン式）"
   },
@@ -5379,6 +5575,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.941532,
       "longitude": 135.702811
     },
+    "url": "http://www.mukoumaibun.or.jp",
     "openingHours": "10時～17時（案内所）"
   },
   {
@@ -5445,6 +5642,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.943722,
       "longitude": 135.697778
     },
+    "url": "http://www.city.muko.kyoto.jp/kurashi/tenmonkan/",
     "openingHours": "9時30分～17時30分（入館は17時まで）",
     "price": "展示室無料　プラネタリウム　　大人　200円（180円）　小中学生　100円（50円）　（ ）内は団体（20名以上）料金"
   },
@@ -5452,11 +5650,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-485",
     "name": "東洋竹工",
     "description": "製品の展示見学、販売（30分程度）花籠・茶杓体験教室（要予約）所要時間／1～2時間　出張可定員／3名～（要予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.954177,
       "longitude": 135.708968
     },
+    "url": "http://www.toyo-bamboo.com/",
     "openingHours": "8時30分～17時",
     "price": "展示見学無料花籠・茶杓体験教室　1人3,500円"
   },
@@ -5469,6 +5668,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.926144,
       "longitude": 135.692778
     },
+    "url": "http://www.nagaokakyo-kankou.jp/",
     "openingHours": "9時～17時※長岡京@naviのみ6月～10月と12月～3月は16時まで"
   },
   {
@@ -5480,6 +5680,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.918273,
       "longitude": 135.700691
     },
+    "url": "http://www.city.nagaokakyo.lg.jp/0000001138.html",
     "openingHours": "4月～10月　9時～18時11月～ 3月　9時～17時"
   },
   {
@@ -5490,7 +5691,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.927086,
       "longitude": 135.688306
-    }
+    },
+    "url": "http://www.nagaokakyo-hall.jp"
   },
   {
     "id": "spot-489",
@@ -5501,6 +5703,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.938434,
       "longitude": 135.675127
     },
+    "url": "http://www.komyo-ji.or.jp/",
     "openingHours": "9時～16時",
     "price": "入山料　紅葉シーズンのみ必要"
   },
@@ -5513,6 +5716,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.919962,
       "longitude": 135.698424
     },
+    "url": "http://fureaimachiya.com",
     "openingHours": "9時～18時",
     "price": "入館無料※和室を使用する場合は利用料がかかります。"
   },
@@ -5537,6 +5741,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.911027,
       "longitude": 135.699319
     },
+    "url": "http://www.city.nagaokakyo.lg.jp/0000001312.html",
     "openingHours": "10時～16時",
     "price": "無料"
   },
@@ -5560,6 +5765,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.911015,
       "longitude": 135.696877
     },
+    "url": "http://www.suntory.co.jp/factory/",
     "openingHours": "10時～最終15時15分※時期によって開催時間に変更があります。電話受付時間　9時30分～17時",
     "price": "無料"
   },
@@ -5572,6 +5778,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.914768,
       "longitude": 135.709243
     },
+    "url": "http://www.shoyeido.co.jp",
     "openingHours": "9時30分～12時、13時～15時",
     "price": "無料"
   },
@@ -5584,6 +5791,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.91427,
       "longitude": 135.652585
     },
+    "url": "http://www.yanagidani.jp/",
     "openingHours": "9時～17時"
   },
   {
@@ -5594,7 +5802,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.916622,
       "longitude": 135.701133
-    }
+    },
+    "url": "http://www.city.nagaokakyo.lg.jp/0000001248.html"
   },
   {
     "id": "spot-498",
@@ -5616,7 +5825,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.93305,
       "longitude": 135.675932
-    }
+    },
+    "url": "http://www.city.nagaokakyo.lg.jp/0000001273.html"
   },
   {
     "id": "spot-500",
@@ -5647,6 +5857,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.893671,
       "longitude": 135.679921
     },
+    "url": "http://www.chochikukyo.com",
     "openingHours": "水曜日、金曜日、日曜日　9時～16時",
     "price": "大人　1,000円学生　500円（小学4年生以上）"
   },
@@ -5654,7 +5865,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-503",
     "name": "十七烈士の墓",
     "description": "元治元年（1864）の禁門の変で敗れ、天王山山中で自刃した真木和泉守以下十七名が眠る墓。彼らは新政府樹立を夢見て革命を図ったが時熟せず失敗に終わり、後の時代に夢を託してこの世を去った。新政府誕生はこの4年後のことだった。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.90165,
       "longitude": 135.677439
@@ -5689,6 +5900,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.895689,
       "longitude": 135.679622
     },
+    "url": "http://www.asahibeer-oyamazaki.com/",
     "openingHours": "10時～17時（入館は16時30分まで）",
     "price": "大人　900円（800円）高校・大学生　500円（400円）小・中学生無料（ ）内は団体（20名以上）料金"
   },
@@ -5701,6 +5913,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.896488,
       "longitude": 135.683286
     },
+    "url": "http://www.town.oyamazaki.kyoto.jp/",
     "openingHours": "開園　8時～夜間は施錠（施錠時間は季節によって異なります。）",
     "price": "無料"
   },
@@ -5713,6 +5926,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.892866,
       "longitude": 135.682805
     },
+    "url": "http://www.town.oyamazaki.kyoto.jp/",
     "openingHours": "9時30分～17時（入館は16時30分まで）",
     "price": "大人　200円（150円）小・中学生無料（ ）内は団体（20名以上）料金※企画展の場合は変更有り"
   },
@@ -5720,7 +5934,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-509",
     "name": "天王山",
     "description": "大山崎のシンボルである天王山は、標高は270.4m。淀川をはさんで男山と向かい合い、京都盆地から大阪平野への出口の門のような地形。戦国時代には軍事的にも経済的にも重要なポイントで、山崎合戦に勝利した羽柴（豊臣）秀吉は、さっそくこの山頂に城を築いた。宝積寺、酒解神社など、大山崎の主要な観光ポイントがこ",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.901788,
       "longitude": 135.676153
@@ -5762,7 +5976,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-513",
     "name": "自玉手祭来酒解神社（酒解神社）",
     "description": "乙訓地方で最も古い神社です。江戸時代以前は天神八王子社と呼ばれ牛頭天王を祭神としていました。天王山の名は祭神の牛頭天王の天王から由来しています。本殿は江戸時代後期の建築で国の登録文化財に指定されています。また、本殿横にある神輿庫は板倉形式という珍しい形式で、鎌倉時代前期の建築で重要文化財に指定されて",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.901674,
       "longitude": 135.678685
@@ -5776,7 +5990,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.898827,
       "longitude": 135.680088
-    }
+    },
+    "url": "http://www.town.oyamazaki.kyoto.jp/"
   },
   {
     "id": "spot-515",
@@ -5797,6 +6012,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.891998,
       "longitude": 135.679514
     },
+    "url": "http://rikyuhachiman.org/",
     "openingHours": "9時～16時"
   },
   {
@@ -5830,6 +6046,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.892293,
       "longitude": 135.680357
     },
+    "url": "http://www.eonet.ne.jp/~myoukian-no2/",
     "price": "1人あたり1,000円以上で志納※見学は午前のみ"
   },
   {
@@ -5841,6 +6058,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.889437,
       "longitude": 135.801721
     },
+    "url": "http://www.tokichi.jp/",
     "openingHours": "銘茶売場　10時～18時カフェ　10時～18時（ラストオーダー17時）※季節により営業時間に変更あり",
     "price": "お抹茶体験　1人4,000円（税別、お菓子付き）"
   },
@@ -5853,6 +6071,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.888844,
       "longitude": 135.808806
     },
+    "url": "http://www.kyoto-uji-kankou.or.jp/",
     "openingHours": "9時～17時"
   },
   {
@@ -5864,6 +6083,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.871178,
       "longitude": 135.796175
     },
+    "url": "http://www.uji-citypark.jp/ucbpark/index.htm",
     "openingHours": "9時～17時（入園は16時まで）",
     "price": "大人（高校生以上）600円（500円）小人（小・中学生）300円（250円）（ ）内は団体（20名以上）料金"
   },
@@ -5876,6 +6096,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.913824,
       "longitude": 135.807269
     },
+    "url": "https://www.obakusan.or.jp/",
     "openingHours": "9時～17時（入山受付は16時30分まで）普茶料理　11時30分～14時30分（ラストオーダー13時）",
     "price": "拝観料　大人　500円坐禅体験　1,000円（別途拝観料要）写経体験　2,000円（別途拝観料要）法話体験　30,000円～（別途拝観料要）普茶料理各種（3日前の午前中までに要予約）　3,000円～（別途消費税・拝観料要）"
   },
@@ -5922,6 +6143,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.892956,
       "longitude": 135.806255
     },
+    "url": "http://www.city.uji.kyoto.jp/",
     "price": "無料"
   },
   {
@@ -5933,6 +6155,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.888737,
       "longitude": 135.807389
     },
+    "url": "http://www.byodoin.or.jp",
     "openingHours": "9時～17時（入館受付は閉館の15分前まで）",
     "price": "平等院入園+鳳翔館大人　600円中学・高校生　400円小人　300円※身障者手帳をお持ちの方は、本人および介添人1名を半額"
   },
@@ -5980,6 +6203,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.889292,
       "longitude": 135.807678
     },
+    "url": "http://www.byodoin.or.jp/",
     "openingHours": "8時30分～17時30分（入園受付は15分前まで）鳳翔館　9時～17時（入館受付は閉館の15分前まで）",
     "price": "大人　600円中学・高校生　400円小人　300円（鳳翔館入館含む）※身障者手帳をお持ちの方は、本人および介添人1名を半額"
   },
@@ -6003,6 +6227,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.900509,
       "longitude": 135.819189
     },
+    "url": "http://www.mimurotoji.com/",
     "openingHours": "毎月17日　9時より20分限り（開扉中の中途入館不可）",
     "price": "霊宝殿　　大人　500円入山料　大人　500円　小・中学生　300円あじさい園開園期間中　大人　800円　小人　400円"
   },
@@ -6027,6 +6252,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.913824,
       "longitude": 135.807269
     },
+    "url": "https://www.obakusan.or.jp/",
     "openingHours": "毎月8日　9時～17時"
   },
   {
@@ -6062,6 +6288,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.900503,
       "longitude": 135.81919
     },
+    "url": "http://www.mimurotoji.com/",
     "openingHours": "11月1日～3月31日　8時30分～16時4月1日～10月31日　8時30分～16時30分（受付は30分前終了）宝物館は毎月17日公開",
     "price": "大人　500円小・中学生　300円宝物館は別途500円必要あじさい時　大人　800円　小人　400円あじさいライトアップ　大人　800円　小人　400円"
   },
@@ -6074,6 +6301,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.893812,
       "longitude": 135.810346
     },
+    "url": "https://www.city.uji.kyoto.jp/soshiki/33/",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "大人　600円（480円）小人（小・中学生）　300円（240円）（ ）内は団体（20名以上）料金"
   },
@@ -6086,6 +6314,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.913783,
       "longitude": 135.804888
     },
+    "url": "http://www.hakuunan.com/",
     "openingHours": "11時～16時（ラストオーダー14時）",
     "price": "5,000円、6,500円※税別"
   },
@@ -6098,6 +6327,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.889022,
       "longitude": 135.808698
     },
+    "url": "http://www.city.uji.kyoto.jp/",
     "openingHours": "10時～16時",
     "price": "季節の和菓子付で一席　1,000円抹茶メニュー　薄茶　1,000円　濃茶と薄茶セット　3,000円（7月～9月・12月～2月のみ、2名から受付、3日前までに要予約）煎茶メニュー　煎茶　1,000円　玉露　1,400円　玉露と煎茶セット　2,000円（3日前までに要予約）お点前体験　抹茶、または煎茶　2,400円（1名から受付可、3日前までに要予約）"
   },
@@ -6121,6 +6351,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.887434,
       "longitude": 135.810857
     },
+    "url": "http://www.ukifune-en.co.jp/",
     "price": "京会席（3名～）8,000円～（税別）※宿泊は部屋のタイプ、土曜日・休前日・特別期間で料金が変わりますので、予めお問合せください。"
   },
   {
@@ -6132,6 +6363,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.869661,
       "longitude": 135.803986
     },
+    "url": "http://www.kyoto-park.or.jp/yamashiro/",
     "openingHours": "9時～17時（ただし、4月及び9月は18時まで、5月～8月は19時まで）",
     "price": "陸上競技場　14,280円～59,230円第2競技場　7,140円～17,980円※以上個人使用の場合は300円球技場　10,710円～27,040円野球場　3,570円～35,850円テニスコート　3,360円～14,190円競泳プール　13,360円～67,320円飛び込みプール　2,240円（1時間）体育館　メインアリーナ　14,170円～489,600円サブアリーナ　3,970円～137,080円野外ステージ　1,730円～4,400円ファミリープール　100円～1,020円以上一般料金"
   },
@@ -6156,6 +6388,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.8956,
       "longitude": 135.78551
     },
+    "url": "http://www.marukyu-koyamaen.co.jp/",
     "openingHours": "10時～、13時30分～",
     "price": "500円（お買い物券）"
   },
@@ -6168,6 +6401,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.890021,
       "longitude": 135.810315
     },
+    "url": "http://asahiyaki.com/",
     "openingHours": "10時～17時",
     "price": "3,500円（税別）"
   },
@@ -6186,11 +6420,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-550",
     "name": "炭山陶芸",
     "description": "京焼、清水焼の製作工程見学と絵付け教室。陶房10軒が集まっており、販売もある。〈絵付け教室〉素焼きの湯飲み、皿などに絵付けをして、約20日後に完成品を送付。所要時間／見学　約30分、絵付け　約30分定員／約30名（要予約）",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.914651,
       "longitude": 135.836236
     },
+    "url": "https://sumiyama.kyoto/",
     "openingHours": "10時～16時30分",
     "price": "見学無料 絵付け教室　1,500円～"
   },
@@ -6203,6 +6438,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.891022,
       "longitude": 135.80617
     },
+    "url": "http://ujicha-kanbayashi.co.jp",
     "openingHours": "9時～17時",
     "price": "資料室無料お抹茶作り（菓子付）　1,000円（税別）※お一人様の場合は1,600円（税別）※当日予約の場合は1,200円（税別）"
   },
@@ -6226,6 +6462,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.879289,
       "longitude": 135.804085
     },
+    "url": "http://www.city.uji.kyoto.jp/",
     "openingHours": "9時～17時",
     "price": "特別展　高校生以上　300円（240円）　小・中学生無料　（ ）内団体（20名以上）料金企画展無料"
   },
@@ -6238,6 +6475,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.889142,
       "longitude": 135.808662
     },
+    "url": "http://www.ujikoubou.com/",
     "openingHours": "11時～17時",
     "price": "宇治茶ソフト　350円宇治ほうじ茶ソフト　320円宇治茶ダブルソフト　600円宇治茶おにぎり　1個180円薄うす宇治抹茶（ホット・アイス）　300円プレミアム宇治玉露　350円プレミアム宇治煎茶　250円宇治煎茶　200円ティーセレモニーセット（宇治抹茶・宇治玉露）　1,000円ティーセレモニーセット（宇治煎茶）　800円石臼挽抹茶体験　1,000円各種茶そば　900円～抹茶かゆ　1,000円宇治茶を使ったお弁当（3日前までに要予約）　あじろぎ　4,600円　宇治茶弁当　2,500円　なごみ　2,500円　うぶね　1,700円抹茶ロールケーキ　800円抹茶フロート　880円抹茶みたらし　800円お抹茶（生菓子つき）　1,200円デミカップ抹茶　600円アイス抹茶　600円※すべて税別価格"
   },
@@ -6262,6 +6500,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.891363,
       "longitude": 135.791518
     },
+    "url": "http://www.shunsho.co.jp",
     "openingHours": "10時～、13時～、14時～",
     "price": "無料"
   },
@@ -6274,6 +6513,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.891532,
       "longitude": 135.805993
     },
+    "url": "http://www.ujikoubou.com/",
     "openingHours": "11時～16時"
   },
   {
@@ -6285,17 +6525,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.890289,
       "longitude": 135.810585
     },
+    "url": "http://www.ujikoubou.com/",
     "openingHours": "10時～17時"
   },
   {
     "id": "spot-559",
     "name": "京都府立木津川運動公園　城陽五里五里の丘",
     "description": "府民参画による自然再生に取り組み、数千本の苗木を植樹しています。これからも植樹を続け、小さい苗木が大きく育ち森へと成長する姿を共に楽しめる公園です。南北130m、東西100mの天然芝の大芝生広場をはじめ、京都府下最大級のザイルクライミングのあるちびっこ広場や、大きなシェルターのあるサークル広場があり",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.846066,
       "longitude": 135.796123
     },
+    "url": "https://fmtpark.com",
     "openingHours": "9時～17時",
     "price": "入場無料"
   },
@@ -6303,7 +6545,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-560",
     "name": "史跡森山遺跡",
     "description": "木津川を望む丘陵上に営まれた縄文時代後期から古墳時代にかけての集落遺跡。縄文時代の竪穴式住居など一部を復元し史跡公園として楽しめる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.843351,
       "longitude": 135.79093
@@ -6327,7 +6569,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-562",
     "name": "鴨谷の滝",
     "description": "鴨谷は城陽市の東南部森林地帯を流れる青谷川支流の渓谷で訪れる人も少なく豊かな自然が残された秘境です。ここに「京都の自然200選」に選ばれた鴨谷の滝があり、近くには椎尾ノ滝もあります。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.834885,
       "longitude": 135.83264
@@ -6342,6 +6584,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.852076,
       "longitude": 135.828363
     },
+    "url": "http://www.jyonaneikan.jp/",
     "openingHours": "月曜日、火曜日、金曜日　10時～16時土曜日、日曜日、祝日　9時30分～16時",
     "price": "ガラス工房　電気炉細工、砂吹き細工　500円　バーナー細工　900円自転車工房　修理　500円、組立　1,500円衣服工房　リサイクル衣服の譲渡　100円～　教室　500円～1,000円※城南衛生管理組合構成市町（宇治市、城陽市、八幡市、久御山町、宇治田原町、井手町）以外の在住者は上記の金額の3割増（ガラス工房、自転車工房）"
   },
@@ -6349,7 +6592,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-564",
     "name": "上津屋の浜茶",
     "description": "城陽市は宇治茶の主産地の一つで、主に抹茶の原料となる「てん茶」を生産しています。本市の茶園の多くは、市の西部を流れる木津川河川敷にあり、木津川上流からの肥沃な土砂の流入と砂地であることから、茶の生産に適し高品質な茶が生産されています。（生産農家約25戸、生産面積約30ha、生産量（荒茶）約28t）ま",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.865465,
       "longitude": 135.755882
@@ -6364,6 +6607,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.849215,
       "longitude": 135.773361
     },
+    "url": "http://www.city.joyo.kyoto.jp/rekishi/",
     "openingHours": "10時～17時（入館は16時30分まで）",
     "price": "観覧料大人　200円小・中学生　100円※ただし、市内在住の65歳以上の方、身体障害者手帳等をお持ちの方、小・中学生は無料"
   },
@@ -6394,11 +6638,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-568",
     "name": "城陽酒造株式会社",
     "description": "明治28年（1895）創業。清酒及び梅酒製造清酒代表銘柄「純米大吟醸　城陽」、梅酒地元青谷梅林産梅実100％使用三年熟成以上、着色料、香料不使用、代表銘柄「花小枝」、「梅小枝」【販売店舗】蔵元京都駅The CUBE（B1階）京の地酒・京旬味　富屋（TEL.075-365-8725）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.828314,
       "longitude": 135.798279
-    }
+    },
+    "url": "http://www.joyo-shuzo.co.jp/"
   },
   {
     "id": "spot-569",
@@ -6416,11 +6661,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-570",
     "name": "城陽市観光協会",
     "description": "事務局は、近鉄京都線寺田駅東口にある。近鉄京都線寺田駅西口を出て、すぐのところに観光案内所「NPO法人きらっと」があり、レンタサイクルの利用ができる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.853151,
       "longitude": 135.772311
     },
+    "url": "http://城陽市観光協会.jp/",
     "openingHours": "9時～17時",
     "price": "レンタサイクル半日　300円1日（9時～17時）　600円ただし、保証金1,000円（自転車返却時に精算）"
   },
@@ -6440,11 +6686,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-572",
     "name": "上方温泉　一休　京都本館",
     "description": "城陽市から宇治田原町方面に抜ける国道307号線沿いに、平成19年（2007）6月29日にオープンした「上方温泉一休」。「美人の湯」といわれるアルカリ性単純温泉で、源泉名を『松泉乃湯』という。主な効能は、神経痛、筋肉痛、関節痛、冷え性、慢性消化器病、疲労回復〈施設内容〉「滝」と「松」をモチーフにした露",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.835795,
       "longitude": 135.825369
     },
+    "url": "http://www.onsen19.jp/",
     "openingHours": "10時～翌日の1時（最終受付24時）岩盤温浴　10時～24時（最終受付22時30分）レストラン　11時～24時（ラストオーダー23時30分）リラクゼーション　11時～25時（最終受付24時）",
     "price": "施設利用料金　大人　1,143円（税別）　小人（4歳以上小学生まで）572円（税別）岩盤温浴　90分762円（税別）リラクゼーション「楽楽」・ヘッドスパの利用は有料"
   },
@@ -6468,6 +6715,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.849312,
       "longitude": 135.773536
     },
+    "url": "http://www.bunkaparcjoyo.net",
     "openingHours": "9時～22時",
     "price": "ホール等　施設により異なるため、要問合せ。プラネタリウム　大人（高校生以上）600円（480円）　小人（4歳～中学生）300円（240円）　（ ）内は団体料金（20名以上）"
   },
@@ -6498,7 +6746,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-577",
     "name": "青谷梅林",
     "description": "霊山鷲峰をはるかに望み、青谷川の清流に沿うなだらかな丘陵一帯にある青谷梅林。鎌倉末期にはすでにその存在が歌に詠まれているこの梅林には、老樹古木を含んで一万本の木々があり、古くから梅花の名勝地として庶民から親しまれてきた。また青谷梅林の梅の実は、大粒で肉ばなれがよいため昔から梅干しや梅酒用に愛用されて",
-    "congestionLevel": 5,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.835573,
       "longitude": 135.808289
@@ -6572,6 +6820,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.881712,
       "longitude": 135.747859
     },
+    "url": "https://ktc.jp/brand/museum-west/",
     "openingHours": "月曜日～金曜日（ただし、会社休日を除く）9時～17時見学開始時間（所要時間50分～120分）　9時30分～、13時30分～",
     "price": "無料"
   },
@@ -6584,6 +6833,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.884119,
       "longitude": 135.74526
     },
+    "url": "https://www.ccbji.co.jp/plant/kyoto/about.php",
     "openingHours": "1日3回のツアー（完全入替制） 10時、12時30分、14時30分3月～9月の土曜日、日曜日、祝日、および春休み・夏休み期間は1日4回（完全入替制） 10時、12時30分、14時30分、16時30分",
     "price": "無料 （グッズ販売、プリクラ、自販機は有料）"
   },
@@ -6618,6 +6868,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.891983,
       "longitude": 135.74731
     },
+    "url": "http://www.town.kumiyama.lg.jp/contents_detail.php?frmId=2028",
     "openingHours": "9時～19時",
     "price": "1回200円"
   },
@@ -6630,17 +6881,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.893129,
       "longitude": 135.73925
     },
+    "url": "https://www.tamada-jinjya.com",
     "price": "無料"
   },
   {
     "id": "spot-589",
     "name": "旧山田家住宅",
     "description": "山田家は江戸時代に御牧郷（みまきごう）13か村をまとめた大庄屋で、巨椋池（おぐらいけ）漁業の取りまとめ役を務めていました。長屋門・長塀・主屋は国の登録有形文化財建造物。展示室では巨椋池にかかわる資料もご覧いただけます。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.904327,
       "longitude": 135.739863
     },
+    "url": "http://www.town.kumiyama.lg.jp/contents_detail.php?frmId=2185",
     "openingHours": "毎月第1木曜日、第2土曜日、第3日曜日9時～12時",
     "price": "1人　200円"
   },
@@ -6653,6 +6906,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.891829,
       "longitude": 135.747319
     },
+    "url": "http://www.crosspeer.jp",
     "openingHours": "7時30分～22時",
     "price": "無料2階交流室の利用　半日　900円～　全日　3,300円～※夜間含むレンタサイクル　200円/回"
   },
@@ -6677,6 +6931,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.870694,
       "longitude": 135.702749
     },
+    "url": "http://www.kameya-yoshikuni.com",
     "openingHours": "9時～19時"
   },
   {
@@ -6688,6 +6943,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.870661,
       "longitude": 135.695054
     },
+    "url": "http://www.yawatataiikukan.jp/satuki.htm",
     "openingHours": "9時～17時※5月～9月のグラウンド・テニスコートは19時まで",
     "price": "グラウンド1面　2時間1,460円～テニスコート1面（クレーコート）　1時間620円～屋外市民プール（夏季のみ営業）　18歳以上　300円　15歳以上18歳未満　200円　3歳以上15歳未満　100円"
   },
@@ -6695,11 +6951,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-594",
     "name": "やわた流れ橋交流プラザ四季彩館",
     "description": "自然のやすらぎ、郷土の味や伝統など八幡の魅力を満喫できる交流施設。パンづくり、そば打ち体験（有料・事前予約制）地元で採れる旬の新鮮野菜の販売農産物の加工販売（てん茶、抹茶、和菓子、洋菓子、パン、味噌、漬物、佃煮）宿泊室（最大50名）、会議室、浴場レストラン（ランチはビュッフェ）",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.866077,
       "longitude": 135.743751
     },
+    "url": "http://www.shikisaikan.co.jp/",
     "openingHours": "10時～21時",
     "price": "研修棟　1室1時間260円～宿泊1人1泊　大人3,360円、子供2,540円（個室利用の場合、別途個室利用料1室3,150円が必要）入浴　大人430円、子供220円"
   },
@@ -6719,11 +6976,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-596",
     "name": "松花堂庭園・美術館",
     "description": "江戸時代初期・華やかな寛永文化の中心となって活躍した松花堂昭乗（1584～1639）ゆかりの松花堂庭園。2万2千平方メートルの広大な庭園は、草庵「松花堂」、書院などの文化財が露地庭や枯山水とともに趣のある風景を創り出している。庭園茶室梅隠のつくばいに水琴窟があり、茶室の腰掛待合に座ると美しい音色が楽",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.862878,
       "longitude": 135.704555
     },
+    "url": "https://shokado-garden-art-museum.jp/",
     "openingHours": "9時～17時（入園・入館は16時30分まで）",
     "price": "料金等の詳細は要問合せ"
   },
@@ -6736,6 +6994,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.881901,
       "longitude": 135.682682
     },
+    "url": "https://ryokan-kaori.com",
     "openingHours": "チェックイン　12時チェックアウト　12時",
     "price": "宿泊（1泊）　1人　5,000円（2人以上の場合は1人3,500円）見学のみ　500円"
   },
@@ -6748,6 +7007,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.884468,
       "longitude": 135.700795
     },
+    "url": "http://www.kankou-yawata.org/",
     "openingHours": "9時～17時",
     "price": "変則付自転車　1回500円電動アシスト自転車（八幡市観光協会のみ）　1回1,000円※別途保証金500円、保証金は返却時に返金します。"
   },
@@ -6755,11 +7015,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-599",
     "name": "八幡市市民スポーツ公園・体育館",
     "description": "八幡市市民スポーツ公園・体育館の観光スポット",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.862135,
       "longitude": 135.743825
     },
+    "url": "http://www.yawatataiikukan.jp",
     "openingHours": "9時～21時",
     "price": "多目的グラウンド　半面　2時間1,460円～クラブハウス会議室　2時間730円～テニスコート1面　1時間830円～※夜間照明設備有り（有料）体育館アリーナ半面　3,130円～　フリースペース半面　730円～会議室　大　1,460円～　小　730円～"
   },
@@ -6783,6 +7044,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.870208,
       "longitude": 135.701015
     },
+    "url": "http://shoboji.or.jp/",
     "openingHours": "公開日のみ（公開日はお問い合わせください。）",
     "price": "拝観料　700円※拝観は要予約"
   },
@@ -6790,7 +7052,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-602",
     "name": "松花堂ふれあい市",
     "description": "農家の方々の「自分で作った野菜や農産物加工品は自分で販売したい」との気持ちから生まれたふれあい市。販売品目は、野菜、花、果物、加工食品（茶・漬物等）、竹炭など。また4月～5月初旬には筍も並ぶ。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.862934,
       "longitude": 135.70398
@@ -6806,13 +7068,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.883813,
       "longitude": 135.701446
     },
+    "url": "http://www.yawata-hashiriimochi.com/",
     "openingHours": "8時～18時（喫茶のラストオーダー17時30分）"
   },
   {
     "id": "spot-604",
     "name": "神應寺",
     "description": "貞観2年（860）、石清水八幡宮を開いた行教律師によって開山された寺であり、八幡市では一番の古刹である。国の重要文化財である行教律師坐像を安置している。ほかに寺の宝物が何点か有る。宗派　曹洞宗",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.88334,
       "longitude": 135.699966
@@ -6824,7 +7087,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-605",
     "name": "淀川河川公園「背割堤地区」",
     "description": "京阪本線石清水八幡宮駅から北へ、御幸橋を渡ったところにある。木津川と宇治川の合流する背割堤に植えられた桜並木は約1.4kmあり、春には花のトンネルができる。河川公園になっている周辺には芝生広場や展望所がある。また、「さくらであい館」の展望塔では、高さ約25mから背割堤の桜並木を一望できる。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.890548,
       "longitude": 135.695229
@@ -6840,6 +7103,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.879649,
       "longitude": 135.700065
     },
+    "url": "http://www.iwashimizu.or.jp/",
     "openingHours": "南総門開閉時間4月～9月　5時30分～18時30分10月　6時～18時11月～3月　6時30分～18時（12/31～1/19を除く）"
   },
   {
@@ -6861,6 +7125,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.875799,
       "longitude": 135.702746
     },
+    "url": "http://ritsuji.web.fc2.com",
     "openingHours": "8時～17時",
     "price": "庭園散策自由本堂拝観のみ、要志納金（500円～）"
   },
@@ -6883,6 +7148,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.883801,
       "longitude": 135.702986
     },
+    "url": "https://hikoujinjya.com",
     "openingHours": "9時～16時30分資料館は9時～16時（受付は15時45分まで）",
     "price": "資料館一般　300円学生（小・中学・高校生）　200円"
   },
@@ -6890,7 +7156,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-611",
     "name": "伊佐家住宅",
     "description": "江戸時代に、代々幕府領の庄屋を務めた伊佐家の住居で、国の重要文化財に指定されている。母屋は享保19年（1734）に建てられた入母屋造り。大きな茅葺屋根は、かつてあった巨椋池の茅で葺かれ、特徴的な赤い壁は、今は入手できない伏見の「桃山」という壁土を用いる。木津川にかかる流れ橋の近くにあり、事前申し込み",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.865086,
       "longitude": 135.746738
@@ -6900,7 +7166,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-612",
     "name": "白山神社",
     "description": "市内最古の神社建築物。毎月第1日曜日には朔日講の神楽が行われることでも有名。本殿は重要文化財。本殿は永享年間の造営といわれ、向拝蟇股（こうはいかえるまた）や木鼻（きはな）などに室町時代の建築様式がみられる。本殿前にあり重要美術品にも指定されている石灯籠には、永享5年（1433）年の銘が刻まれており、",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.785241,
       "longitude": 135.781403
@@ -6915,6 +7181,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.821019,
       "longitude": 135.757557
     },
+    "url": "http://www.ikkyuji.org/",
     "openingHours": "9時～17時宝物殿　9時30分～16時30分",
     "price": "拝観料　中学生以上　500円　小学生　250円　（宝物殿観覧料を含む）精進料理　1,850円～精進本膳は4,700円※精進料理は要予約"
   },
@@ -6922,7 +7189,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-614",
     "name": "月読神社",
     "description": "旧綴喜郡のなかで、もっとも古い神社のひとつ。創建は明らかではないが、日本全国の神社を記した平安時代初期の書物「延喜式」にも掲載されている神社で、当時は朝廷から崇敬されていた。祭神は天照大神の弟、月読尊で、毎月一日には「月次祭」、11月下旬には「新嘗祭」が行われ、10月14日の例祭には「隼人舞」が奉納",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.836284,
       "longitude": 135.741078
@@ -6933,7 +7200,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-615",
     "name": "咋岡神社（飯岡）",
     "description": "建築年代など不詳。記録によれば、中世に天満宮と称した時期もあったが、明治6年（1873）村社となり、明治10年（1877）に延喜式内咋岡神社と決定、今の社名にあらためたという。境内の巨木・スダジイは、平成3年（1991）に「京都の自然200選」に指定された。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.804884,
       "longitude": 135.797083
@@ -6943,7 +7210,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-616",
     "name": "甘南備山",
     "description": "山城地方のランドマーク的な存在で、頂上の展望台からは、南は同志社大学、西は八幡の市街地、北は京都市の中心部まで望むことができ、まさに一大パノラマの眺望が楽しめる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.810438,
       "longitude": 135.74456
@@ -6953,7 +7220,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-617",
     "name": "飯岡古墳群",
     "description": "山城盆地のなかに孤立する小高い丘は、かつて咋山・咋岡とよばれ、早くから開けた土地であった。この飯岡丘陵には木津川の水運に関係する一族の墓と考えられる古墳が点在している。前方後円墳の飯岡車塚古墳、円墳の薬師山古墳、トヅカ古墳、南山城地域を代表するゴロゴロ山古墳、弥陀山古墳など、四世紀から六世紀の古墳が",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.805726,
       "longitude": 135.79161
@@ -6974,7 +7241,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-619",
     "name": "普賢寺ふれあいの駅",
     "description": "産地品直売所。野菜、果物、花、お茶や漬け物・味噌などの加工品の他、作業所（障害者）で作ったパン等を販売している。一年を通して数回、イベントを行っている。（大根炊き、おもち等の無料接待）",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.792854,
       "longitude": 135.761101
@@ -6985,11 +7252,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-620",
     "name": "澤井家住宅",
     "description": "澤井家は、武家の出身で、近世初頭に現在地に住み、江戸時代には尼門跡曇華院の所領を治める代官であった。主屋は、江戸時代中期の元文5年から翌6年（1740～1741）にかけて建て替えられており、尼門跡領の代官職を勤めていたことから接客機能を重視した特殊な平面と形式構成をもち意匠レベルも高い建物となってい",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.836693,
       "longitude": 135.750348
     },
+    "url": "http://www.amati.jp/",
     "openingHours": "毎月第2・第4土曜日・日曜日10時～17時（入館は16時まで）",
     "price": "文化財保存協力金として300円"
   },
@@ -7002,13 +7270,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.820391,
       "longitude": 135.76972
     },
+    "url": "https://kankou-kyotanabe.jp/",
     "openingHours": "〈京田辺市観光協会事務局・京田辺市観光案内所〉9時～12時、13時～17時〈京田辺市駅ナカ案内所〉営業時間　9時～17時"
   },
   {
     "id": "spot-622",
     "name": "天神社",
     "description": "天神社は、「延喜式神名帳（えんぎしきじんみょうちょう）」に記載されている式内社（しきないしゃ）である。明応2年（1493）に社殿が造営され、宮寺・中性院がおかれていた。しかし中性院は、明治維新の神仏分離により明治5年（1872）に廃寺となり、不動明王、薬師如来、歓喜王、役行者などの諸像を天神社に委託",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.845246,
       "longitude": 135.731101
@@ -7018,7 +7287,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-623",
     "name": "大住車塚古墳",
     "description": "5世紀初期（古墳時代中期）につくられた前方後方墳、智光寺山古墳（ちこんじやまこふん）とも呼ばれている。全長66m・前方部は幅18m・高さ1.5m、後方部は一辺の長さ36m・高さ4.5m。古墳の周りには長方形の周濠（しゅうごう）の存在が考えられ、棺が納められていた主体部は竪穴式石室か粘土槨であったと推",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.838217,
       "longitude": 135.748122
@@ -7028,7 +7297,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-624",
     "name": "須賀神社",
     "description": "「氏神牛頭天王造供神社牘之控」に、普賢寺郷の惣社牛頭天王社（現朱智神社）に遠く、打田村にも天王社を造営したとある。明治時代に須賀神社とあらためられた。府の登録文化財である本殿は、東に面した一間社流造、高欄擬宝珠銘から安永5年（1776）の建立であることがわかる。正面の木鼻はバクの、桁隠しは菊花の彫り",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.755938,
       "longitude": 135.738047
@@ -7058,7 +7327,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-627",
     "name": "朱智神社",
     "description": "仁徳天皇時代（313年～299年）に現在の地より西方の西峰山頂に創建、宣化天皇元年（535）にこの地に移されたという。延暦12年（793）に大宝天王と朱智天王を同殿にあわせて祀られた。貞観11年（869）、朱智神社の祭神として祀っていた迦爾米雷命（牛頭天王）が、祇園の八坂郷感神院（八坂神社の前身）に",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.781249,
       "longitude": 135.733638
@@ -7068,7 +7337,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-628",
     "name": "大御堂観音寺",
     "description": "天武天皇の時代に創建されたと伝えられている古寺で、ご本尊は数少ない国宝に指定されている十一面観世観音菩薩。境内は桜の名所として有名で、浮島のある庭とあいまって古寺の情緒を感じ取ることができる。〈法話〉予約をすれば住職による説法が楽しめる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.79587,
       "longitude": 135.761829
@@ -7080,7 +7349,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-629",
     "name": "寿宝寺",
     "description": "重要文化財に指定されている十一面千手千眼観音立像をご本尊とし、天武天皇の時代に創建されたと伝えられている。古くは「山本の大寺」と栄え、民衆の信仰を集めた。予約をすれば住職による説法が楽しめる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.800219,
       "longitude": 135.788945
@@ -7097,6 +7366,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.811909,
       "longitude": 135.855502
     },
+    "url": "http://www.taishoike.sakura.ne.jp",
     "openingHours": "9時～17時",
     "price": "宿泊やキャンプ場利用、各種用具のレンタル等は料金必要※詳細はお問い合わせください。"
   },
@@ -7104,7 +7374,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-631",
     "name": "井手の玉川",
     "description": "「平成の名水百選」に選ばれた玉川は、古来より多くの歌や物語などに登場する。玉川堤に約500本の桜並木が花のトンネルをつくり、山吹が黄金色に染める。桜の開花にあわせて「桜まつり」が開かれる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.801527,
       "longitude": 135.822027
@@ -7114,11 +7384,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-632",
     "name": "玉水駅前休憩所「さくら」",
     "description": "井手町の玄関口、JR奈良線玉水駅前の喫茶休憩所。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.80002,
       "longitude": 135.806835
     },
+    "url": "http://sakura.idenet.jp",
     "openingHours": "9時～16時30分",
     "price": "定食 600円"
   },
@@ -7126,7 +7397,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-633",
     "name": "駒岩の左馬",
     "description": "玉川の岸辺に座る数百トンもありそうな岩。その巨岩には、大きさ1mほどの左馬が刻まれており、道行く人を驚かせる。左馬は、女性の習いごと、裁縫や作法、生け花、舞踊を志す人の守り神として、古くから信仰されている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.801659,
       "longitude": 135.826843
@@ -7136,7 +7407,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-634",
     "name": "万灯呂山展望台",
     "description": "木津川を中心に平安京と平城京を繋ぐ街道沿いに都を支える豊かな農村が発展してきたのが山城盆地であり、その歴史の変遷を眺めることができるのが万灯呂山公園です。京都タワーや生駒丘陵まで広範な眺望が楽しめます。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.813531,
       "longitude": 135.823137
@@ -7156,17 +7427,18 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-636",
     "name": "龍王の滝",
     "description": "落差が13mあり、岩間を縫って糸のような水が流れ落ちる龍王の滝。町の北端、木津川の支流、南谷川の静かな渓谷に、滝の音を響かせている。龍王神は雨の神で、かつて、日照りがつづいたとき、雨ごいの儀式が行われていた場所としても知られている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.818596,
       "longitude": 135.824269
-    }
+    },
+    "url": "https://ujitawara-kyoto.com"
   },
   {
     "id": "spot-637",
     "name": "玉津岡神社",
     "description": "うっそうとした木々に覆われた境内は、真夏日もひんやりと空気が漂い、濃い緑陰をつくっている。本殿は貞享4年（1687）再建の春日造。境内には橘神社があり橘諸兄の末えいの橘正成をまつっている。隣接する地蔵禅院には府の天然記念物・名木10選に選ばれている。しだれ桜がある。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.8042,
       "longitude": 135.819867
@@ -7177,7 +7449,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-638",
     "name": "高神社",
     "description": "高神社の鎮守の森は、京都百景のひとつに選ばれている。その奥に、高神社の社はひっそりと立っている。本殿は桃山時代に建てられたもので府指定文化財。あでやかな装飾が施され、桃山時代の建築の風潮がくっきりと現れている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.817069,
       "longitude": 135.814197
@@ -7198,7 +7470,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-640",
     "name": "小町塚",
     "description": "世界三大美女の一人として、またせつない女心を詠んだ歌人として知られる小野小町。生まれた年も、死亡した場所も謎に包まれているが、晩年は井堤寺に住んでいたと伝わる。玉津岡神社の参道べりには、自然石を積み重ねた小野小町塚が立っている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.802434,
       "longitude": 135.818762
@@ -7208,11 +7480,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-641",
     "name": "禅定寺",
     "description": "約1千年前、東大寺の僧・平崇が開いた寺院。十一面観音立像や日光・月光菩薩立像など多くの文化財が宝物殿に安置されている。また、本堂裏には開創千年を記念した巨大壁画「禅定寺平成大涅槃図」が描かれている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.876841,
       "longitude": 135.875177
     },
+    "url": "http://zenjyoji.jp/",
     "openingHours": "宝物殿見学　9時～16時",
     "price": "拝観及び宝物殿見学　大人　500円（30名以上は400円） 中学生以下　200円"
   },
@@ -7224,24 +7497,26 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.874268,
       "longitude": 135.875529
-    }
+    },
+    "url": "https://ujitawara-kyoto.com"
   },
   {
     "id": "spot-643",
     "name": "猿丸神社",
     "description": "「奥山に　紅葉ふみわけ　鳴く鹿の　声聞くときぞ　秋はかなしき」この歌を詠んだ猿丸大夫を祀る。三十六歌仙の一人に数えられているが、謎の人物。この地は、大夫晩年隠棲の土地とも伝えられている。また、猿丸神社は瘤、でき物取りの神様として信仰が厚い。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.880169,
       "longitude": 135.88417
     },
+    "url": "http://www.sarumarujinja.jp/",
     "openingHours": "7時～16時 （祈祷は9時～16時）"
   },
   {
     "id": "spot-644",
     "name": "田原又太郎忠綱の墓",
     "description": "治承4年（1180）、以仁王の平氏追討令に呼応して挙兵した源頼政は平等院に布陣し宇治川を挟んで平氏軍と対峙した。その頼政軍を攻めて武功を揚げた平氏方の武将足利忠綱は、地元の伝承では郷之口北堂山にてその後の平氏の滅亡を嘆いて自刃したとも、宇治川合戦で負傷してたどり着き息絶えたともいわれる。住民は供養塔",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.849132,
       "longitude": 135.849512
@@ -7267,6 +7542,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.854209,
       "longitude": 135.864244
     },
+    "url": "https://ujitawara-kyoto.com",
     "price": "無料"
   },
   {
@@ -7289,17 +7565,19 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.852661,
       "longitude": 135.835289
-    }
+    },
+    "url": "https://ujitawara-kyoto.com"
   },
   {
     "id": "spot-649",
     "name": "JA京都やましろ宇治茶の郷",
     "description": "JAの茶直売所をリニューアル。直売だけでなく、喫茶コーナーを併設。玉露や煎茶を自分で入れることができる。地元農産物も販売。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.85065,
       "longitude": 135.852887
     },
+    "url": "http://www.ja-yamasiro.com/",
     "openingHours": "9時30分～16時30分（農産物直売）",
     "price": "喫茶メニュー玉露・抹茶セット　各500円煎茶セット　500円"
   },
@@ -7312,6 +7590,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.85275,
       "longitude": 135.897949
     },
+    "url": "https://www.sk-yantan.com/",
     "openingHours": "3月～10月　10時～17時11月～2月　10時～16時",
     "price": "入館無料施設貸出料金は要問い合わせ※施設の借用については事前の申請が必要"
   },
@@ -7319,22 +7598,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-651",
     "name": "山瀧寺跡",
     "description": "白鳳時代（7世紀後半）に建立された古代寺院跡で、付近から飛鳥の寺院や平城宮などと同じ瓦が出土している。「禅定寺文書」の鎌倉時代の記述に「山瀧寺」の名が見られ、昭和20年代まで「大御堂」が存在していた。現在の「観音堂」には鎌倉時代の木造十一面観音立像（町指定文化財）が安置され、毎月18日に開帳される。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.854909,
       "longitude": 135.858755
     },
+    "url": "https://ujitawara-kyoto.com",
     "price": "無料"
   },
   {
     "id": "spot-652",
     "name": "正寿院",
     "description": "※諸般の事情で拝観停止していましたが、11/14（土）から拝観可能となりました正寿院は、高野山真言宗に属し、創建はおよそ800年前、飯尾山医王教寺の塔頭寺院として建立されたと伝えられています。客殿「則天の間」には猪目窓という窓があります。猪目（いのめ）とは、ハート型であり古来から伝わる日本伝統文様の",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.849818,
       "longitude": 135.920777
     },
+    "url": "http://shoujuin.boo.jp",
     "openingHours": "9時～16時30分",
     "price": "拝観料　500円（お茶、お菓子、散華、叶紐付き）"
   },
@@ -7342,22 +7623,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-653",
     "name": "やすらぎの道",
     "description": "町の中心部を流れる田原川沿いに整備された遊歩道で、郷之口から岩山地区まで3.4kmに及ぶ。4月には沿道の約270本のソメイヨシノが咲き誇り、桜を愛でながら散策を楽しめる。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.852463,
       "longitude": 135.857722
     },
+    "url": "https://ujitawara-kyoto.com",
     "price": "無料"
   },
   {
     "id": "spot-654",
     "name": "禅定寺五輪塔",
     "description": "禅定寺山門を入った場所に置かれてあり、康永3年（1344）銘が刻まれている。当時禅定寺の財産の管理者に男子の跡継ぎがなく、長女の蘭雀女のためにその妹が建てたと伝えられる。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.87684,
       "longitude": 135.875177
     },
+    "url": "http://zenjyoji.jp",
     "openingHours": "9時～16時",
     "price": "拝観及び宝物殿拝観料　大人　500円（30名以上は400円）中学生以下　200円"
   },
@@ -7375,11 +7658,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-656",
     "name": "禅定寺宝物殿",
     "description": "約1千年前、東大寺の僧・平崇が開いた寺院。十一面観音立像や日光・月光菩薩立像など多くの文化財が宝物殿に安置されている。また、本堂裏には開創千年を記念した巨大壁画『禅定寺平成大涅槃図』が描かれている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.87684,
       "longitude": 135.875177
     },
+    "url": "http://zenjyoji.jp",
     "openingHours": "宝物殿見学　9時～16時",
     "price": "拝観及び宝物殿見学　大人　500円（30名以上は400円）中学生以下　200円"
   },
@@ -7387,18 +7671,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-657",
     "name": "龍王の滝",
     "description": "南地区を流れる符作川の上流にある滝。古くから「たかお神（水分神）」をまつる清滝大権現社が鎮座する。南地区を川沿いに歩き、田園地帯から山間部に入ると、夏でも冷涼なハイキングコースとなる。毎年8月7日に「滝まつり」が行われる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.833673,
       "longitude": 135.850325
     },
+    "url": "https://ujitawara-kyoto.com",
     "price": "無料"
   },
   {
     "id": "spot-658",
     "name": "天神社",
     "description": "江戸時代初期に建立された天神社本殿は京都府登録文化財に、境内は文化財環境保全地区となっている。参道沿いでは春は桜、秋は紅葉が美しい。毎年8月15日には地元の子供を中心に郷土芸能「ねりこみ囃子」が行われる。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.858499,
       "longitude": 135.919157
@@ -7408,7 +7693,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-659",
     "name": "宝筐印塔",
     "description": "大宮神社宝筐印塔と同じタイプで鎌倉時代の塔。南区の旧「切林村」に位置し、和束町から伊賀方面へ向かう街道横にある。ここで旅人がわらじの緒を締め直し旅立ったことから地元では「わらじの神様」と呼ばれている。町指定文化財。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.84301,
       "longitude": 135.861269
@@ -7418,21 +7703,23 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-660",
     "name": "郷之口本町",
     "description": "郷之口は宇治田原への西側の入口にあたり、かつては織田信長の命で山口甚介秀康が「山口城」を築城し、郷中の郷士層を集めて城下町を形成した。郷之口本町から隣接する贄田地区まで東西に「信楽街道」が横断し、主要な交通路だった。現在も本町あたりには旧家が多く残り、情緒ある町並みの中には茶問屋も多い。与謝蕪村の句",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.852179,
       "longitude": 135.853145
-    }
+    },
+    "url": "https://ujitawara-kyoto.com"
   },
   {
     "id": "spot-661",
     "name": "鷲峰山",
     "description": "役行者が開いたといわれ、吉野に対して「北大峰」と呼ばれる修験道の拠点として多くの寺社が存在したという。古くから立川大道寺からの参詣道が整備され、今も道標等が点在する。標高682mの山頂付近には金胎寺等の史跡が数多く残り、南山城地方最高峰へのハイキングコースとして親しまれている。四季を通じて豊かな自然",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.830463,
       "longitude": 135.90844
-    }
+    },
+    "url": "https://ujitawara-kyoto.com"
   },
   {
     "id": "spot-662",
@@ -7454,37 +7741,41 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.864871,
       "longitude": 135.842233
     },
+    "url": "https://ujitawara-kyoto.com",
     "openingHours": "見学自由"
   },
   {
     "id": "spot-664",
     "name": "大宮神社",
     "description": "大宮神社は「田原祭」を行う三社のひとつで、荒木・郷之口地区の氏神。荒木天皇谷入口に座し、裏参道から大峰山への登山口がある。境内には町指定文化財の宝筐印塔があり、他にも文殊石碑など神仏習合時代の名残を思わせる遺物がある。参道の桜並木は開花時期に夜間ライトアップされ、7月には「茅の輪くぐり」「夏越しの大",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.856612,
       "longitude": 135.860123
-    }
+    },
+    "url": "https://ujitawara-kyoto.com"
   },
   {
     "id": "spot-665",
     "name": "大道神社",
     "description": "元は「天満宮」と称し中世から存在していた。現在の本殿（町指定文化財）は延宝8年（1680）建立。鷲峰山登山道沿いで隠れた紅葉の名所。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.847465,
       "longitude": 135.884217
-    }
+    },
+    "url": "https://ujitawara-kyoto.com"
   },
   {
     "id": "spot-666",
     "name": "大道寺",
     "description": "立川の大道寺地区は、地名となった「大道寺」、町指定文化財の「大道神社」、源平合戦の史跡「信西入道塚」があり、南山城の霊峰「鷲峰山」への昔からの登山口でもある。11月には「古老柿」を生産する「柿屋」が建ち並び、集落と田園風景が「ふるさと」の風情を感じさせる景観を作り出す。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.847518,
       "longitude": 135.883263
-    }
+    },
+    "url": "https://ujitawara-kyoto.com"
   },
   {
     "id": "spot-667",
@@ -7495,6 +7786,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.840751,
       "longitude": 135.906755
     },
+    "url": "https://ujitawara-kyoto.com",
     "openingHours": "見学自由"
   },
   {
@@ -7506,6 +7798,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.848077,
       "longitude": 135.902885
     },
+    "url": "https://ujitawara-kyoto.com",
     "openingHours": "内部見学は土曜日、日曜日、祝日のみ可10時～15時",
     "price": "維持管理協力金　100円"
   },
@@ -7513,18 +7806,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-669",
     "name": "御栗栖神社",
     "description": "古代最大の内乱「壬申の乱」直前、大津京を脱出した大海人皇子（後の天武天皇）は、吉野への道中に立ち寄った里で供された煮栗焼栗を埋めて戦勝祈願をした。やがて栗は芽生えて栗林となり、収穫された栗は宮中へ献上されたという伝承の舞台。「田原祭」三社のひとつ。境内の杉の神木は町指定天然記念物。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.834849,
       "longitude": 135.862142
     },
+    "url": "https://ujitawara-kyoto.com",
     "openingHours": "境内見学自由"
   },
   {
     "id": "spot-670",
     "name": "田原天皇社跡",
     "description": "「田原天皇（施基皇子）」は天智天皇の皇子で万葉歌人。伝承では宇治田原の高尾と荒木に館を構え、そこで亡くなったために陵墓が作られたという。天皇谷の入口、現在の大宮神社裏参道横に田原天皇社が祀られたが、明治になって大宮神社に合祀された。跡地には三宅安兵衛建立の石碑が建つ。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.855487,
       "longitude": 135.85853
@@ -7545,7 +7839,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-672",
     "name": "山口城跡",
     "description": "織田信長が明智光秀に討たれた「本能寺の変」が勃発し、堺にいた徳川家康は領国三河へ逃亡。道中、郷之口の山口氏の居城で休憩し、奥山田を経て信楽・伊賀へ逃れた。現在は茶畑等になっているが、堀や石垣跡などの痕跡が残る。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.85274,
       "longitude": 135.852578
@@ -7556,11 +7850,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-673",
     "name": "信西入道塚",
     "description": "平安時代末の「平治の乱」で源氏に敗れた藤原信西が、領地のある宇治田原に逃れたところを捕らえられ斬首され、その首を持ち帰った領民により葬られたという塚。向かいの大道神社とともに、秋には町内の紅葉のかくれた名所となる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.847359,
       "longitude": 135.883273
     },
+    "url": "https://ujitawara-kyoto.com",
     "openingHours": "見学自由"
   },
   {
@@ -7571,7 +7866,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.847763,
       "longitude": 135.903135
-    }
+    },
+    "url": "https://ujitawara-kyoto.com"
   },
   {
     "id": "spot-675",
@@ -7582,6 +7878,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.855728,
       "longitude": 135.863136
     },
+    "url": "https://ujitawara-kyoto.com",
     "openingHours": "10時～17時",
     "price": "無料"
   },
@@ -7589,7 +7886,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-676",
     "name": "西念寺",
     "description": "現在の本堂が建ったのは宝永3年（1706）。前身は「鹿山寺」と称して古代南部仏教の一派である。奈良元興寺と関わりがあったとされる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.744654,
       "longitude": 135.841519
@@ -7605,6 +7902,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.733101,
       "longitude": 135.791695
     },
+    "url": "http://www.fukujuen.com/company/cha.html",
     "openingHours": "10時～16時（体験受付終了は15時）",
     "price": "石臼体験　1,200円ほうじ茶づくり体験　2,000円抹茶一服体験　1,000円茶道マナー教室　1,500円宇治茶体験（抹茶・玉露）　1,500円宇治茶体験（煎茶）　1,200円世界のお茶体験　1,000円プレミアム世界の茶体験　2,000円宇治茶作り体験　2,300円茶摘み体験　1,000円CHA宇治茶体験（期間限定）　3,500円※すべて税別価格"
   },
@@ -7612,7 +7910,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-678",
     "name": "不動川公園",
     "description": "不動川の清流と緑の竹林に囲まれた公園。広大な園内には、多目的広場（野球、サッカー等）、テニスコート（2面）、エントランス広場などが設置されている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.777718,
       "longitude": 135.82203
@@ -7629,6 +7927,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.731564,
       "longitude": 135.788231
     },
+    "url": "http://www.sekisuihouse.com",
     "openingHours": "10時～17時※要予約",
     "price": "無料"
   },
@@ -7652,13 +7951,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.752694,
       "longitude": 135.869531
     },
+    "url": "http://0774.or.jp",
     "openingHours": "10時～17時"
   },
   {
     "id": "spot-682",
     "name": "蟹満寺",
     "description": "かつては紙幡寺、加波多寺ともいわれていた蟹満寺は、白鳳期の末期に建てられた。本尊の銅造釈迦如来坐像は白鳳期の秀作で国宝に指定されている。「今昔物語集」や「古今著聞集」に登場する蟹の恩返しの縁起でも有名。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.786429,
       "longitude": 135.815864
@@ -7670,7 +7970,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-683",
     "name": "上狛駅東公園テニスコート",
     "description": "JR奈良線上狛駅の東側に立地する。テニスコート3面（照明あり）があり、トイレ・休憩施設が設置されている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.750289,
       "longitude": 135.821833
@@ -7682,7 +7982,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-684",
     "name": "不動川砂防歴史公園",
     "description": "明治6年（1873）に来日したオランダ人工師、ヨハネス・デ・レーケは日本の治山、治水に大きな功績を残した。京都府では彼の偉業を記念して、昭和57年（1982）、不動川砂防歴史公園の整備に着手し、完成後は多くのレクリエーション客で賑わっている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.785117,
       "longitude": 135.834812
@@ -7704,7 +8004,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-686",
     "name": "涌出宮（和伎神社）",
     "description": "和伎神社とも涌出宮とも呼ばれる和伎座天乃夫岐売神社（わきにますあめのふきめじんじゃ）は、天平神護2年（766）、現在の三重県にあたる五十鈴川の船ケ原から天乃夫岐売命を勧請したのが、その起こりと言われている。祭神は古来より雨を降らせる神としてあがめられ、清和天皇や宇多天皇も雨乞いの使者を遣わしたという",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.775374,
       "longitude": 135.817352
@@ -7750,7 +8050,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-690",
     "name": "椿井大塚山古墳",
     "description": "昭和28年（1953）、古墳の後円部を南北に走る国鉄奈良線（現JR奈良線）の拡幅工事の際、偶然に竪穴式石室が出土。邪馬台国女王卑弥呼の鏡といわれる「三角縁神獣鏡」を含む四十面近い銅鏡や多くの副葬品が発見された。古墳時代前期（三世紀後半）の中でも最古に位置づけられる代表的な前方後円墳で、平成12年（2",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.762111,
       "longitude": 135.817839
@@ -7771,7 +8071,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-692",
     "name": "当尾周辺",
     "description": "浄瑠璃寺～岩船寺の道沿いに、わらい仏（岩船阿弥陀三尊磨崖仏）、（一願不動立像/不動明王立像）などの石仏や石塔があちこちに点在している。約2km、1時間弱の距離。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.718539,
       "longitude": 135.883568
@@ -7781,7 +8081,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-693",
     "name": "泉橋寺",
     "description": "泉橋寺は別名「橋寺」とも言われ、僧行基が五畿内（山城・大和・摂津・河内・和泉）に造営した四十九院のひとつ。境内にある石造地蔵菩薩坐像は鎌倉時代につくられたもので、高さは約4.58m。丸彫の石仏としては、日本一の大きさをほこっている。五輪塔は国の重要文化財。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.744873,
       "longitude": 135.819462
@@ -7797,6 +8097,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.713804,
       "longitude": 135.835779
     },
+    "url": "http://www.kansai.qst.go.jp/kids-photon/",
     "openingHours": "10時～16時30分（入館は16時まで）",
     "price": "無料"
   },
@@ -7815,7 +8116,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-696",
     "name": "岡田鴨神社",
     "description": "賀茂氏族の祖神として崇神天皇御世（前97年～前30年）の創祀と伝わる。当社は京都・下鴨神社（賀茂御祖神社）の元宮で延喜式内社の古社である。祭神は八咫烏が化身の賀茂建角身命（かもたけつぬみのみこと）。【日本サッカー協会のシンボルマークで著名である。】本殿は江戸時代に春日大社より移築された春日造り（春日",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.761554,
       "longitude": 135.876368
@@ -7827,7 +8128,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-697",
     "name": "高麗寺跡",
     "description": "飛鳥時代から平安時代まで存続していた寺で、高句麗（朝鮮半島）からの渡来氏族狛氏の氏寺として創建されたと考えられている。伽藍は西に金堂、東に塔を持つ法起式の配置で寺域は一辺が約200mの規模であったと考えられる。昭和15年（1940）に国史跡に指定され、現在は跡地に石碑が建てられており、国内最古の寺院",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.74939,
       "longitude": 135.826744
@@ -7843,6 +8144,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.752307,
       "longitude": 135.833849
     },
+    "url": "http://www1.kyoto-be.ne.jp/yamasiro-m/",
     "openingHours": "9時～16時30分",
     "price": "常設展、企画展　大人　200円（150円）　小人　50円（40円）特別展示　大人　250円（200円）　小人　70円（50円）（ ）内は団体（20名以上）料金"
   },
@@ -7874,7 +8176,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-701",
     "name": "海住山寺",
     "description": "創建は天平7年（735）聖武天皇が大仏造立平安祈願のため、良弁僧正に命じて建立させたのが始まりと伝えられるが、焼失し鎌倉時代に解脱上人により中興された。五重塔は、鎌倉時代の傑作で国宝に指定されている。十一面観音菩薩立像や文殊堂、絹本著色法華曼荼羅図や海住山寺文書は重要文化財。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.776886,
       "longitude": 135.861796
@@ -7896,7 +8198,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-703",
     "name": "岩船寺",
     "description": "天平元年（729）に聖武天皇の勅願で建立されたと伝えられる。深い緑につつまれるように立つ三重塔や古色を秘めてたたずむ本堂の風景からは、山寺の風情が感じられる。山門の入り口には、寺名の由来にもなったと伝わる船のかたちをした岩があり、僧侶が沐浴に使ったといわれている。境内は四季折々の花に彩られ、6月は紫",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.72028,
       "longitude": 135.885855
@@ -7908,7 +8210,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-704",
     "name": "高田寺",
     "description": "創建は奈良時代と伝えられ、本尊の薬師如来坐像は保安年間の造立と推定される。頭：体の比率が整い、ゆったり坐す姿は12世紀の典型的作風を示し、重要文化財に指定されている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.735853,
       "longitude": 135.862091
@@ -7919,7 +8221,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-705",
     "name": "史跡恭仁宮跡（山城国分寺跡）",
     "description": "天平16年（744）に恭仁京が廃都。その大極殿は山城国分寺に施入の後、跡地は金堂として使用され、あわせて七重塔や境内鎮守社なども整えられた。そのため全国でも稀な二つの重要遺跡が複合することになる。現在、大極殿跡に当時の礎石が点在し、隣接して塔跡の巨大な礎石群が広がり、その一帯は平成19年（2007）",
-    "congestionLevel": 5,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.765422,
       "longitude": 135.863028
@@ -7929,7 +8231,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-706",
     "name": "銭司遺跡",
     "description": "国道163号を木津川にそって登っていくと、和同開珎の鋳造跡がある。和同開珎は我が国の古い貨幣として知られ、直径25ミリ、和・同・開・珎の４文字が刻まれている。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.763877,
       "longitude": 135.888392
@@ -7939,7 +8241,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-707",
     "name": "笠置寺収蔵庫",
     "description": "渡来仏の釈迦誕生仏や藤原時代の十一面観音像やなど笠置寺の収蔵品を展示している。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.753397,
       "longitude": 135.941679
@@ -7951,11 +8253,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-708",
     "name": "笠置寺（行場めぐり）",
     "description": "笠置山の山頂付近には、花崗岩で造られた巨岩・奇石が多く、その特異な景観から山伏の修行場となっていた。巨岩には、弥勒石、虚空蔵石、文殊石、太鼓石、貝吹岩、ゆるぎ石などがあり信仰の対象となっている。これらの巨石を巡って笠置寺に訪れる、笠置山一巡コースは、所要時間も45分程度でちょっとしたハイキングに最適",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.753517,
       "longitude": 135.941484
     },
+    "url": "http://www.kasagidera.or.jp/",
     "openingHours": "夏期　8時30分～17時冬期　9時～16時",
     "price": "拝観料　大人300円中学生以下100円"
   },
@@ -7963,11 +8266,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-709",
     "name": "笠置カヌースクール",
     "description": "70隻ものカヌーを保有する日本最大のカヌースクール。主に初心者を対象としており、そのため流れの穏やかな木津川中流をゲレンデとし、初心者クラスでも基礎練習の後、実際に川に6km下る体験ができる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.754499,
       "longitude": 135.928035
     },
+    "url": "http://www.fujitacanoe.com/",
     "openingHours": "3月春分の日～11月末までの土曜日、日曜日、祝日開催10時～16時（ただし、参加者5名以上の場合は平日も開催）",
     "price": "大人　10,000円（税別）小人（小学生以下）　7,000円（税別）（カヌーレンタル料、講習料、昼食料、温泉入浴料）"
   },
@@ -7975,11 +8279,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-710",
     "name": "笠置キャンプ場",
     "description": "木津川河川敷を一般開放。車でそのままキャンプが出来る。（トイレ、水道有り）グランドゴルフ場も有る。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.759076,
       "longitude": 135.936157
     },
+    "url": "http://www.kankou-kasagi.com",
     "openingHours": "受付時間　8時～17時",
     "price": "清掃協力金（1日あたり）　中学生以上　500円　小学生以上　300円グランドゴルフ場プレー料金　1人500円"
   },
@@ -7987,11 +8292,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-711",
     "name": "笠置寺",
     "description": "奈良時代、笠置山で狩りを楽しんでいた天武天皇が、鹿を追って進退きわまったとき、仏に祈念して難を逃れた。そこで大岩面に弥勒菩薩を掘り、それを本尊にしてはじまったのが笠置寺。平安末期には修験道の道場として発展したが、元弘の乱で焼かれ、現在の本堂、正月堂は、室町時代に建造された。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.753525,
       "longitude": 135.941484
     },
+    "url": "http://www.kasagidera.or.jp/",
     "openingHours": "夏期　8時30分～17時冬期　9時～16時",
     "price": "拝観料　大人　300円　中学生以下　100円"
   },
@@ -7999,18 +8305,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-712",
     "name": "京都府立笠置山自然公園",
     "description": "国の史跡・名勝に指定されている笠置山と、その山麓を流れる木津川の峡谷を中心とした自然公園。頂上には、後醍醐天皇ゆかりの史跡をはじめ、仏像が彫られた石等が点在し、秘められた歴史を探訪しながら、四季折々の自然を満喫できるハイキングコースになっている。また木津川の峡谷は、伊賀ラインとも呼ばれる景勝地。なお",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.753525,
       "longitude": 135.941482
     },
+    "url": "http://www.pref.kyoto.jp/shizen-koen/kas.html",
     "price": "ライトアップの時間帯は、笠置寺拝観料300円が無料となります。"
   },
   {
     "id": "spot-713",
     "name": "リバーサイド大扇",
     "description": "自慢の出汁をつかった料理を提供する食堂と旬を感じる新鮮な青果を販売しています。9月から2月頃（なくなり次第終了）までお楽しみいただける松茸料理（そば、うどん、どんぶり）はとても人気です。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.762013,
       "longitude": 135.928063
@@ -8021,11 +8328,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-714",
     "name": "天然わかさぎ温泉　笠置いこいの館（休業中）",
     "description": "天然温泉の大浴場やレストラン、多目的広場、ゲートボール場があり、若者からお年寄まで幅広く利用できる。外観は、笠置町が21世紀に向かって飛び立とうとしている姿を鷺にイメージしてデザインしており、くちばしや羽根もあり、ユニークな建物になっている。【泉質】含弱放射能-ナトリウム-炭酸水素塩・塩化物温泉（低",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.757096,
       "longitude": 135.934225
     },
+    "url": "http://kasagi-ikoi.com/",
     "openingHours": "10時～21時（受付は20時30分まで）",
     "price": "大人　800円小人　400円"
   },
@@ -8033,18 +8341,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-715",
     "name": "正法寺",
     "description": "聖武天皇の皇子・安積親王がこの地に葬られ、その冥福を祈るため、行基が創建したと伝わる。秋は紅葉が美しい。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.792674,
       "longitude": 135.902913
     },
+    "url": "http://www.kyoto-shoboji.com/",
     "openingHours": "拝観自由"
   },
   {
     "id": "spot-716",
     "name": "金胎寺",
     "description": "鷲峰山にある古刹。1300年前に創建され、平安時代の最盛期には50以上の堂宇が建っていたといわれる。鎌倉時代、兵火にあってほとんどの堂宇が消失し、現在は多宝塔だけが往時のおもかげを伝えている。閑雅な境内には、再建された諸堂が並び、静かな山寺の雰囲気を漂わせている。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.829242,
       "longitude": 135.909398
@@ -8055,7 +8364,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-717",
     "name": "和束町観光案内所",
     "description": "町の情報発信と観光案内、お茶などお土産の販売も行っています。案内所の中からは日本遺産に認定された「釜塚の茶畑」景観が楽しめます。レンタサイクルも受付。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.796638,
       "longitude": 135.905328
@@ -8066,17 +8375,18 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-718",
     "name": "鷲峰山",
     "description": "和束町の北東、宇治田原町との境にある。標高682m、南山城地方の最高峰にあたり、山頂近くには古刹金胎寺があり、古くから修験道の道場になっていたといわれている。山頂からは、北東に比叡・比良・三上の三山と琵琶湖、南に木津川一帯から奈良、西に大阪・京都が眺められ、大パノラマが楽しめる。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.830462,
       "longitude": 135.90844
-    }
+    },
+    "url": "https://ujitawara-kyoto.com"
   },
   {
     "id": "spot-719",
     "name": "和束茶カフェ",
     "description": "「茶源郷」和束でお茶を飲むならここ。30軒以上の茶農家が、自農園で自家加工したこだわりのお茶を楽しめる。和束茶の直売の他、お茶を使ったお菓子や佃煮も好評。夏には、抹茶や玄米茶などのシロップを使用した絶品かき氷もある。絵はがきや木工作品も店内で販売。暮らしに根差した茶畑の風景を楽しめる天空カフェの利用",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.796219,
       "longitude": 135.898183
@@ -8087,7 +8397,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-720",
     "name": "安積親王陵墓",
     "description": "安積親王は聖武天皇の皇子。この陵墓は、お茶畑に囲まれた小高い丘の上にあり、別名「太鼓山」と呼ばれ土地の人々から崇られている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.797215,
       "longitude": 135.899204
@@ -8098,7 +8408,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-721",
     "name": "湯船森林公園",
     "description": "ふるさとの活性化と自然環境保護を目的に作られた公園。豊かな緑におおわれて、川遊びやバーベキューなどが楽しめる。公園内には、ワールドマスターズゲームズ2021関西「マウンテンバイク競技」会場でもある、ゆぶねMTB LANDでマウンテンバイクも楽しめる。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 34.83323,
       "longitude": 135.992107
@@ -8110,7 +8420,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-722",
     "name": "和束天満宮",
     "description": "天満宮は、平安時代、菅原道真の絵を菅原家より奉納され、祀ったのが初まり。本殿は、南北朝の動乱により焼失したが、正平3年（1348）に再建。室町時代の特色がくっきりと現われた社殿建築。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.807346,
       "longitude": 135.912156
@@ -8121,11 +8431,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-723",
     "name": "京都和束荘",
     "description": "京都和束荘は「お茶を五感で愉しむ宿」をコンセプトに、お茶を使った会席料理や、煎茶を浮かべたお茶風呂などがお楽しみいただけます。また、本館の各部屋にはシャワールームやトイレが完備され、すべて庭付きなので周りを気にせずゆったりお過ごしいただけます。別館は最大53名まで宿泊可能で団体にも対応しています。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.794659,
       "longitude": 135.896532
     },
+    "url": "http://wazukaso.com/",
     "price": "詳細はお問い合わせください。"
   },
   {
@@ -8149,6 +8460,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.74822,
       "longitude": 135.772744
     },
+    "url": "https://keihanna-park.net/",
     "openingHours": "水景園　9時～17時（入園は16時30分まで）",
     "price": "水景園入園料　一般　200円　小・中学生　100円※団体（25名以上）割引あり、60才以上の方・障害者手帳をお持ちの方は無料（要公的証明）広場・谷あい無料※施設利用などの料金は要問い合わせ"
   },
@@ -8168,7 +8480,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-727",
     "name": "祝園神社",
     "description": "木津川の流れが聞こえてきそうな地に建つ祝園神社は、奈良時代、この地にあった柞ノ森にこもった鬼神を鎮めるため、春日大名神を勧請したのが由来といわれている。毎年、お正月の申の日から3日間行われるいごもり祭りも、鎮魂のために始まったといわれ、大きな松明から燃え上がる火が夜の闇を焦がしていく。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.768008,
       "longitude": 135.801589
@@ -8180,7 +8492,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-728",
     "name": "南山城村農林産物直売所",
     "description": "南山城村で採れた新鮮な野菜、加工品の販売。村特産品、お茶、しいたけの販売。しいたま焼きがおすすめ。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.772684,
       "longitude": 135.991283
@@ -8206,17 +8518,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.770621,
       "longitude": 135.987379
     },
+    "url": "http://www.kidugawa.com/",
     "price": "年券　9,500円日券　3,100円  年券は解禁日より発売。日券は解禁日の10日後より発売。"
   },
   {
     "id": "spot-731",
     "name": "道の駅　お茶の京都　みなみやましろ村",
     "description": "産直野菜売り場、お土産売り場、日用品販売食堂、テイクアウト、休憩室道路情報室24時間使用可能トイレ",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.765175,
       "longitude": 136.024442
     },
+    "url": "https://michinoeki.kyoto.jp/",
     "openingHours": "道の駅　9時～18時のもん市場　9時～18時村民百貨店　9時～18時村風土食堂つちのうぶ　11時～16時村茶屋　9時30分～17時"
   },
   {
@@ -8234,7 +8548,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-733",
     "name": "恋志谷神社",
     "description": "木津川のほとりにある恋志谷神社は、後醍醐天皇の寵妃が祀られており、昔から子授けの神として、また婦人病を除く神として信仰されており、毎年、春秋の祭礼には遠方からも多くの人が訪れる。境内近くには「雄滝」、「雌滝」という一対の滝がある。※ご利益：縁結び、恋愛成就、子授け、安産、病気平癒、家内安全、無病息災",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.768427,
       "longitude": 135.98773
@@ -8246,7 +8560,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-734",
     "name": "春光寺",
     "description": "文化圏が奈良県に属していた南山城村には、今も奈良文化の影響を色濃く残した寺が残っている。春光寺もその一つで、本尊の木造薬師如来立像は、奈良様風の代表格、元興寺の木造薬師如来立像の系統を受け継いでいる。カヤ一木造りのこの本尊は、重要文化財に指定されている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.773371,
       "longitude": 135.996771
@@ -8262,6 +8576,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.03336,
       "longitude": 135.733745
     },
+    "url": "http://www.nagakusa.info",
     "openingHours": "10時30分～17時（入館16時30分）",
     "price": "入庵料　1,000円（抹茶と菓子付）※要予約※月1回、日曜日も受け付けています、お問い合わせください。日本刺繍一日体験受講料・材料費　22,000円～（税込）所要時間／約3時間※要予約（一週間前までに）"
   },
@@ -8274,6 +8589,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.041803,
       "longitude": 135.744823
     },
+    "url": "http://www.kyoto-izusen.com/",
     "openingHours": "11時～16時（ラストオーダー）",
     "price": "3,500円～（税込）"
   },
@@ -8281,11 +8597,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-737",
     "name": "くるっとパーク紫明通",
     "description": "113台※高さ制限2.30m",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.038461,
       "longitude": 135.753776
     },
+    "url": "http://www.kyotopublic.or.jp",
     "openingHours": "0時～24時（24時間営業）",
     "price": "〈普通車〉8時～20時　40分/200円、最大料金900円20時～翌8時　60分/100円、最大料金300円"
   },
@@ -8298,6 +8615,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.039381,
       "longitude": 135.729244
     },
+    "url": "http://www.shokoku-ji.jp/",
     "openingHours": "9時～17時",
     "price": "一般　400円小・中学生　300円"
   },
@@ -8310,6 +8628,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.054792,
       "longitude": 135.731709
     },
+    "url": "http://genkouan.or.jp/",
     "openingHours": "9時～17時",
     "price": "大人　400円（中学生以上）※11月は500円子供　200円（小学生）"
   },
@@ -8322,6 +8641,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.038697,
       "longitude": 135.7432
     },
+    "url": "http://kenkun-jinja.org",
     "openingHours": "拝観自由授与所　9時～17時",
     "price": "無料"
   },
@@ -8329,11 +8649,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-741",
     "name": "大谷大学博物館",
     "description": "大谷大学は寛永5年（1665）に東本願寺の学寮として京都の地に創立されたことにはじまる。明治34年（1901）には東京巣鴨に移転開校し、近代的な大学としてスタートした。そののち大正2年（1913）に現在の地に移転して今日に至っている。平成13年（2001）に近代化100年（創立336年）を迎えるにあ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.043195,
       "longitude": 135.758911
     },
+    "url": "http://www.otani.ac.jp/kyo_kikan/museum/",
     "openingHours": "10時～17時（入館は16時30分まで）※事前予約制とする場合があります。開館予定はホームページ（http://www.otani.ac.jp/kyo_kikan/museum/）をご確認ください。",
     "price": "企画展　無料特別展　有料（一般、大学生のみ）"
   },
@@ -8341,11 +8662,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-742",
     "name": "ガラシャ/グラススタジオ北やま",
     "description": "ステンドグラスは注文制作の他、ランプ、パネル、アクセサリー、小物、万華鏡などを展示販売。ショップは吹きガラス作家による日常のガラス中心に。隣接スペースでは、ステンドグラス教室、材料販売、体験教室（2時間～）ができます。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.049785,
       "longitude": 135.754437
     },
+    "url": "http://www.kyotogracia.jp",
     "openingHours": "10時30分～18時30分",
     "price": "ペンダント体験他　2,500円～（税別）※材料費込み・持ち物不用※要予約"
   },
@@ -8358,6 +8680,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.022866,
       "longitude": 135.728562
     },
+    "url": "http://www.kyoto-furitutaiikukan.jp/",
     "openingHours": "9時～21時",
     "price": "第1競技場　全面　15,500円～1,058,860円　部分　5,100円～17,950円第2競技場　全面　6,120円～81,290円　部分　2,950円～10,500円会議室　1,020円～14,580円トレーニングルーム　350円※予約は同館へ直接（使用施設、使用区分により受付期間、料金等が大きく異なるので要注意）"
   },
@@ -8370,6 +8693,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.032626,
       "longitude": 135.731986
     },
+    "url": "http://www.hiranojinja.com",
     "openingHours": "6時～17時（桜期21時頃まで）",
     "price": "無料"
   },
@@ -8377,7 +8701,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-745",
     "name": "等持院",
     "description": "等持院は足利家の菩提寺として知られ、霊光殿には足利歴代将軍の木像が安置されている。方丈（本堂）北側には、衣笠山を借景とした芙蓉池と東側に心字池、ともに池泉回遊式庭園がある。夢窓国師の作庭として伝わる庭園の一つ。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.031556,
       "longitude": 135.723445
@@ -8394,6 +8718,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.05803,
       "longitude": 135.75391
     },
+    "url": "http://suguki-narita.com/",
     "openingHours": "10時～18時",
     "price": "すぐき　100gあたり432円"
   },
@@ -8406,6 +8731,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.042331,
       "longitude": 135.748776
     },
+    "url": "http://www.spaghetti-anri.com",
     "openingHours": "昼　11時30分～14時（ラストオーダー13時30分）夜　18時～22時（ラストオーダー20時30分）※小さなお店のため、予約が望ましい。",
     "price": "ランチセット　1,100円～ディナーセット　1,500円～パーティメニュー　2,500円～"
   },
@@ -8430,6 +8756,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.041233,
       "longitude": 135.747646
     },
+    "url": "http://www.daitokuji-ikkyu.jp/",
     "openingHours": "12時～18時（入店）",
     "price": "大徳寺精進料理縁高盛　4,840円（税・サ込）大徳寺精進料理本膳　8,470円、12,100円、14,520円（税・サ込）"
   },
@@ -8448,11 +8775,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-751",
     "name": "大森リゾートキャンプ場",
     "description": "自然に囲まれたのんびりとした空間。山あり。川あり。事前予約でアドベンチャースクールも体験できる。（そば打ちや、わらぞうり教室、曳き馬体験、ウッドクラフト等）自家製有機栽培の野菜を使った焼き肉セットも好評。（要予約）",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.146674,
       "longitude": 135.700089
     },
+    "url": "http://omori-camp.jp/",
     "openingHours": "9時～18時（日帰り）",
     "price": "場所代大人（18才以上）　1,000円小人（3才～高校生）　500円"
   },
@@ -8477,6 +8805,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.059333,
       "longitude": 135.752927
     },
+    "url": "http://kamigamo-tedukuriichi.com/",
     "openingHours": "毎月第4日曜日9時～16時"
   },
   {
@@ -8507,11 +8836,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-756",
     "name": "手仕事雑貨屋　風土",
     "description": "築90年の古い米穀店を利用した、懐かしく心和む店舗空間。ShopGallery人の手が生み出すやさしい道具「手仕事」にこだわったガラス製品、陶器、鉄器などが店内に並んでいる。また、庭に面するギャラリーでは、多彩な企画展、ワークショップも開催される。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.040872,
       "longitude": 135.751039
     },
+    "url": "http://www2n.biglobe.ne.jp/~urata/",
     "openingHours": "11時～18時"
   },
   {
@@ -8547,6 +8877,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.049674,
       "longitude": 135.733142
     },
+    "url": "http://www.shozan.co.jp/",
     "openingHours": "染織工芸館　8時～21時茶花園　9時～17時",
     "price": "寄せ植え体験（草木、鉢、土、苔、ネット、庭園見学料含む）　2,750円～（税込）※要予約（2名～24名まで）庭園入場　500円（税込）団体（25名以上）　400円（税込）園内でお食事ご利用された方は庭園が一律300円（税込）でご入場いただけます。"
   },
@@ -8579,6 +8910,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.044584,
       "longitude": 135.745952
     },
+    "url": "https://daisen-in.net/",
     "openingHours": "3月～11月　9時～17時12月～2月　9時～16時30分",
     "price": "拝観料　400円お抹茶付き　700円"
   },
@@ -8603,6 +8935,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.051269,
       "longitude": 135.761942
     },
+    "url": "https://www.kitayamakaikan.jp/",
     "openingHours": "常設展期間　9時30分～16時30分（入館は16時まで）特別展期間　9時30分～16時30分（入館は16時まで）　※ただし、毎週金曜日及び、市民講座開催日は18時まで開館（入館は17時30分まで）",
     "price": "特別展　一般　1,000円　高校・大学生、団体（20名以上）　800円　表千家同門会員　800円常設展　一般　800円　高校・大学生、団体（20名以上）　600円　表千家同門会会員無料※呈茶（菓子・薄茶）付"
   },
@@ -8615,6 +8948,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.059293,
       "longitude": 135.752531
     },
+    "url": "http://www.kamigamojinja.jp/",
     "openingHours": "二ノ鳥居内　5時30分～17時楼門内　8時～16時45分特別拝観は10時～16時（土曜日、日曜日、祝日は16時30分まで）自由参拝",
     "price": "特別参拝　500円"
   },
@@ -8622,7 +8956,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-766",
     "name": "大宮交通公園",
     "description": "現在、休園中。市内唯一の交通公園としての機能及び豊な緑をいかし、自転車を学び、楽しみ、交流する場及び市民の憩いの場となるよう再整備を進めており、令和3年春の再開園を予定しています。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.053348,
       "longitude": 135.743392
@@ -8638,6 +8972,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.033659,
       "longitude": 135.727344
     },
+    "url": "https://www.ritsumeikan-wp-museum.jp",
     "openingHours": "10時～12時（入館は11時30分まで）13時～15時（入館は14時30分まで）※消毒等の実施のため12時～13時は一旦退館をお願いいたします。",
     "price": "大人　400円（350円）中学・高校生　300円（250円）小学生　200円（150円）（ ）内は20名以上の団体料金「世界報道写真展」開催期間中は、大人500円（団体割引無し）"
   },
@@ -8662,6 +8997,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.05436,
       "longitude": 135.750817
     },
+    "url": "http://www.koryomuseum.or.jp/",
     "openingHours": "10時30分～16時30分（入館は16時まで）※新型コロナウイルス感染症予防対策のため、当面の間、開館時間を短縮いたします。ご来館当日の開館情報は公式ホームページをご覧ください。",
     "price": "一般　500円高校・大学生　400円中学生以下無料（特別展の場合変動あり）※障害者手帳をお持ちのご本人と付き添いの方1名は無料※65歳以上の方は一般料金より2割引（年齢の分かるものを提示）"
   },
@@ -8686,6 +9022,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.05134,
       "longitude": 135.763483
     },
+    "url": "http://www.touyoutei.co.jp",
     "openingHours": "11時～22時（ラストオーダー21時）",
     "price": "昼　1,320円～夜　1,500円～"
   },
@@ -8710,6 +9047,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.043901,
       "longitude": 135.746032
     },
+    "url": "http://www.rinnou.net/cont_03/07daitoku/",
     "openingHours": "9時～16時"
   },
   {
@@ -8721,6 +9059,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.046012,
       "longitude": 135.742029
     },
+    "url": "http://imamiyajinja.org",
     "openingHours": "参拝自由",
     "price": "無料"
   },
@@ -8733,6 +9072,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.035151,
       "longitude": 135.726063
     },
+    "url": "https://insho-domoto.com",
     "openingHours": "9時30分～17時（入館16時30分まで）",
     "price": "一般　510円高校・大学生　400円小・中学生　200円団体（20名以上）2割引※65歳以上の方（要証明）、障害者手帳をお持ちの方（介護者1名を含む）は無料"
   },
@@ -8745,6 +9085,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.056837,
       "longitude": 135.765969
     },
+    "url": "http://www.ruruson.sakura.ne.jp",
     "openingHours": "11時30分～14時（ラストオーダー）17時～20時（ラストオーダー）",
     "price": "昼　2,000円～（税別）夜　4,000円～（税別）"
   },
@@ -8787,11 +9128,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-780",
     "name": "京象嵌の館　川人象嵌・川人ハンズ",
     "description": "象嵌の製作実演、資料の展示、作品販売、体験教室。体験教室（要予約）所要時間／1時間30分定員／4名～6名（一教室）",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.02606,
       "longitude": 135.723899
     },
+    "url": "http://www.kawahitozougan.com/",
     "openingHours": "9時～16時30分",
     "price": "体験教室　1名3,000円"
   },
@@ -8799,11 +9141,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-781",
     "name": "京都の歴史を学ぶ（平安京の遺跡めぐりなど）",
     "description": "平安京をはじめ市内の遺跡をガイドの案内により巡る「遺跡めぐり」を実施。また、発掘体験も可。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.029953,
       "longitude": 135.749633
     },
+    "url": "https://www.kyoto-arc.or.jp/museum/",
     "openingHours": "事前相談※ただし、発掘体験は天候等により実施できない場合がある。"
   },
   {
@@ -8815,6 +9158,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.026635,
       "longitude": 135.734499
     },
+    "url": "http://www1.odn.ne.jp/kozu-kobunka/",
     "openingHours": "10時～17時",
     "price": "要問合せ"
   },
@@ -8822,11 +9166,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-783",
     "name": "京都こども文化会館（エンゼルハウス）",
     "description": "京都こども文化会館は、文化芸術を鑑賞する場として、また、文化芸術を創造し発表する場として、国際児童年を記念して京都府と京都市の協力により開館した施設。こどもから大人まで、低料金で利用できる公立の施設です。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.027004,
       "longitude": 135.738299
     },
+    "url": "http://www.eonet.ne.jp/~angel-house/",
     "openingHours": "9時～21時",
     "price": "演目による"
   },
@@ -8834,11 +9179,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-784",
     "name": "千本釈迦堂（大報恩寺）",
     "description": "正式には大報恩寺。数々の災厄をまぬがれ、安貞元年（1227）の創建当時のままの姿で残る京都市街最古の建造物。この本堂造営には切ないエピソードがある。棟梁が柱を短く切り過ぎた際、その妻、おかめが「斗ぐみ（ますぐみ）をほどこせば・・・」と提言し、造営は成功。しかし、おかめは夫の名誉のために自刃。彼女の徳",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.031604,
       "longitude": 135.739812
     },
+    "url": "http://www.daihoonji.com",
     "openingHours": "9時～17時",
     "price": "拝観料（堂内と第二霊宝殿）　一般　600円　高校・大学生　500円　小・中学生　400円団体（20名以上）は50円引き"
   },
@@ -8851,6 +9197,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.01879,
       "longitude": 135.767265
     },
+    "url": "http://www.kyotopublic.or.jp",
     "openingHours": "0時～24時（24時間営業）",
     "price": "普通車8時～20時　20分100円20時～翌8時　60分100円昼間（8時～20時）最大1,300円夜間（20時～翌8時）最大500円"
   },
@@ -8863,6 +9210,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.027672,
       "longitude": 135.734547
     },
+    "url": "https://www.kyotofu.co.jp",
     "openingHours": "10時～18時カフェは17時ラストオーダー",
     "price": "おとうふ1丁　200円～豆乳ソフトクリーム　300円～"
   },
@@ -8870,7 +9218,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-787",
     "name": "京やのお昼・甘味処　ShiじMa",
     "description": "もみじやヒメウツギ等の木々と季節の和花に彩られた路地奥の一軒家レストラン。（テーブル12席）和洋を取り混ぜた『昼膳』は、自家菜園の野菜を中心に優しい味。また、黒大豆みつ豆、あんみつは寒天・黒みつ・あんこ等全て手作りです。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.025918,
       "longitude": 135.753878
@@ -8881,11 +9229,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-788",
     "name": "菓遊茶屋",
     "description": "菓子職人が目の前で調製してくれるできたての和菓子を抹茶で味わえる。1階は店舗。代表銘菓の柚餅、京観世をはじめ季節の銘菓をとり揃えている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.029955,
       "longitude": 135.751442
     },
+    "url": "https://www.tsuruyayoshinobu.jp",
     "openingHours": "10時～17時（ラストオーダー16時30分）",
     "price": "季節の生菓子と抹茶セット　1,210円"
   },
@@ -8898,17 +9247,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.030535,
       "longitude": 135.7374
     },
+    "url": "http://www.yuzuki-net.jp/",
     "openingHours": "10時～18時"
   },
   {
     "id": "spot-790",
     "name": "近為",
     "description": "明治12年（1879）創業の京漬物の老舗。飲食スペースが設けられており、近為自慢の漬物で「きんため御膳」が味わえる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.031269,
       "longitude": 135.741916
     },
+    "url": "http://www.kintame.co.jp/",
     "openingHours": "飲食（きんため御膳）　11時30分～14時50分（ラストオーダー14時）店舗　9時30分～17時30分",
     "price": "きんため御膳　1,980円（税込）"
   },
@@ -8916,11 +9267,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-791",
     "name": "萬亀楼",
     "description": "有職料理とは、古くからの宮廷の儀式や行事の際に供されたもの。萬亀楼では、これに現代風の味つけを施し、現代人にも美味しく食せるようにした料理が賞味できる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.022142,
       "longitude": 135.750433
     },
+    "url": "http://www.mankamerou.com/",
     "openingHours": "昼　12時～15時（閉店）夜　17時30分～21時30分（閉店）",
     "price": "有職料理コース　30,000円、40,000円、50,000円（税・サ別）京料理コース　10,000円～（税・サ別、12時～13時までに入店）　18,000円～（税・サ別、12時～19時までに入店）竹籠弁当　6,500円（税・サ別、12時～14時までに入店）"
   },
@@ -8945,6 +9297,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.022953,
       "longitude": 135.76885
     },
+    "url": "http://www.bungei.jp/",
     "openingHours": "開館時間　9時～21時30分（催しによる）受付時間　9時～18時展示室　10時～18時（月曜日は準備日、最終日の終了時間は異なる。）",
     "price": "展示室　入場無料ホール・和室公演は催しによって異なる"
   },
@@ -8969,17 +9322,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.02509,
       "longitude": 135.767338
     },
+    "url": "http://nashinoki.jp/",
     "price": "拝観自由"
   },
   {
     "id": "spot-796",
     "name": "宝鏡寺（人形の寺）",
     "description": "歴代皇女が住持となる尼門跡寺院のため百々御所の名がある。孝明天皇遺愛の人形のほか、御所より賜った人形などを公開し、人形寺と呼ばれている。春と秋の2回開かれる人形展に合わせて寺内を一般公開。また、10月14日の人形供養祭の日には全国各地からよせられた人形の供養が行われる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.034062,
       "longitude": 135.752714
     },
+    "url": "http://www.hokyoji.net/",
     "openingHours": "3/1～4/3、11/1～11/30※新型コロナウイルス感染症拡大防止対策のため、2021年は3月1・2・3日、6・7日、13・14日、20・21日、27・28日、4月3日の合計12日間のみです。",
     "price": "600円"
   },
@@ -8987,11 +9342,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-797",
     "name": "西陣くらしの美術館　冨田屋",
     "description": "国の登録有形文化財の町家を見学いただき、古くからつちかわれたしきたりの話をお楽しみください。「生きた町家」に触れることができます。また、ご希望に応じて、着物の着付けやお茶席、伝統弁当も体験いただけます。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.027438,
       "longitude": 135.748891
     },
+    "url": "http://www.tondaya.co.jp/",
     "openingHours": "9時～17時（最終入館16時）",
     "price": "〈基本プラン〉「町家の見学」+「しきたりを学ぶ」　2,200円(税込)〈オプション〉着物体験　別途4,400円(税込)お茶席体験　別途3,300円(税込)伝統弁当　別途3,300円(税込)12/29～1/3は正月特別料金(30%増)"
   },
@@ -8999,11 +9355,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-798",
     "name": "天喜",
     "description": "天ぷらと京料理が美味しくいただける。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.030612,
       "longitude": 135.742124
     },
+    "url": "http://kyoto-tenki.com",
     "openingHours": "11時30分～20時（ラストオーダー）",
     "price": "会席料理　昼　6,000円～　夜　10,000円～カウンター（予約可）　3,850円～"
   },
@@ -9016,6 +9373,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.024633,
       "longitude": 135.76828
     },
+    "url": "http://www7a.biglobe.ne.jp/~rozanji/",
     "openingHours": "9時～16時",
     "price": "大人　500円中学生以下　400円"
   },
@@ -9023,22 +9381,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-800",
     "name": "御所西あいぜん　西村兄妹キモノ店",
     "description": "京都らしい手仕事の技で作られたきもの、帯の制作・小売。コーディネイトの相談や、アフターケア、メンテナンスの相談などお気軽にどうぞ。家族経営のアットホームなお店です。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.023734,
       "longitude": 135.757603
     },
+    "url": "http://www.kimono-aizen.co.jp",
     "openingHours": "10時～18時"
   },
   {
     "id": "spot-801",
     "name": "公益財団法人手織技術振興財団　織成舘",
     "description": "西陣を代表するジャカード機を使用した手織・緯錦（ヌキニシキ）の工場が見学できる。また、昭和11年（1936）に西陣織の店舗兼住まいとして建てられた、梁・柱・明かり天窓など西陣の織屋建の面影をそのまま残したミュージアムでは、昭和を代表する国宝級の復原能装束をはじめ、全国の手織物・時代衣裳を展示している",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.032855,
       "longitude": 135.74541
     },
+    "url": "https://orinasukan.com",
     "openingHours": "10時～16時手織体験　火曜日～土曜日　10時～13時、13時～16時",
     "price": "大人　500円 （400円）小・中学・高校生　350円（300円）（ ）内は団体（10名以上）料金手織体験　　初心者コース　5,000円（材料費、見学料、お土産付）※カード利用可（ただし、入館料は不可）"
   },
@@ -9051,6 +9411,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.030675,
       "longitude": 135.737294
     },
+    "url": "http://www.kurochiku.co.jp/kurosuke/",
     "openingHours": "11時～14時（ラストオーダー）17時～21時（ラストオーダー）※夜はなるべく予約を",
     "price": "昼　小梅　3,000円（税別）　梅　4,000円（税別）夜　夕梅　5,000円（税別）　天神　7,000円（税別）　くろすけ　10,000円（税別）※夜はサービス料10% ※カード利用可"
   },
@@ -9058,11 +9419,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-803",
     "name": "虎屋菓寮　京都一条店",
     "description": "庭を眺められる老舗和菓子屋の喫茶。店内41席とテラス席12席有り。和菓子や京都等に関する本を約600冊そろえ、自由に閲覧できる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.02646,
       "longitude": 135.758525
     },
+    "url": "http://www.toraya-group.co.jp",
     "openingHours": "10時～18時（ラストオーダー17時30分）",
     "price": "季節の生菓子（飲み物付）　1,232円～吉野本葛をつかった葛切　1,430円あんみつ（黒蜜又は白蜜）1,320円（すべて税込）"
   },
@@ -9075,6 +9437,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.02996,
       "longitude": 135.736726
     },
+    "url": "http://www.maiko3.com/",
     "price": "北野をどり　お茶席付御観覧券　5,500円　御観覧券（お茶席無）　5,000円寿会（ことぶきかい）　8,000円（予定）※寿会のみ前年度のものを記載しています。"
   },
   {
@@ -9085,13 +9448,14 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.025091,
       "longitude": 135.767338
-    }
+    },
+    "url": "http://nashinoki.jp/"
   },
   {
     "id": "spot-806",
     "name": "本法寺",
     "description": "表千家・裏千家の家元に向かい合う閑静な地に建つ、日蓮宗の本山のひとつ。本阿弥光悦の菩提寺であり、長谷川等伯の縁のお寺。見どころは、書院前にある光悦作の国の指定名称「巴の庭」。桃山時代風の豪放な庭園で、枯瀧石形が据え置かれ滝水の動きを石で表現している。また、等伯筆の大涅槃図（通常は実物大の複製を展示）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.03502,
       "longitude": 135.752137
@@ -9103,7 +9467,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-807",
     "name": "千本玉壽軒",
     "description": "京菓子の老舗。名菓は羽二重餅でごまの餡を包んだ「西陣風味」。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.030517,
       "longitude": 135.741918
@@ -9120,6 +9484,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.03362,
       "longitude": 135.762612
     },
+    "url": "http://www.shokoku-ji.jp",
     "openingHours": "10時～17時（入館は16時30分まで）",
     "price": "入館料　一般　800円　65才以上・大学生　600円　中学・高校生　300円　小学生　200円（一般の方に限り、20名様以上、100円割引いたします）"
   },
@@ -9127,7 +9492,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-809",
     "name": "瑞春院",
     "description": "相国寺塔頭。作家水上勉氏が9歳～13歳まで雛僧としてここで修行し、その体験をもとに小説「雁の寺」を著したことで知られている。本堂の御本尊は6代将軍足利義教が寄進した平安時代の木像仏で、雲上来迎の姿は他に例を見ない。表千家の不審庵を模した茶室「久昌庵」（名工・諸冨厚士氏作・寄進）は、室町時代の石組みが",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.032223,
       "longitude": 135.760229
@@ -9137,11 +9502,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-810",
     "name": "茶道資料館・今日庵文庫",
     "description": "裏千家センター内にある茶道を総合的に学ぶことができる施設。茶道資料館（ちゃどうしりょうかん）は、茶の湯に関する企画展を開催し、掛物、茶碗、花入などの茶道具や関連の美術工芸品、古文献などを中心とした展示を行っている美術館です。（展覧会の詳細はホームページをご覧ください。）2階陳列室には、今日庵（こんに",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.03474,
       "longitude": 135.752018
     },
+    "url": "http://www.urasenke.or.jp/textc/gallery/tenji/index.html",
     "openingHours": "茶道資料館　9時30分～16時30分（入館は16時まで）今日庵文庫　平日10時～16時",
     "price": "通常展　一般　700円　大学生　400円　中学・高校生　300円特別展　一般　1,000円　大学生　600円　中学・高校生　350円20名以上は団体割引有り小学生以下ならびに茶道資料館メンバーシップ校の学生・教職員の方は無料今日庵文庫は入館料無料"
   },
@@ -9149,11 +9515,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-811",
     "name": "西陣織会館",
     "description": "衣文化の伝統を肌で感じとることができる伝統産業見学施設。きものショーの上演や、十二単・舞妓・芸妓の着付のほか、きもの（小紋）の着付1日外出や、ミニ手機による手織体験などを実施している。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.028774,
       "longitude": 135.751678
     },
+    "url": "http://www.nishijinori.jp/",
     "openingHours": "開館時間　10時～17時着付け、手織体験　10時～15時30分（内容により異なる）",
     "price": "入館無料きもの体験（十二単・芸妓・舞妓）　16,500円（税込・記念写真1枚付）きもの（小紋）1日外出　4,400円（税込）手織体験　一般　2,200円（税込）　団体　1,980円（税込、15名以上）　学生　1,870円（税込）　団体　1,683円（税込、15名以上） マフラー製作体験（10時～、13時～）　一般（1日5名まで）6,600円（税込）要予約※着付け、手織は前日までに要予約（電話、またはホームページで受付）"
   },
@@ -9161,7 +9528,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-812",
     "name": "囀市",
     "description": "主に、手作り品や食べ物の出店が多い。雨天決行。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.036512,
       "longitude": 135.761617
@@ -9172,44 +9539,48 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-813",
     "name": "長五郎餅本舗",
     "description": "北野の天神さんの名物として豊臣秀吉の時代から親しまれてきた長五郎餅は、京都で最初の包み餅とされている。普段はお店でしか買えないこのお餅も、毎月25日には北野天満宮の境内に出るお店で買うことができる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.026573,
       "longitude": 135.738456
     },
+    "url": "http://www.chogoromochi.co.jp/",
     "openingHours": "9時～17時"
   },
   {
     "id": "spot-814",
     "name": "佐々木酒造株式会社",
     "description": "明治26年（1893）創業。豊臣秀吉の邸宅・聚楽第の跡地にある造り酒屋。伝統ある酒造りを継承しつつ積極的に新しい技術も取り入れている。代表銘柄「純米大吟醸　聚楽第」〈精米歩合〉40％〈主な使用米〉山田錦 （兵庫）〈日本酒度〉+2.5〈酸度〉1.4〈特徴〉京料理にあう淡麗辛口。【販売店舗】蔵元大丸京都",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.018643,
       "longitude": 135.747676
     },
+    "url": "http://jurakudai.com/",
     "openingHours": "10時～17時"
   },
   {
     "id": "spot-815",
     "name": "京都御所",
     "description": "京都市街のほぼ中央にある京都御苑は、東西約700m、南北約1,300mの広大な敷地を誇る。かつては皇族や公家の邸宅が集まっていたが、東京遷都をきっかけに東京へ移動、その後を公園化したもの。玉砂利の広い道、緑の木々や芝生が美しく、それらの豊富な樹木は、街中のオアシス的な存在で、野鳥の宝庫としても知られ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.025423,
       "longitude": 135.762126
     },
+    "url": "http://sankan.kunaicho.go.jp/",
     "price": "無料※参観は事前申し込み不要の通年公開に変更されました。公開時間については、宮内庁ホームページ（http://sankan.kunaicho.go.jp/）をご確認ください。"
   },
   {
     "id": "spot-816",
     "name": "京菓子資料館",
     "description": "京菓子資料館は、京菓子と京のおもてなし文化を体験することができる施設。敷地の間口の狭さを活かした京都らしい建物は、1階に茶室、2階に展示室がある。1階の裏千家鵬雲斎千玄室大宗匠ご命名の茶室「祥雲軒」では、季節の京菓子と薫り豊かなお茶でおもてなし。椅子に座る立礼式なので気軽に体験できる。茶室に続く坪庭",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.032433,
       "longitude": 135.758969
     },
+    "url": "http://www.kyogashi.co.jp/shiryokan/index.html",
     "openingHours": "9時～17時（最終入館は16時30分）※茶席は16時ラストオーダー",
     "price": "入館無料茶席利用　700円"
   },
@@ -9217,11 +9588,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-817",
     "name": "鶴屋吉信",
     "description": "鶴屋吉信は享和3年（1803）創業という老舗の和菓子屋さん。バラエティーに富んだ和菓子の数々が店先に並び、なかでも京名物の「柚餅（ゆうもち）」は柔らかく上品な味。優雅な柚子の香りを求肥にしのばせ、和三盆糖でまぶした、風味豊かなつまみ菓子。三代　伊兵衛が明治初年に考案。また「福ハ内（ふくわうち）」は、",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.029954,
       "longitude": 135.751441
     },
+    "url": "https://www.tsuruyayoshinobu.jp",
     "openingHours": "1階店舗　9時～18時2階お休み処　10時～17時（ラストオーダー16時30分）",
     "price": "柚餅　柚形パッケージ　1個　648円（税込）　柚形パッケージ　2個入り　1,296円（税込）　箱入　1,188円（税込）　※賞味期限　製造日より22日福ハ内　8入り　2,160円（税込）　13入り　3,240円（税込）　21入り　4,320円（税込）　※賞味期限　製造日より25日"
   },
@@ -9234,13 +9606,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.033991,
       "longitude": 135.745756
     },
+    "url": "http://souzen.co.jp/",
     "openingHours": "販売　10時～18時茶房　11時～18時（ラストオーダー17時30分）"
   },
   {
     "id": "spot-819",
     "name": "一条戻り橋",
     "description": "一条通の堀川に架かる、長さ6.2mの小さな橋。平安京当時とその位置は変わっていないといわれている。河竹黙阿弥の歌舞伎・渡辺綱と鬼女の話や豊臣秀吉による千利休の木像の磔けなど、さまざまな伝説と歴史を持つ橋。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.026289,
       "longitude": 135.751947
@@ -9250,11 +9623,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-820",
     "name": "TAKENOKO　有限会社横山竹材店",
     "description": "大正8年（1919）創業の銘竹問屋で、和雑貨を中心に竹製品を販売している。また、MY竹箸製作体験（所要時間／2時間程度）もできる。あらかじめ「箸箱」・「箸袋」がセットになっているので、その場で完成させて持ち帰れる。ほか、茶杓製作体験（1名～30名、所要時間／2時間程度）、竹カゴ製作体験（1名～30名",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.023392,
       "longitude": 135.753706
     },
+    "url": "http://www.yokotake.co.jp",
     "openingHours": "9時～17時",
     "price": "MY竹箸製作体験　4,400円茶杓製作体験（スタンダードコース）　茶杓のみ　3,850円　茶杓+白竹茶杓入れ　5,500円茶杓製作体験（プレミアムコース）　　茶杓のみ　5,000円　茶杓+白竹茶杓入れ　6,650円　茶杓+本煤竹茶杓入れ　10,000円竹カゴ製作体験　四海波花カゴ　3,600円　よろずカゴ　4,400円　えびカゴ　4,400円※GOTOトラベル地域共通クーポン利用可"
   },
@@ -9267,6 +9641,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.026655,
       "longitude": 135.733948
     },
+    "url": "http://www.daishogun.or.jp/",
     "openingHours": "5/1～5/5、11/1～11/5（その他の日は要問い合わせ）10時～16時",
     "price": "個人　500円団体　400円学生　300円小学生以下無料"
   },
@@ -9279,17 +9654,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.031135,
       "longitude": 135.735109
     },
+    "url": "http://www.kitanotenmangu.or.jp/",
     "openingHours": "毎月25日の終日（6時～日没まで）"
   },
   {
     "id": "spot-823",
     "name": "山田松香木店",
     "description": "平安朝の頃より育まれた、香道を頂点とする「日本の香り」。その伝統を京都御所近くで受け継ぐ御香処。香木・香原料の輸入・鑑別に優れたノウハウをもつ。伽羅・沈香・白檀など香木の販売や、[1]聞香体験、[2]匂袋作りなどの体験教室も実施している。所要時間／[1]約50分、[2]約50分定員／[1]2名以上、",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.021128,
       "longitude": 135.757859
     },
+    "url": "https://www.yamadamatsu.co.jp/",
     "openingHours": "10時～17時30分体験　[1]10時30分（予約制、月曜日～土曜日）　[2]15時30分（予約制、月曜日～金曜日）",
     "price": "体験　[1]1,500円　[2]2,000円"
   },
@@ -9297,11 +9674,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-824",
     "name": "ギャラリー紫織庵",
     "description": "京都市景観保全地区の織物工場跡を利用し、長襦袢やきものなど、特に大正期から昭和初期のレトロモダン柄の長じゅばんや復刻製品を展示。当時の卓越した染織技量と京友禅染が見学できるギャラリー。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.033254,
       "longitude": 135.745582
     },
+    "url": "http://www.shiorian.gr.jp/",
     "openingHours": "10時～17時（夏季17時30分）",
     "price": "入館無料"
   },
@@ -9309,7 +9687,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-825",
     "name": "慈照院",
     "description": "相国寺塔頭。はじめ大徳院と号していたが、後に足利義政の菩提所となったことから、その法号にちなみ慈照院と改称した。江戸時代初期には桂宮家の菩提所となり、その学問所・棲碧軒が現存している。また、千宗旦好みの茶室・頤神室があることでも知られている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.035304,
       "longitude": 135.759757
@@ -9319,22 +9697,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-826",
     "name": "京の手創り体験",
     "description": "〈漆器加飾〉●材料をお選びいただきます。技法によって金額が変わります。・Aコース（丸絵皿/写真立て/ペン立て/筆入れ/八景小箱/コンパクト鏡/平鏡の7種類）　2,600円または3,000円・Bコース（手鏡/アクセサリーボックス/弁当箱/コーヒーカップの4種類）　3,000円または3,500円・丸盆　",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.028775,
       "longitude": 135.751678
     },
+    "url": "http://kyotedukuri.jp",
     "openingHours": "月曜日～金曜日9時～16時（入場）"
   },
   {
     "id": "spot-827",
     "name": "樂美術館",
     "description": "樂家に伝わった樂家歴代による樂焼作品および茶道工芸美術品が展示されている。年に3～4回程度、展示内容が変わる。（所要時間／約40分）その他、年に7～8回の「特別鑑賞茶会」と毎月1回土曜日または日曜日に開催の「手にふれる樂茶碗鑑賞会」がある。「特別鑑賞茶会」　樂家15代樂直入席主による館所蔵の作品を用",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.025565,
       "longitude": 135.753464
     },
+    "url": "http://www.raku-yaki.or.jp/",
     "openingHours": "10時～16時30分（入館は16時まで）",
     "price": "入館料　一般　900円～（展覧会により変更有り）　大学生　700円～（展示会により変更有り）　団体（一般30名以上）1割引　高校生　400円～　小・中学生無料"
   },
@@ -9342,11 +9722,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-828",
     "name": "ハリス理化学館同志社ギャラリー",
     "description": "創立者 新島襄の志と同志社の歴史を資料で紹介する展示施設。ハリス理化学館は、J.N.ハリスの寄附をもとに明治23年（1890）に竣工し、ながらく同志社における理化学教育の拠点となった建物であり、現在国の重要文化財に指定されている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.030318,
       "longitude": 135.760981
     },
+    "url": "https://harris.doshisha.ac.jp",
     "openingHours": "10時～17時（入館は16時30分まで）",
     "price": "無料"
   },
@@ -9354,11 +9735,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-829",
     "name": "安達くみひも館",
     "description": "帯締め、鎧兜など、室町時代などの組紐作品の展示が見学できる。（所要時間／約30分）定員／見学・体験ともに約50人（要予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.021156,
       "longitude": 135.75857
     },
+    "url": "http://www.adachikumihimokan.com/",
     "openingHours": "9時～16時",
     "price": "見学　 500円体験（9コース）〔A〕メガネ紐　1時間　3,500円（個人のみ）〔B〕飾り紐　1時間　3,300円（個人のみ）〔C〕携帯ストラップ　1時間　2,200円〔D〕組紐ブレスレット　1時間　2,200円〔E〕キーホルダー　1時間　2,200円〔F〕イヤホンジャック　1時間　2,200円〔G〕コネクトコード　1時間　2,200円〔H〕ブックマーカー　1時間　2,200円〔I〕リールキーホルダー　1時間　2,900円※団体（21名以上）割引有り"
   },
@@ -9366,11 +9748,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-830",
     "name": "京・西陣　孝太郎の酢",
     "description": "京西陣　孝太郎の酢は、創業180余年、酢一筋の商い。西陣の中でも茶道のお家元が集う名水どころ。厳選した国産米を使い、昔ながらの製法で造り続けています。米酢以外にも飲むお酢やレーズンなど約30種類以上の販売アイテムを取り揃えているので、ご年配の方からお若い方まで皆さんにお買い物を楽しんでいただけます。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.034312,
       "longitude": 135.755982
     },
+    "url": "http://koutarou-su.com/",
     "openingHours": "9時～17時",
     "price": "『Myぽん酢』づくり体験（要予約）1本（360ml）　1,200円（税別）"
   },
@@ -9378,11 +9761,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-831",
     "name": "妙蓮寺",
     "description": "宿坊あり。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.034638,
       "longitude": 135.750021
     },
+    "url": "http://myorenji.or.jp/",
     "openingHours": "拝観　10時～16時",
     "price": "寺宝拝観　庭園及び襖絵ガイド付拝観　500円　宝蔵庫拝観　300円（予約制）"
   },
@@ -9390,18 +9774,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-832",
     "name": "澤井醤油　本店",
     "description": "明治12年（1879）創業。洛中において醤油やもろみを醸造厳選された素材を基に、継承された技と昔ながらの桶や釜を用い、京都の風味と美味しさを守り続けています。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.023464,
       "longitude": 135.756453
     },
+    "url": "http://sawai-shoyu.shop-pro.jp",
     "openingHours": "平日　9時～17時日曜日、祝日　10時30分～15時30分"
   },
   {
     "id": "spot-833",
     "name": "町家写真館",
     "description": "西陣在住の写真家水野克比古のフォトスペース。築150年以上の町家を、使用する木材も出来るだけ古い民家などから集め、愛情と手間をかけて再生し、町家の持つ歴史と息づかいが感じられる写真ギャラリー。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.02772,
       "longitude": 135.748756
@@ -9425,11 +9810,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-835",
     "name": "相国寺",
     "description": "足利義満によって明徳3年（1392）に建立された相国寺は、竣工までに約10年を費やしたと伝えられている。現存する日本最古の法堂の天井画は、狩野光信筆の「蟠龍図」で、鳴き龍とも呼ばれる。総門をくぐると、参道が松並木のあいだを縫うように伸びる。境内の承天閣美術館などは見ごたえ十分。〈坐禅・維摩会〉毎月第",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.032558,
       "longitude": 135.762008
     },
+    "url": "https://www.shokoku-ji.jp/",
     "openingHours": "坐禅「維摩会」　第2・第4日曜日　9時～11時　（ただし、1月第2日曜日、8月第2・第4日曜日、12月第4日曜日は休会）特別拝観　春（3/24～6/4）と秋（9/25～12/15）　10時～16時",
     "price": "坐禅会　志納（100円以上）拝観（春と秋の特別拝観時のみ）　800円（一般及び学生の団体20名以上は700円）期間外は境内自由参拝"
   },
@@ -9437,11 +9823,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-836",
     "name": "京都市考古資料館",
     "description": "京都市内の発掘調査により発見された、旧石器時代から平安時代を経て江戸時代に至るまでの各時代の埋蔵文化財を常設展示し、京都市の歴史を紹介している。また、発掘調査や研究成果に基づいた特別展示を年2回、市内の大学などと協働して行う合同企画展を年1回開催している。また、随時、速報展・企画陳列も行っている。建",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.029944,
       "longitude": 135.74964
     },
+    "url": "https://www.kyoto-arc.or.jp/museum/",
     "openingHours": "9時～17時（入館16時30分まで）",
     "price": "無料"
   },
@@ -9454,6 +9841,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.019172,
       "longitude": 135.767635
     },
+    "url": "http://www.city.kyoto.lg.jp/bunshi/page/0000003963.html",
     "openingHours": "開館時間　9時～17時（ただし、2階閲覧室利用の受付は9時～16時30分）",
     "price": "無料"
   },
@@ -9478,6 +9866,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.028036,
       "longitude": 135.770371
     },
+    "url": "http://www.kitamura-museum.com",
     "openingHours": "3月中旬～6月中旬、9月初旬～12月初旬のみ開館10時～16時",
     "price": "一般　600円学生（中学生以上）　400円"
   },
@@ -9485,7 +9874,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-840",
     "name": "鳥岩楼",
     "description": "鳥料理専門店。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.030976,
       "longitude": 135.746662
@@ -9497,11 +9886,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-841",
     "name": "金剛能楽堂／能・狂言",
     "description": "平成15年（2003）6月に京都御所の西向かいに移転、開館した。旧能楽堂より140年の星霜を経た能舞台をそのまま移築。石舞台をしつらえた庭園をあわせて見学もできる。能楽シテ方5流の中で唯一京都を本拠地とする金剛流の能楽堂。「舞金剛」といわれる金剛流の躍動感溢れる優美・華麗な舞が見どころで、8月16日",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.02585,
       "longitude": 135.758893
     },
+    "url": "http://www.kongou-net.com/",
     "openingHours": "公演の詳細はホームページをご確認ください。"
   },
   {
@@ -9513,6 +9903,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.031135,
       "longitude": 135.735109
     },
+    "url": "http://www.kitanotenmangu.or.jp/",
     "openingHours": "神社の開門（通常時）　4月～9月　5時～18時　10月～3月　5時30分～17時30分　※修学旅行による参拝時間は要問合せ天神さん　毎月25日　6時～21時神楽　毎月25日　10時～17時頃宝物殿の開館　御縁日（25日）、観梅、青もみじ、紅葉シーズンほか",
     "price": "天満宮への参拝は無料宝物殿　一般　800円　中学・高校生　400円　小学生　250円※梅苑公開時（茶菓子付）　大人　1,000円　小人　500円"
   },
@@ -9520,11 +9911,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-843",
     "name": "護王神社",
     "description": "平安京建都に力を尽くした和気清麻呂を祭神とする。明治19年（1886）に現在地に社殿を造営、遷座した。清麻呂の難を猪が助けたという故事にちなみ、狛犬の代わりに石造りの猪が置かれている。社務所横には約3,000点の猪コレクションが陳列され、境内北側には清麻呂の銅像と約7tにも及ぶさざれ石がある。例祭は",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.022205,
       "longitude": 135.758999
     },
+    "url": "http://www.gooujinja.or.jp/",
     "openingHours": "6時～21時（受付授与所は9時～17時）",
     "price": "無料"
   },
@@ -9532,11 +9924,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-844",
     "name": "益富地学会館",
     "description": "美しい紫水晶、くねくねと曲がるこんにゃく石、恐竜のフンや卵の化石など世界中の鉱物、岩石、化石、隕石を約15,000点収蔵。常設展として見学できる。石に関する講演会や、野外採集会、その他の様々な研修会を毎月1～2回開いている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.02148,
       "longitude": 135.758653
     },
+    "url": "http://www.masutomi.or.jp/",
     "openingHours": "10時～16時標本展示室は土曜日、日曜日、祝日のみ開館（予約をすれば団体のみ平日可の場合あり）",
     "price": "大人　300円18歳以下無料"
   },
@@ -9549,6 +9942,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.030717,
       "longitude": 135.736799
     },
+    "url": "http://oimatu.co.jp/",
     "openingHours": "午前の部　10時～午後の部　13時30分～",
     "price": "1名　2,500円（税別）"
   },
@@ -9561,6 +9955,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.117944,
       "longitude": 135.770838
     },
+    "url": "https://www.kuramadera.or.jp",
     "openingHours": "9時～16時15分",
     "price": "高校生以上　300円（愛山費）写経　500円（お経一巻）"
   },
@@ -9585,6 +9980,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.010055,
       "longitude": 135.785168
     },
+    "url": "http://www.takeshigero.com/",
     "openingHours": "平日　11時30分～14時　17時～22時（ラストオーダー19時30分）土曜日、日曜日　11時30分～22時（ラストオーダー19時30分）",
     "price": "昼　懐石料理　7,700円～夜　16,500円～（サービス料別　昼10%、夜20%）"
   },
@@ -9597,6 +9993,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.012388,
       "longitude": 135.781971
     },
+    "url": "https://www.momak.go.jp/",
     "openingHours": "9時30分～17時金曜日、土曜日は20時まで（入館は、いずれも閉館の30分前まで）",
     "price": "コレクション・ギャラリー　一般　430円　大学生　130円高校生以下及び18歳未満、65歳以上の方は無料※企画展別途"
   },
@@ -9609,6 +10006,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.045088,
       "longitude": 135.797088
     },
+    "url": "https://www.enkouji.jp/",
     "openingHours": "9時～17時",
     "price": "大人　500円中学・高校生　400円小学生　300円"
   },
@@ -9621,6 +10019,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.011587,
       "longitude": 135.787078
     },
+    "url": "https://murin-an.jp",
     "openingHours": "4月～9月　9時～18時10月～3月　9時～17時※入場は閉場の30分前まで※1時間入替制、事前予約優先",
     "price": "入場　600円（小学生以下無料）茶室・母屋2階使用料1回　9時～12時　3,200円　12時～17時　3,800円　1日（9時～17時）　5,400円※茶室・母屋2階は要事前予約"
   },
@@ -9633,6 +10032,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.05399,
       "longitude": 135.78552
     },
+    "url": "http://matugasaki-daikokuten.net/",
     "openingHours": "9時～17時（ご朱印受付は16時30分まで）",
     "price": "拝観無料法話、祈祷、お札を授与　1,000円（10名以上の団体のみ。個人は別に規定有り。要予約）※現在、新型コロナウイルス感染症拡大防止のため、10名以上の団体の法話・祈祷・お札の授与の受付はしていません。※団体ご参拝の方は、事前にお電話にてお知らせください。"
   },
@@ -9645,6 +10045,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.011429,
       "longitude": 135.786739
     },
+    "url": "http://www.hyotei.co.jp",
     "openingHours": "11時～19時30分（ラストオーダー）",
     "price": "昼　20,000円～（税サ別）夜　25,000円～（税サ別）朝粥　4,000円（税サ別）（別館）松花堂弁当　5,000円（税サ別）（別館）"
   },
@@ -9657,6 +10058,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.015796,
       "longitude": 135.779589
     },
+    "url": "http://www.rokusei.co.jp",
     "openingHours": "11時30分～14時16時～21時（ラストオーダー20時）土曜日、日曜日、祝日　11時30分～21時（ラストオーダー20時）※入店は19時まで※夜は予約制",
     "price": "手をけ弁当　3,300円（14時まで）手をけコース　7,150円～8,800円会席料理（昼、夜）　11,000円～33,000円（サ別）"
   },
@@ -9669,6 +10071,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.01285,
       "longitude": 135.783571
     },
+    "url": "https://kyotocity-kyocera.museum/",
     "openingHours": "10時～18時",
     "price": "展覧会により異なる"
   },
@@ -9681,6 +10084,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.021582,
       "longitude": 135.796628
     },
+    "url": "http://anrakuji-kyoto.com",
     "openingHours": "公開中の見学時間は9時30分～16時30分くさの地蔵縁日　毎月2日　10時～16時（受付終了）※くさの地蔵縁日はコロナウイルス感染症が終息するまでお休みの予定です。",
     "price": "500円（中学生以下無料）"
   },
@@ -9688,11 +10092,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-857",
     "name": "国指定史跡岩倉具視幽棲旧宅",
     "description": "明治維新の立役者の一人、岩倉具視が元治元年（1864）から慶応3年（1867）まで隠れ棲んだ旧宅「鄰雲軒」があり、室内の観覧ができる。武田五一が設計した展示・収蔵施設である対岳文庫には岩倉具視やその家族の資料を展示している。旧宅の前には七代目小川治兵衛が携わった庭園がある。鄰雲軒や対岳文庫では各種講",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.078446,
       "longitude": 135.783133
     },
+    "url": "http://iwakura-tomomi.jp",
     "openingHours": "9時～17時（入場は16時30分まで）",
     "price": "大人　400円中学・高校生　200円小学生　100円"
   },
@@ -9705,6 +10110,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.043735,
       "longitude": 135.796131
     },
+    "url": "https://kyoto-shisendo.net/",
     "openingHours": "9時～17時（受付は16時45分まで）",
     "price": "大人　500円高校生　400円小・中学生　200円"
   },
@@ -9717,6 +10123,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.014134,
       "longitude": 135.794997
     },
+    "url": "http://www.eikando.or.jp/",
     "openingHours": "9時～16時（受付終了）",
     "price": "一般　600円小・中学・高校生　400円団体（30名以上）割引有り※ただし、季節により変更有り"
   },
@@ -9729,6 +10136,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.034182,
       "longitude": 135.773981
     },
+    "url": "http://www.shimogamosaryo.co.jp",
     "openingHours": "昼　11時30分～15時（ラストオーダー13時30分）夜　17時～21時（ラストオーダー20時）",
     "price": "昼　6,500円～（サ別・税別）夜　13,000円～（サ別・税別）"
   },
@@ -9741,6 +10149,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.013039,
       "longitude": 135.780947
     },
+    "url": "https://www.miyakomesse.jp/",
     "openingHours": "9時～17時（展示場は催事により開館時間の変更有り）京都伝統産業ミュージアム　9時～17時",
     "price": "京都伝統産業ミュージアム　無料"
   },
@@ -9753,6 +10162,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.024413,
       "longitude": 135.788186
     },
+    "url": "http://www.artzone-kaguraoka.com",
     "openingHours": "12時～19時",
     "price": "無料"
   },
@@ -9760,11 +10170,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-863",
     "name": "ひろや",
     "description": "貴船神社の畔にある老舗の純和風造り、京料理、政府登録国際観光旅館。四季折々の素材を生かした京懐石が中心で、食事だけでも楽しめる。夏期には、貴船川に設けられた川床で賞味できる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.122408,
       "longitude": 135.763408
     },
+    "url": "http://www.kibune-hiroya.com/",
     "openingHours": "11時～19時（ラストオーダー）",
     "price": "料理　10,000円～川床料理　11月　10,000円～　5月、6月　10,000円～　7月、8月　15,000円～　9月　10,000円～宿泊（1泊2食付）　32,000円～（税・サ別）"
   },
@@ -9777,6 +10188,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.044662,
       "longitude": 135.767721
     },
+    "url": "http://kyogashi.fc2web.com/",
     "openingHours": "京菓子講師倶楽部代表　京菓子司　笹屋吉清9時～18時、水曜日定休日",
     "price": "原則、5名まで12,500円（講師代、材料費、消費税を含む）追加1名毎に2,500円増京都市外が会場となる場合は、交通費を要する場合あり。また、キャンセルや参加人数変更等については、2日前まで（厳守）に連絡のこと。以後はキャンセル料発生。"
   },
@@ -9784,11 +10196,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-865",
     "name": "京都工芸繊維大学美術工芸資料館",
     "description": "収蔵品は、浅井忠の「武士山狩図」などを含む絵画、彫刻、金工、漆工、染織、陶磁器、建築図面など多岐にわたっている。また、19世紀末～20世紀前半のアール・ヌーヴォー、アール・デコ期のポスターコレクションは有名。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.049482,
       "longitude": 135.781196
     },
+    "url": "http://www.museum.kit.ac.jp/",
     "openingHours": "10時～17時（16時30分までに入館）",
     "price": "一般　200円大学生　150円高校生以下無料※京都・大学ミュージアム連携所属大学の学生・院生は学生証の掲示で無料"
   },
@@ -9801,6 +10214,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.050663,
       "longitude": 135.765442
     },
+    "url": "http://www.kyoto-toban-hp.or.jp/",
     "openingHours": "9時～17時（入園は16時30分まで）",
     "price": "一般　100円中学生以下無料70歳以上の方、身体障害者手帳等所持者の方は無料（証明するものが必要）"
   },
@@ -9813,6 +10227,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.048744,
       "longitude": 135.762736
     },
+    "url": "http://www.pref.kyoto.jp/plant/",
     "openingHours": "9時～17時（入園は16時まで）観覧温室　10時～16時（入室は15時30分まで）",
     "price": "入園料（温室は観覧料が別途同額必要）　一般　200円　高校生　150円　中学生以下無料※障害者手帳をお持ちの方(介護者も含む)は無料※府立陶板名画の庭との共通入園券有り※70歳以上の方は証明提示で無料"
   },
@@ -9848,6 +10263,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.064731,
       "longitude": 135.829031
     },
+    "url": "http://www.garden-museum-hiei.co.jp/",
     "openingHours": "10時～17時30分（入園受付17時まで）ただし、7/31～8/22の土曜日、日曜日、祝日及び8/11～8/13は20時30分まで営業（入園受付20時まで）",
     "price": "4/17～11/23　大人　1,200円　子供　600円11/24～12/5　大人　600円　子供　300円※団体（20名以上）は　大人　1,080円　子供　540円"
   },
@@ -9860,6 +10276,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.119274,
       "longitude": 135.828932
     },
+    "url": "http://kyoto-ohara-kankouhosyoukai.net/",
     "openingHours": "大原観光保勝会　10時～15時",
     "price": "1人通常2,500円"
   },
@@ -9872,6 +10289,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.117811,
       "longitude": 135.825326
     },
+    "url": "http://www.ohara-koubou.net",
     "openingHours": "10時～17時",
     "price": "体験シルクハンカチ　1,000円～スカーフ　3,000円～※要予約"
   },
@@ -9884,6 +10302,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.023994,
       "longitude": 135.797417
     },
+    "url": "http://www.honen-in.jp",
     "openingHours": "6時～16時",
     "price": "無料"
   },
@@ -9896,6 +10315,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.011253,
       "longitude": 135.793259
     },
+    "url": "http://nanzen.net/",
     "openingHours": "3月～11月　8時40分～17時12月～2月　8時40分～16時30分※受付は20分前まで",
     "price": "方丈庭園　一般　600円　高校生　500円　小・中学生　400円三門　一般　600円　高校生　500円　　小・中学生　400円南禅院　一般　400円　高校生　350円　小・中学生　250円※団体（30名以上）割引有り"
   },
@@ -9913,11 +10333,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-876",
     "name": "百万遍さんの手づくり市",
     "description": "毎月15日に百万遍の知恩寺の境内を中心に開催されるフリーマーケット。昭和62年（1987）、「素人が作った物を発表する場」として始まった。手づくり以外の物の販売は禁止となっており、このことが、京都にある他のフリーマーケット等とは一線を画した手づくりマーケットとなっている。現在の出店数、約380店。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.029876,
       "longitude": 135.780701
     },
+    "url": "http://www.tedukuri-ichi.com/",
     "openingHours": "毎月15日8時～16時※雨天決行"
   },
   {
@@ -9929,6 +10350,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.013873,
       "longitude": 135.779671
     },
+    "url": "http://www.emuseum.or.jp/",
     "openingHours": "展覧会により異なる",
     "price": "展覧会により異なる"
   },
@@ -9936,7 +10358,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-878",
     "name": "阿弥陀寺（古知谷）",
     "description": "大原の北にあり、中国風の山門が変わった印象を与えてくれる。深い緑に覆われているせいか、夏でもひんやりしている。参道の左手には実相の滝があり、樹齢800余年の楓と絵画のような構図。隠れた紅葉の名所である。",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.138215,
       "longitude": 135.827926
@@ -9953,6 +10375,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.014669,
       "longitude": 135.785045
     },
+    "url": "http://www.daiyasu.co.jp",
     "openingHours": "9時～18時"
   },
   {
@@ -9987,6 +10410,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.015994,
       "longitude": 135.782427
     },
+    "url": "http://www.heianjingu.or.jp",
     "openingHours": "6時～18時（季節により変動）",
     "price": "境内無料神苑　600円（6月上旬の一日と9月19日に神苑は無料公開される）"
   },
@@ -9999,6 +10423,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.01581,
       "longitude": 135.795983
     },
+    "url": "http://www.kanou.com/",
     "openingHours": "茶室　10時～16時30分（お点前は要予約）甘味処　10時～16時30分（ラストオーダー16時10分）食事　11時～14時菓子販売　10時～17時",
     "price": "お抹茶と生菓子　1,100円（税込）ぜんざい　1,100円（税込）抹茶パフェ　1,100円（税込）若王子春秋富弁当　3,300円（税込）"
   },
@@ -10011,6 +10436,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.011302,
       "longitude": 135.79007
     },
+    "url": "http://www.to-fu.co.jp/",
     "openingHours": "11時～21時30分（ラストオーダー20時）",
     "price": "ゆどうふコース　3,000円～湯葉会席　6,500円（引き上げゆばと会席料理）ゆどうふ会席　6,500円（ゆどうふと会席料理）京会席・雲水　10,000円+サービス料～（ゆどうふと旬の素材を取り合わせた会席）"
   },
@@ -10035,6 +10461,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.026271,
       "longitude": 135.795001
     },
+    "url": "http://www.omen.co.jp/",
     "openingHours": "11時～21時（ラストオーダー20時30分）",
     "price": "おめん　1,210円（税込）"
   },
@@ -10047,6 +10474,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.013921,
       "longitude": 135.779637
     },
+    "url": "http://www.emuseum.or.jp/",
     "openingHours": "開室　11時～17時",
     "price": "2名の場合　1名　2,500円20名以上の場合　1名　2,000円"
   },
@@ -10054,11 +10482,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-888",
     "name": "梁山泊",
     "description": "お造りが美味しくいただけるお店。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.028396,
       "longitude": 135.777648
     },
+    "url": "https://www.ryozanpaku.co.jp",
     "openingHours": "昼　12時～14時30分（ラストオーダー13時）夜　17時30分～22時（ラストオーダー19時30分）",
     "price": "お昼は7,000円～、コース料理が15,000円～。※予約が望ましい庭の見えるテーブル席のパーティ会場は34名様、お座敷は4室とも掘りコタツ。お座敷最大人数は20名様。予算については相談可。"
   },
@@ -10071,6 +10500,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.027032,
       "longitude": 135.798208
     },
+    "url": "http://www.shokoku-ji.jp/ginkakuji/",
     "openingHours": "3月～11月　8時30分～17時12月～2月　9時～16時30分",
     "price": "参拝料　高校生以上　500円　小・中学生　300円"
   },
@@ -10078,11 +10508,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-890",
     "name": "聖護院",
     "description": "増誉大僧正が寛治4年（1090）に白河上皇より賜った寺で、家並みがつづく築地塀に囲まれるように建つ。現在の建物は延宝4年（1676）再建。修験道の本山として全国の修験者を統括したため、古くは入洛した修験者がまずここを訪れたといわれている。表門を入ると、東側に宸殿、本堂が、正面には長屋門と玄関が並び、",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.01918,
       "longitude": 135.78041
     },
+    "url": "http://www.shogoin.or.jp",
     "openingHours": "4月～8月　9時30分～17時9月～3月　9時30分～16時30分",
     "price": "800円※特別公開時は予約不要。他の期間はお問い合わせください。朱印・本堂への参拝は自由"
   },
@@ -10095,6 +10526,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.114126,
       "longitude": 135.773258
     },
+    "url": "http://www.yoshuji.com",
     "openingHours": "9時30分～18時（ラストオーダー17時30分）",
     "price": "精進料理（3コース有り）　2,000円～（税別）"
   },
@@ -10102,11 +10534,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-892",
     "name": "吉田神社",
     "description": "吉田山のふもとに平安京の守り神として創建されたのがはじまり。境内には、産生（うぶすな）の神をはじめ、菓子や料理の神を祀る社も。なかでもユニークなのは斎場所大元宮。全国の神々が一堂に祀られていて、ここにお参りすれば全国の神社に参ったのと同じ効験があるとか。また、2月の節分祭には、全国より毎年数十万人の",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.025414,
       "longitude": 135.784754
     },
+    "url": "http://www.yoshidajinja.com/",
     "openingHours": "拝観自由（授与所17時まで）",
     "price": "無料"
   },
@@ -10119,6 +10552,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.035865,
       "longitude": 135.770856
     },
+    "url": "http://www.kyotobisho.com/",
     "openingHours": "11時～17時",
     "price": "一般　500円学生　300円"
   },
@@ -10131,6 +10565,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.019664,
       "longitude": 135.78802
     },
+    "url": "http://www.kurodani.jp/",
     "openingHours": "参拝自由※ただし、御影堂は9時～16時",
     "price": "特別拝観料（御影堂・大方丈・庭園）　大人　1,000円　小学生　500円山門セット拝観料　大人　1,600円　小学生　800円"
   },
@@ -10143,6 +10578,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.030893,
       "longitude": 135.773203
     },
+    "url": "https://emusica-dmcy.com",
     "openingHours": "受付時間　9時～21時30分※新型コロナウイルス感染拡大防止のため、営業時間の変更を実施しております。今後の状況によって営業時間を変更する場合があります。",
     "price": "当日20時まで　700円（翌朝10時まで+300円）1週間レンタル　3,000円2週間レンタル　4,000円1ヶ月レンタル　5,000円※レンタル1台ごとに預かり金2,000円が必要（自転車返却時に返金）※三段変速・オートライト付きの自転車の取扱もございます。台数に限りがあります。料金等についてはお問い合わせください。"
   },
@@ -10150,7 +10586,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-896",
     "name": "音無しの滝",
     "description": "来迎院の奥、律川の上流にある滝。聖応大師が滝音で声明が乱れるのを恐れて呪文でその音を止めたという伝説があり、滝の名もこれに由来している。実際は岩の表面を白糸をたらすように水が滑り落ちるので音がしない。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.120751,
       "longitude": 135.839746
@@ -10165,6 +10601,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.02146,
       "longitude": 135.789268
     },
+    "url": "http://shin-nyo-do.jp/",
     "openingHours": "9時～16時",
     "price": "大人　500円高校生　500円中学生　400円※特別公開時、料金変更あり（大人1,000円）"
   },
@@ -10177,17 +10614,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.119274,
       "longitude": 135.828932
     },
+    "url": "http://www.kyoto-ohara-kankouhosyoukai.net/",
     "openingHours": "10時～15時"
   },
   {
     "id": "spot-899",
     "name": "聖護院八ッ橋総本店",
     "description": "京名物・八ツ橋の販売。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.018442,
       "longitude": 135.779114
     },
+    "url": "http://www.shogoin.co.jp",
     "openingHours": "8時～18時"
   },
   {
@@ -10199,17 +10638,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.012984,
       "longitude": 135.78197
     },
+    "url": "https://www.library.pref.kyoto.jp/",
     "openingHours": "火曜日～金曜日　9時30分～19時土曜日、日曜日、祝日　9時30分～17時"
   },
   {
     "id": "spot-901",
     "name": "宝泉院",
     "description": "客殿からは樹齢700年の京都市指定天然記念物である五葉松が眺められる。庭の名前は盤桓園（額縁庭園）で柱と柱の空間を額に見立てて観賞する。「理智不二」と名付けられた二連式の水琴窟もある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.121344,
       "longitude": 135.833983
     },
+    "url": "http://www.hosenin.net/",
     "openingHours": "拝観時間　9時～17時（閉門）受付終了　16時30分",
     "price": "拝観料　一般　800円　中学・高校生　700円　小学生　600円お抹茶とお菓子の接待有り"
   },
@@ -10233,7 +10674,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.119393,
       "longitude": 135.833572
-    }
+    },
+    "url": "http://www.ohara-onsen.jp/"
   },
   {
     "id": "spot-904",
@@ -10255,6 +10697,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.113923,
       "longitude": 135.773651
     },
+    "url": "http://www.yoshuji.com",
     "openingHours": "12時～18時"
   },
   {
@@ -10276,6 +10719,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.114224,
       "longitude": 135.823502
     },
+    "url": "http://www.satonoeki-ohara.com",
     "openingHours": "里の駅大原　9時～17時大原ふれあい朝市（天候等によりやむを得ず中止となる場合があります。）　毎週日曜日　6時～9時"
   },
   {
@@ -10287,6 +10731,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.219959,
       "longitude": 135.781687
     },
+    "url": "http://dobanzy.com/",
     "openingHours": "9時～17時",
     "price": "入山無料※その他、木工体験、宿泊料金についてはお問い合わせください。"
   },
@@ -10299,6 +10744,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.010831,
       "longitude": 135.787672
     },
+    "url": "https://www.kcif.or.jp/",
     "openingHours": "9時～21時※kokoPlazaは9時30分～17時",
     "price": "入館料無料Wi-Fi無料※ホール、会議室、国内FAXなどを使用する場合は有料。"
   },
@@ -10311,6 +10757,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.172927,
       "longitude": 135.785837
     },
+    "url": "http://web.kyoto-inet.or.jp/org/hanasell/",
     "openingHours": "9時～17時",
     "price": "宿泊棟、ロッジ（1泊）　　大学生以上　2,260円　高校生　1,100円　小・中学生　550円キャンプ場（1泊）　大学生以上　1,130円　高校生　550円　小・中学生　300円研修室（1時間）　560円、1,130円プレイホール（1時間）　1,130円グラウンド　午前　10,180円　午後　13,570円テニスコート（1面1時間）　9時～17時　1,330円　　17時～21時　1,690円日帰り（グラウンド、テニスコート以外の利用）　大学生以上　460円　高校生　250円　小・中学生　150円上記金額には食費・シーツ代（160円）は含まれない。"
   },
@@ -10323,6 +10770,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.113944,
       "longitude": 135.773369
     },
+    "url": "http://www.yoshuji.com",
     "openingHours": "12時～18時"
   },
   {
@@ -10334,6 +10782,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.116258,
       "longitude": 135.771501
     },
+    "url": "http://www.yukijinjya.jp/",
     "price": "無料"
   },
   {
@@ -10355,6 +10804,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.011493,
       "longitude": 135.790686
     },
+    "url": "http://nanzenkaikan.com",
     "openingHours": "チェックイン15時～20時チェックアウト　10時",
     "price": "1泊朝食付　9,500円～1泊2食付　12,500円～"
   },
@@ -10367,6 +10817,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.010811,
       "longitude": 135.783214
     },
+    "url": "http://komaruya.kyoto.jp/",
     "openingHours": "10時～18時",
     "price": "深草うちわ　8,500円～（税別）新深草うちわ名所図会　4,000円～（税別）手書き名入れ京丸うちわ　3,000円～（税別）京うちわ金地琳派　40,000円～（税別）京うちわ切り絵　12,000円～（税別）"
   },
@@ -10374,7 +10825,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-916",
     "name": "奥の院魔王殿",
     "description": "老杉が茂り、巨大な杉の根が地面をはい、神秘的なムードが漂うなかに建つ奥の院魔王殿。650万年前に金星から飛来したともいわれている護法魔王尊を祭っている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.121253,
       "longitude": 135.765853
@@ -10384,11 +10835,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-917",
     "name": "重森三玲邸庭園美術館",
     "description": "枯山水庭園。邸宅は吉田神社旧社家で、木造平屋建ての書院は国の登録文化財となっている。庭園は15畳の座敷からの眺めを意識し、重森本人が設計したもので、立たせた石を重なるように配し、力強いイメージの枯山水となっている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.024109,
       "longitude": 135.782162
     },
+    "url": "http://www.est.hi-ho.ne.jp/shigemori/",
     "openingHours": "11時～、14時～説明付",
     "price": "書院・庭園・茶室　1,000円"
   },
@@ -10412,6 +10864,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.118713,
       "longitude": 135.836987
     },
+    "url": "http://www.raigoin.com",
     "openingHours": "9時～17時",
     "price": "拝観料　大人　400円中学・高校生　300円写経　1,000円"
   },
@@ -10419,7 +10872,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-920",
     "name": "花背",
     "description": "鞍馬からさらに街道を北へ進めば、花背峠を経て花背の集落へ続く。花背はバスも1日に数本しか通わない林業の村だが、最近はガラス工芸や和紙工芸などのクラフト作家が移り住んだ芸術村としても知られるようになった。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.208038,
       "longitude": 135.775708
@@ -10434,6 +10887,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.015343,
       "longitude": 135.784863
     },
+    "url": "https://ayanokoji.jp",
     "openingHours": "10時～18時"
   },
   {
@@ -10452,7 +10906,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-923",
     "name": "無礙光院",
     "description": "〈坐禅会〉定例坐禅会 1時間（途中5分休憩）その後、茶礼（懇談） 指導・法話無し、予約不要。定例外坐禅会 1時間半、団体（5名以上）のみ 指導・法話有り、要予約。希望により写経・読経等可。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.036748,
       "longitude": 135.777267
@@ -10469,6 +10923,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.053574,
       "longitude": 135.799639
     },
+    "url": "http://sankan.kunaicho.go.jp/",
     "price": "無料※参観は事前申込、または当日申込が必要申込方法については、宮内庁ホームページ（http://sankan.kunaicho.go.jp/）をご確認ください。"
   },
   {
@@ -10480,6 +10935,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.048913,
       "longitude": 135.802943
     },
+    "url": "http://www.manshuinmonzeki.jp/",
     "openingHours": "9時～17時（受付は16時30分まで）",
     "price": "一般　600円高校生　500円小・中学生　400円"
   },
@@ -10492,6 +10948,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.039196,
       "longitude": 135.773007
     },
+    "url": "http://www.shimogamo-jinja.or.jp/",
     "openingHours": "境内参拝自由大炊殿と鴨長明の方丈庵拝観　10時～16時",
     "price": "〈平安王朝舞〉雅楽の調べに乗せて十二単衣姿の女人舞を披露（要予約）人数に関わらず1回40,000円〈大炊殿・鴨長明の方丈庵と秀穂舎鴨社資料館拝観〉一般　500円中学生以下無料"
   },
@@ -10526,6 +10983,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.041082,
       "longitude": 135.802337
     },
+    "url": "http://www.tanukidani.com/",
     "openingHours": "9時～16時一字写経は9時～15時",
     "price": "入山料　500円一字写経　300円"
   },
@@ -10550,6 +11008,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.101595,
       "longitude": 135.824374
     },
+    "url": "https://top.doishibazuke.co.jp/",
     "openingHours": "9時～17時30分（季節により変動有り）",
     "price": "無料"
   },
@@ -10557,7 +11016,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-932",
     "name": "もとしろ",
     "description": "手すき和紙の小売店。手すき和紙の体験ができる。所要時間／約1時間定員／3名以上6名まで",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.120161,
       "longitude": 135.830189
@@ -10574,6 +11033,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.045468,
       "longitude": 135.794009
     },
+    "url": "http://www.kiraraduke.net/",
     "openingHours": "9時～17時",
     "price": "1袋　860円～"
   },
@@ -10586,6 +11046,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.057952,
       "longitude": 135.778921
     },
+    "url": "http://www.city.kyoto.lg.jp/kensetu/page/0000082746.html",
     "openingHours": "「子どもの楽園」以外は終日開園「子どもの楽園」は9時～16時30分",
     "price": "入園無料"
   },
@@ -10598,6 +11059,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.048476,
       "longitude": 135.766882
     },
+    "url": "https://rekisaikan.jp",
     "openingHours": "平日　9時～21時土曜日、日曜日　9時～17時※1/14現在　9時～17時",
     "price": "無料"
   },
@@ -10610,6 +11072,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.068359,
       "longitude": 135.794106
     },
+    "url": "https://www.miyake-hachiman.com",
     "openingHours": "拝観自由絵馬展示資料館　10時～15時",
     "price": "絵馬展示資料館入場料　1人300円"
   },
@@ -10617,11 +11080,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-937",
     "name": "実相院門跡",
     "description": "寛喜元年（1229）近衛基通の孫、静基によって創建され、応永18年（1411）に現在地に落ち着いた。四脚門、御車寄せ、客殿などは江戸時代中期に東山天皇中宮承秋門院の旧殿を移築したものである。数少ない現存する女院御所の遺構。狩野派の襖絵を多く蔵し池泉廻遊式の庭と広大な白砂の石庭が見ごたえ十分の古刹。床",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.079135,
       "longitude": 135.781507
     },
+    "url": "http://www.jissoin.com/",
     "openingHours": "9時～17時",
     "price": "大人　500円小・中学生　250円"
   },
@@ -10634,6 +11098,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.017611,
       "longitude": 135.79279
     },
+    "url": "https://www.sen-oku.or.jp/kyoto",
     "openingHours": "10時～17時（入館は16時30分まで）※開館期間はホームページで確認してください。",
     "price": "一般　800円高校・大学生　600円中学生以下無料※展覧会により、変更になる場合があります。"
   },
@@ -10641,11 +11106,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-939",
     "name": "貴船神社",
     "description": "水神を祀る貴船神社は、古くから雨乞いや雨止めの神事が行われた。また、和泉式部が夫の愛を取り戻したなどの逸話が残る縁結びの神様でもある。本宮の本殿前の石垣から御神水が湧き出しており、その山水は弱アルカリ性でミネラルやカルシウム分がたっぷり含まれているという。貴船神社のおみくじは、この御神水にひたせば文",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.121962,
       "longitude": 135.762964
     },
+    "url": "http://kifunejinja.jp/",
     "openingHours": "境内　6時～20時（時季により変動有り）社務所　9時～17時（おみくじ・お守り・お札）、祈祷受付は15時30分まで",
     "price": "拝観無料水占みくじ　1枚200円御神水を持ち帰るための容器　1本（600ml）500円※御神水の発送は一切行っておりません。"
   },
@@ -10658,6 +11124,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.012695,
       "longitude": 135.786113
     },
+    "url": "http://www5.city.kyoto.jp/zoo/",
     "openingHours": "3月～11月　9時～17時12月～2月　9時～16時30分入園は閉園の30分前まで",
     "price": "一般　620円　団体（30名以上）520円中学生以下無料年間入園券　2,510円"
   },
@@ -10665,11 +11132,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-941",
     "name": "株式会社川島織物セルコン　川島織物文化館",
     "description": "川島織物文化館は、明治22年（1889）に「川島織物参考館」と称し開館した国内最古の企業博物館。展示は、天保14年（1843）の創業以来、こだわりのモノづくりと飽くなき研究心から生まれた精緻で優美な美術工芸織物、歴史的建造物を飾った室内装飾織物などを紹介。収蔵品は約16万点に及び、時代に合うモノづく",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.085889,
       "longitude": 135.759429
     },
+    "url": "http://www.kawashimaselkon.co.jp",
     "openingHours": "10時～16時30分（受付は16時まで）",
     "price": "無料（要予約）"
   },
@@ -10706,6 +11174,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.011312,
       "longitude": 135.781499
     },
+    "url": "http://www.kyoto-kanze.jp/",
     "openingHours": "9時～17時（事務所）",
     "price": "催しにより異なるが、能・狂言の素人の発表会などは無料"
   },
@@ -10718,6 +11187,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.016352,
       "longitude": 135.775142
     },
+    "url": "http://www.kyoto-matsukyu.jp/",
     "openingHours": "平日　10時～16時（12時～13時閉館）",
     "price": "無料"
   },
@@ -10730,17 +11200,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.051153,
       "longitude": 135.767731
     },
+    "url": "http://www.kaiseytei.co.jp/",
     "price": "昼　2,200円～夜　4,400円～"
   },
   {
     "id": "spot-947",
     "name": "京都大学総合博物館",
     "description": "京都大学が研究・教育のために収集した貴重な学術標本とともに研究成果を紹介。考古資料、古地図・古文書や化石・昆虫標本などが展示されている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.027257,
       "longitude": 135.779226
     },
+    "url": "http://www.museum.kyoto-u.ac.jp",
     "openingHours": "9時30分～16時30分（入館は16時まで）※新型コロナ感染拡大防止のため、事前予約制にしています。詳細はホームページをご参照ください。",
     "price": "一般　400円高校・大学生　300円小・中学生　200円（20名以上団体割引有り）障がい者手帳をお持ちの方とその付き添いの方1名、および70歳以上の方は無料（要証明書）"
   },
@@ -10748,11 +11220,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-948",
     "name": "蓮華寺",
     "description": "蓮華寺は江戸時代のはじめに加賀前田家の家老・今枝近義によって洛中からこの地に移された。境内には六角形の笠をもつ蓮華寺型石燈篭や石川丈山作の池泉観賞式庭園があり、全体的にしっとりとした情緒が漂う。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.064072,
       "longitude": 135.800017
     },
+    "url": "http://rengezi.com",
     "openingHours": "9時～17時",
     "price": "拝観料　400円"
   },
@@ -10765,6 +11238,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.119711,
       "longitude": 135.834337
     },
+    "url": "http://www.sanzenin.or.jp/",
     "openingHours": "9時～17時11月は8時30分～17時12月～2月は9時～16時30分※受付は30分前まで〈写経（般若心経）〉9時～15時30分11月は8時30分～15時30分12月～2月　9時～15時",
     "price": "大人　700円団体（30名以上）　600円中学・高校生　400円中学・高校生団体（30名以上）　300円小学生　150円"
   },
@@ -10772,7 +11246,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-950",
     "name": "勝林院",
     "description": "勝林院は、顕真法印が浄土宗の開祖法然上人を請じ、称名念仏によって人々が極楽に往生することができるかどうかというテーマで天台宗等各派の学僧たちと議論をたたかわせた「大原問答」の舞台となった寺。総ケヤキ造りのお堂は、いつでも静寂な雰囲気に包まれている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.121532,
       "longitude": 135.834564
@@ -10784,11 +11258,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-951",
     "name": "実光院",
     "description": "寺院の法要で唱える仏教儀式音楽、声明（しょうみょう）を伝承する学僧の住む寺として建てられた。庭園には多くの草木が植えてあり、四季折々の花を楽しむことができる。特に秋から春まで咲き続ける不断桜は有名。池泉回遊式庭園「契心園」を眺めながらお抹茶が賞味できる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.120583,
       "longitude": 135.833958
     },
+    "url": "http://www.jikkoin.com",
     "openingHours": "9時～16時（受付終了）※11月は16時30分まで",
     "price": "500円茶菓料　300円"
   },
@@ -10796,11 +11271,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-952",
     "name": "寂光院",
     "description": "静かな山間にある寂光院は天台宗の尼寺で、平清盛の娘・建礼門院が隠棲した寺として知られる。境内には「平家物語」にちなんだ庭園や建礼門院ゆかりの史跡などがある。現在の本堂及び本尊は平成17年（2005）に再建されたもの。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.124111,
       "longitude": 135.821046
     },
+    "url": "http://www.jakkoin.jp/",
     "openingHours": "3月～11月　9時～17時12月～2月　9時～16時30分（1/1～1/3は10時～16時）",
     "price": "大人　600円中学生　350円小学生　100円"
   },
@@ -10825,6 +11301,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.119398,
       "longitude": 135.833554
     },
+    "url": "http://www.seryo.co.jp/",
     "openingHours": "11時30分～15時",
     "price": "三千草弁当　2,850円（税別）草菜味懐石　5,500円（税別）"
   },
@@ -10837,6 +11314,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.011952,
       "longitude": 135.788207
     },
+    "url": "https://biwakososui-museum.city.kyoto.lg.jp",
     "openingHours": "9時～17時（入館は閉館の30分前まで）",
     "price": "無料"
   },
@@ -10849,6 +11327,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.013061,
       "longitude": 135.780961
     },
+    "url": "http://kmtc.jp",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "無料（企画展は有料の場合あり）"
   },
@@ -10861,6 +11340,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.012929,
       "longitude": 135.79335
     },
+    "url": "http://www.nomura-museum.or.jp",
     "openingHours": "3月上旬～6月上旬、9月上旬～12月上旬のみ開館 10時～16時30分（入館は16時まで）",
     "price": "一般　800円高校・大学生　300円小・中学生無料"
   },
@@ -10873,6 +11353,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.054045,
       "longitude": 135.791091
     },
+    "url": "https://www.heihachi.co.jp/",
     "price": "昼　3,850円～夜　11,000円～1万円以上の懐石には別途サービス料がかかる。"
   },
   {
@@ -10884,6 +11365,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.035768,
       "longitude": 135.772078
     },
+    "url": "http://www.shimogamo-jinja.or.jp",
     "openingHours": "6時～18時（季節により変動）",
     "price": "参拝自由"
   },
@@ -10891,11 +11373,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-960",
     "name": "京都市百井青少年村",
     "description": "山の家20人、ロッジ50人、テントサイト最大120名程度収容。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.161883,
       "longitude": 135.802002
     },
+    "url": "http://pens-p.com/momoi/",
     "openingHours": "受付（ポジティブアースネイチャースクール）　10時～18時（火曜日、日曜日、祝日は休み）百井青少年村　窓口営業　9時～21時　日帰り利用　10時～15時　宿泊利用　チェックイン　15時、チェックアウト　10時",
     "price": "山の家　　18才未満　730円　　18才以上　1,570円ロッジ　　18才未満　520円　　18才以上　1,040円テントサイト無料"
   },
@@ -10903,7 +11386,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-961",
     "name": "小町寺（補陀洛寺）",
     "description": "小野小町が、このあたりに住んでいたという伝説がある。補陀洛寺とは、平安中期、静原にあった名刹の名を継いだもの。境内には、小町と深草少将の供養塔や小町老衰像、小野画像小町九相変図などがある。また、大陸伝来の楊柳観音もある。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.085396,
       "longitude": 135.761813
@@ -10932,6 +11415,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.071528,
       "longitude": 135.777761
     },
+    "url": "http://kyomingei.exblog.jp/",
     "openingHours": "3月～11月の第3日曜日のみ開館（ただし、5月、10月は毎週日曜日開館予定）10時～16時30分",
     "price": "入館料　300円"
   },
@@ -10944,6 +11428,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.027326,
       "longitude": 135.793701
     },
+    "url": "http://www.hakusasonso.jp",
     "openingHours": "10時～17時（受付は16時30分まで）",
     "price": "入館料（通常展）　一般　1,300円　学生　500円特別展（内容により変わります。）　一般　1,500円～2,000円　学生　500円～800円"
   },
@@ -10956,6 +11441,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.037429,
       "longitude": 135.79227
     },
+    "url": "http://geijutsu-kan.com",
     "openingHours": "10時～17時",
     "price": "無料"
   },
@@ -10980,6 +11466,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.010461,
       "longitude": 135.789206
     },
+    "url": "https://kyoto-kikusui.com/",
     "openingHours": "11時30分～22時（ラストオーダー20時）",
     "price": "昼　湯豆腐コース　5,000円～　会席　8,000円～夜　会席　15,000円～"
   },
@@ -10992,6 +11479,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.017822,
       "longitude": 135.772465
     },
+    "url": "http://www.hachikian.com/",
     "openingHours": "ランチ　11時30分～14時ディナー　17時～21時（ラストオーダー20時）",
     "price": "昼（ミニコース）　4,700円～夜　6,500円～※要予約（完全予約制）"
   },
@@ -10999,11 +11487,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-969",
     "name": "壬生温泉　はなの湯",
     "description": "12種類のお風呂メニューがあり、露天風呂と露天つぼ湯の湯は、弱アルカリ性単純温泉を運び使用している。食事処、カットサロン、リラクゼーションサロン、韓国式あかすり等様々な施設が完備されている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.999628,
       "longitude": 135.742549
     },
+    "url": "http://hanano-yu.jp/",
     "openingHours": "10時～25時（24時受付終了）",
     "price": "平日　大人　720円　小人（小学生以下）　360円　3歳未満無料土曜日、日曜日、祝日　大人　850円　小人（小学生以下）　410円　3歳未満無料"
   },
@@ -11011,11 +11500,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-970",
     "name": "六角堂（紫雲山頂法寺）",
     "description": "本堂の建築様式が六角宝形造であることから六角堂と呼ばれているが、正式には紫雲山頂法寺といい、聖徳太子ゆかりの寺。境内には真ん中がくぼんだ「へそ石」と呼ばれる石があり、その位置が京の中心といわれる。また、この寺はいけばな発祥の地でもあり、華道家元池坊として有名。太子沐浴の池と伝わる池畔に小野妹子を始祖",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.007665,
       "longitude": 135.760254
     },
+    "url": "http://www.ikenobo.jp/rokkakudo/",
     "openingHours": "開門　6時～17時納経　8時～17時",
     "price": "拝観無料"
   },
@@ -11023,11 +11513,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-971",
     "name": "井筒八ッ橋本舗　京極一番街－南錦小路－",
     "description": "井筒八ッ橋の手焼きを体験出来る。「八ツ橋手焼き体験」は1回2名～20名で、所要時間は約60分。（人数によって異なります。）要予約（予約受付10時～20時）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004085,
       "longitude": 135.766664
     },
+    "url": "http://www.yatsuhashi.co.jp/",
     "openingHours": "八ツ橋手焼き体験　10時～18時受付　10時～20時",
     "price": "八ッ橋手焼き体験　1,200円（税別）300円分のお買物優待券付※対象年齢小学5年生以上"
   },
@@ -11035,7 +11526,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-972",
     "name": "小川家住宅（二條陣屋）",
     "description": "江戸時代、京屋敷を持たない大名の宿舎となった町家で、個人の住居である。防火のため外壁は土蔵造りとなっているほか、24室の部屋や階段、廊下などに、敵の侵入を防ぐ巧妙な仕掛けが施されており、国指定の重要文化財となっている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.010362,
       "longitude": 135.7485
@@ -11047,11 +11538,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-973",
     "name": "本能寺",
     "description": "室町時代に創建された本能寺は当初、高辻通りにあったが、移転を重ねた末に天文14年（1545）四条西洞院に第4次の伽藍が建立された。しかし本能寺の変で焼失し、天正20年（1592）現在の場所に移された。本堂背後には織田信長一族と森蘭丸をはじめ、本能寺の変で亡くなった家臣の供養塔がある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.010297,
       "longitude": 135.768319
     },
+    "url": "http://www.kyoto-honnouji.jp",
     "openingHours": "6時～17時大寶殿宝物館　9時～17時（入館は16時30分まで）",
     "price": "拝観無料大寶殿宝物館入観料　一般　500円　中学・高校生　300円　小学生　250円"
   },
@@ -11059,11 +11551,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-974",
     "name": "古典の日記念　京都市平安京創生館",
     "description": "平安京を体感するための展示施設で、京都市生涯学習総合センター（京都アスニー）内に開設されている。都の姿が一目でわかる「平安京復元模型」（1/1000）、国の重要な建物を再現した「豊楽殿復元模型」（1/20）の他、「鳥羽離宮復元模型」（1/1000）、「法勝寺復元模型」（1/100）などを常設展示して",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.01894,
       "longitude": 135.738312
     },
+    "url": "http://web.kyoto-inet.or.jp/org/asny1/souseikan/index.html",
     "openingHours": "10時～17時（入場は16時50分まで）",
     "price": "無料"
   },
@@ -11071,32 +11564,35 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-975",
     "name": "京都鶴屋　鶴壽庵",
     "description": "新選組壬生屯所跡にある和菓子店。店内には、ひと息つける茶席があり、季節の和菓子と抹茶のセットが味わえる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.002273,
       "longitude": 135.744304
     },
+    "url": "http://www.kyototsuruya.co.jp/",
     "openingHours": "8時～18時"
   },
   {
     "id": "spot-976",
     "name": "石長松菊園",
     "description": "石長松菊園は、京の中心を流れる鴨川に程近い、木戸孝允屋敷跡に建ちます。閑静な環境と、市バス、地下鉄など交通の便に恵まれ、京都観光の拠点にはうってつけです。京都御所や鴨川は散策に、新京極から錦市場のエリアはお買い物に、先斗町、祇園も近く、「京を巡る」には大変便利な立地となっております。旬の食材を使った",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.015383,
       "longitude": 135.770152
-    }
+    },
+    "url": "http://www.shogikuen.co.jp"
   },
   {
     "id": "spot-977",
     "name": "豆水楼　木屋町店",
     "description": "国内産大豆100％使用。四季折々の旬の豆腐料理を提供。中でも水分を搾らない特製おぼろ豆腐は深い味わいとなめらかな舌触りが好評。5月上旬から9月末まで川床の営業有り。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.010298,
       "longitude": 135.771126
     },
+    "url": "http://tousuiro.com/",
     "openingHours": "11時30分～14時（ラストオーダー）17時～22時（最終入店21時）日曜日、祝日は11時30分～14時（ラストオーダー）、17時～21時30分（最終入店20時30分）",
     "price": "昼のみ　3,234円豆腐懐席当日可　4,966円、5,775円、7,854円コース（税・サ込）他、予算に合わせて（前日までに予約）単品料理名物豆腐料理　色々湯葉料理生麩の田楽川床（5月上旬～9月末）床席料　1,000円"
   },
@@ -11104,11 +11600,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-978",
     "name": "百足屋本店",
     "description": "祇園祭の鉾町で、町衆の活気が残る新町に面した店。オリジナルのおばんざい懐石料理が楽しめる。町家を復元した店内にはおくどさんなども残されており、京の生活文化を知ることもできる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005667,
       "longitude": 135.756573
     },
+    "url": "http://www.kurochiku.co.jp/mukadeya/",
     "openingHours": "11時～14時（ラストオーダー）17時～21時（ラストオーダー）",
     "price": "昼　百足屋弁当　3,000円（税別）　百足屋御膳　5,000円（税別）夜　新町　5,000円（税別） 　錦　　7,000円（税別）　室町　10,000円（税別）※夕食はサービス料10％※カード利用可"
   },
@@ -11116,11 +11613,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-979",
     "name": "新選組　壬生屯所遺跡（八木家）",
     "description": "文久3年（1863）3月16日、八木家右門柱に松平肥後守御領新選組宿という表札が掲げられ、新選組が誕生した。幕末京都の治安を守った新選組があしかけ3年を過ごした壬生屯所時代。奥座敷の鴨居に残る刀傷は内部抗争で芹澤鴨らが暗殺された際に付けられたもので、当時をしのぶことができる。京都市指定有形文化財指定",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.002251,
       "longitude": 135.744045
     },
+    "url": "http://www.mibu-yagike.jp",
     "openingHours": "9時～17時（受付は16時30分まで）",
     "price": "大人　1,100円（見学（ガイド付）と屯所餅・抹茶付）　中学・高校生　600円（見学のみ）"
   },
@@ -11128,11 +11626,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-980",
     "name": "花遊小路江戸川",
     "description": "明治37年（1904）創業。うなぎ料理のお店。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004055,
       "longitude": 135.76782
     },
+    "url": "http://www.yagenbori.co.jp/",
     "openingHours": "11時～14時、17時～21時（入店は20時まで）",
     "price": "うな重　4,900円～うな丼　2,900円～鰻串焼き　260円～江戸川おまかせコース　7,200円～"
   },
@@ -11140,11 +11639,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-981",
     "name": "本家尾張屋",
     "description": "室町時代から続いているというそば屋さん。寛正6年（1465）に菓子屋として創業、江戸時代からそばを作るようになり、その製法を応用したそば菓子を考案。代表菓はこしあんをそば粉の上皮で包んだ「そば餅」。数奇屋造りの店内では、5段のわりごに盛ったそばを8種類の薬味で食べる名物「宝来そば」が味わえる。（座席",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.012804,
       "longitude": 135.760122
     },
+    "url": "https://honke-owariya.co.jp",
     "openingHours": "そば処　11時～16時（ラストオーダー14時30分）菓子の販売　9時～18時",
     "price": "そば餅・蕎麦板盛り合わせ　330円せいろそば　990円天ぷらそば　1,925円宝来そば　2,530円※カード・電子マネー利用可"
   },
@@ -11152,11 +11652,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-982",
     "name": "めなみ",
     "description": "高瀬川沿いにあるめなみでは、旬の野菜を生かした料理を中心に、伝統的なものから新しい創作ものまで、数多くの季節の料理が賞味できる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.009202,
       "longitude": 135.770556
     },
+    "url": "http://www.menami.jp",
     "openingHours": "15時～22時（ラストオーダー21時30分）",
     "price": "1品　440円～"
   },
@@ -11164,22 +11665,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-983",
     "name": "雪梅花　菜根譚",
     "description": "玄関に「おくどさん」が並ぶ築100年の町家をほぼ当時のまま使用しています。中庭を眺められる元茶室をはじめ、元々の部屋を生かした空間で、根菜や京野菜をふんだんに使った中国料理をお楽しみ頂けます。（座席数60席）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.006614,
       "longitude": 135.763922
     },
+    "url": "https://kiwa-group.co.jp",
     "openingHours": "11時30分～14時（ラストオーダー）17時～20時（ラストオーダー）、21時閉店※状況により変更の可能性有り"
   },
   {
     "id": "spot-984",
     "name": "三嶋亭",
     "description": "高級和牛専門店。風格ある座敷、いす席、広間でいただくすき焼は格別。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.008441,
       "longitude": 135.767058
     },
+    "url": "http://www.mishima-tei.co.jp/",
     "openingHours": "11時30分～22時（ラストオーダー21時）※入店は20時まで（花コース（前菜付）の場合は19時までの入店）",
     "price": "すき焼　14,850円水だき　14,850円オイル焼　14,850円みぞれ鍋　14,850円（11月～2月）花コース　20,790円（2日前までに要予約）（すべて税・サ込）"
   },
@@ -11187,7 +11690,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-985",
     "name": "京料理　にしむら",
     "description": "建物は築100年以上の元呉服屋。打水に映える白い暖簾。ほのかに誘う待合のぼんぼり、しんと佇む坪庭の手水鉢。喧騒をすり抜けて、街のなかの奥座敷にしむら。木のぬくもりとともに、最上級のやすらぎを提供する。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.007505,
       "longitude": 135.762328
@@ -11199,33 +11702,36 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-986",
     "name": "丸太町十二段家",
     "description": "お茶漬けの専門店としてしられている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.017259,
       "longitude": 135.758557
     },
+    "url": "http://www.m-jyunidanya.com",
     "price": "すずしろ　1,150円水菜　2,080円菜の花　3,120円税込"
   },
   {
     "id": "spot-987",
     "name": "八幡さんのおもしろ市",
     "description": "京都の物（もん）市。御池通高倉南角にある御所八幡宮で開催する、小さなフリーマーケット。10店ほどの店から手作り品や古布、小物などが並ぶ。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.010519,
       "longitude": 135.762641
     },
+    "url": "http://www.omosiro1.com/",
     "openingHours": "第2金曜日11時～夕方（雨天中止）"
   },
   {
     "id": "spot-988",
     "name": "イノダコーヒ本店",
     "description": "昭和15年（1940）創業の老舗コーヒー店。上質の豆を独自に配合し、自社焙煎で美味しさを引き出したアラビアの真珠（ホットコーヒー）は、モカコーヒーをベースにハイロースト（普通よりやや強煎り）に仕上げた香り、コク、酸味のバランスが取れたヨーロピアンタイプ。創業以来こだわりの空間と落ち着いた雰囲気の中で",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.008188,
       "longitude": 135.763056
     },
+    "url": "http://www.inoda-coffee.co.jp/",
     "openingHours": "7時～18時"
   },
   {
@@ -11237,13 +11743,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.017223,
       "longitude": 135.726518
     },
+    "url": "http://www.hanazono.ac.jp",
     "openingHours": "月曜日～金曜日　10時～16時　土曜日　10時～14時"
   },
   {
     "id": "spot-990",
     "name": "新京極",
     "description": "寺町通りの一本東の通りで、たくさんのおみやげ屋さんが建ち並ぶ。修学旅行生のメッカとしても名高いところ。繁華街だが妙心寺や安養寺など古いお寺が散在していて、これがいかにも京都らしい光景。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005785,
       "longitude": 135.767249
@@ -11253,11 +11760,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-991",
     "name": "京都伝統工芸館",
     "description": "京都が世界に誇る伝統工芸品、その美しさ、素晴らしさを社会へ発信する施設。つくり手と生活者を結ぶ出逢いの場として、各工芸を代表する作家作品ならびに京都伝統工芸大学校生の作品を常設展示している。またより多くの方に伝統工芸を身近に感じていただけるよう、制作実演コーナーでは、毎日様々なジャンルの若手職人によ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.009034,
       "longitude": 135.759408
     },
+    "url": "http://www.dentoukougei.com",
     "openingHours": "10時～17時30分（入館は17時まで）",
     "price": "入館料大人　300円（団体5名以上200円）学生・60歳以上　100円着物着用の方は150円小学生以下無料"
   },
@@ -11265,11 +11773,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-992",
     "name": "神泉苑（真言宗寺院）",
     "description": "794年の平安京造営の際に造られた禁苑。桓武天皇を初めとして歴代天皇が行幸され、舟遊び、放隼、釣りなどの宴遊や、詩会、相撲節会、重陽節会などの宮中行事が催された。812年には嵯峨天皇が史実に残る最古の桜の花見「花宴の節」を行った。824年、弘法大師空海が雨乞いの修法の際に勧請した善女龍王を、現在も池",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.011528,
       "longitude": 135.7481
     },
+    "url": "http://www.shinsenen.org/",
     "openingHours": "8時30分～20時",
     "price": "拝観自由"
   },
@@ -11277,7 +11786,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-993",
     "name": "くろちく天正館　木目込体験コーナー",
     "description": "他では体験できない、くろちくオリジナル木目込体験は「まり」、「お花」、「ふくろう」からお好きなモチーフをお選びいただき、ストラップとしてお土産にお持ち帰りいただきます。（おばんざい懐石「百足屋本店」のお食事付きも可能）\"",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005775,
       "longitude": 135.756399
@@ -11289,7 +11798,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-994",
     "name": "四条河原町",
     "description": "デパートや銀行などが軒を連ねるビル街、四条通り。アミューズメント・ショップが並ぶショッピング街、河原町通り。このふたつの通りが交わる四条河原町周辺は、市内随一の繁華街である。昼、買い物客などでにぎわう表通りは夜になると静けさを取り戻し、その舞台を木屋町、先斗町通りといった裏通りにあけわたす。竹矢来の",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003781,
       "longitude": 135.769306
@@ -11299,11 +11808,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-995",
     "name": "o・mo・ya　東洞院",
     "description": "和と洋を絶妙に融合したomoya料理の店。築100年の呉服屋の母屋をそのままレストランの客席に使用。通り庭に厨房を設け、井戸もそのままの姿を残している。坪庭の景色を眺めながら、お座敷でゆったり食事を楽しめる。（座席数60席）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.006429,
       "longitude": 135.760746
     },
+    "url": "http://www.secondhouse.co.jp/omoya/omo1.html",
     "openingHours": "ランチ　11時30分～14時30分（ラストオーダー）ディナー　17時30分～20時30分（ラストオーダー）",
     "price": "ランチ　お野菜中心の軽いランチコース　2,500円　Aコース　4,000円　Bコース　5,000円ディナー　Aコース　4,000円　Aの和牛コース　5,000円※カード利用可"
   },
@@ -11311,11 +11821,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-996",
     "name": "ギャラリーマロニエ",
     "description": "2階の「ギャラリーにしかわ」は関西を中心とした工芸作家たちによる普段づかいの器を販売している。3階～5階はギャラリースペース。現代美術・工芸作家の個展を週変わりで開催。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005559,
       "longitude": 135.769455
     },
+    "url": "http://www.gallery-maronie.com/",
     "openingHours": "12時～19時（ギャラリーのみ日曜日は18時まで）",
     "price": "無料"
   },
@@ -11323,11 +11834,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-997",
     "name": "和詩倶楽部",
     "description": "工房で和紙の製作行程の説明を聞いた後、和紙漉き体験ができる。漉いた和紙は持ち帰れる。所要時間／1時間定員／15名※2日前までにWebもしくは、電話にて要予約",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.014172,
       "longitude": 135.753297
     },
+    "url": "https://www.washiclub.jp",
     "openingHours": "10時～、13時～、15時～、17時～",
     "price": "和紙1枚～10枚程度　500円（税別）"
   },
@@ -11335,7 +11847,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-998",
     "name": "三条大橋",
     "description": "東海道五十三次の西の起点。現在の橋は、天正18年（1590）に豊臣秀吉の命で改築された木橋の面影を残しており、高欄の擬宝珠14個はその当時のもの。橋の全長は74ｍ。橋上からは比叡山、北山、東山などの山並みを見ることができるほか、置屋や料亭が並ぶ西岸の先斗町には今も花街の風情を感じることができる。また",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.009049,
       "longitude": 135.77179
@@ -11345,18 +11857,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-999",
     "name": "京都便利堂（本店仮店舗）",
     "description": "明治20年（1887）創業、美術印刷の便利堂が手掛けた全国の美術館や博物館の名品・名作絵はがきやグッズを一堂に集めたショップ。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.015439,
       "longitude": 135.756439
     },
+    "url": "https://benrido.co.jp",
     "openingHours": "10時～18時"
   },
   {
     "id": "spot-1000",
     "name": "高瀬川（一之船入跡）",
     "description": "高瀬川は、慶長年間、当時の豪商・角倉了以が物資輸送のために鴨川の水を引いて開いた運河。この川で用いる舟を高瀬舟といった。二条から五条にかけて7つの船入り（荷物の積みおろしをするための船だまり）があり、川筋に並んだ問屋は繁栄をきわめたといわれている。そのうち、起点・二条の一之船入跡は国の史跡として保存",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.012336,
       "longitude": 135.77047
@@ -11366,7 +11879,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1001",
     "name": "錦市場",
     "description": "四条通から北に一筋入った通りで、寺町から高倉まで約400mの間に錦市場がある。「錦に来てそろわへん食べ物は1個もあらへん」という京都人の言葉通り、魚・肉・乾物・惣菜・湯葉・漬物・京野菜などの店が軒を並べ、「京の台所」とも呼ばれる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005109,
       "longitude": 135.766809
@@ -11376,11 +11889,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1002",
     "name": "元離宮二条城　特別名勝二の丸庭園",
     "description": "二の丸庭園は神仙蓬莱の世界を表した庭園と言われ、作庭の年代については記録や作風から、慶長7年～8年頃（1602～1603 家康時代）二条城が造営されたときに、その建築に調和させて作庭されたものと推測される。寛永3年（1626 家光時代）の後水尾天皇行幸のために一部改修を加えられた。後水尾天皇行幸時の",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.014239,
       "longitude": 135.748221
     },
+    "url": "https://nijo-jocastle.city.kyoto.lg.jp/",
     "openingHours": "入城時間　8時45分～17時（受付終了16時）",
     "price": "一般　1,030円（830円）中学・高校生　350円小学生　200円（ ）内は団体（30名以上）料金※二の丸御殿観覧料含む"
   },
@@ -11388,11 +11902,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1003",
     "name": "島津製作所 創業記念資料館",
     "description": "島津製作所が1875（明治8）年の創業以来製造してきた理化学器械やX線装置、標本・マネキンなどを展示しており、京都の近代化と共に歩んだ歴史をご覧いただけます。実験コーナーや田中耕一のノーベル化学賞受賞技術も紹介しています。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.012903,
       "longitude": 135.770242
     },
+    "url": "https://www.shimadzu.co.jp/visionary/memorial-hall/",
     "openingHours": "9時30分～17時（入館は16時30分まで）",
     "price": "一般・大学生　300円中学・高校生　200円小学生以下無料（20名以上2割引）【団体について】希望により約1時間程度の案内有り（要事前電話予約）"
   },
@@ -11400,11 +11915,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1004",
     "name": "大西清右衛門美術館",
     "description": "約400年にわたり京都・三条釜座にて茶の湯釜の伝統を守り続ける千家十職の釜師、大西家に伝わる茶の湯釜と茶道具類を公開。開館期間中は、茶釜にじかに触れながら鑑賞できる鑑賞会や茶会、講演会等を開催。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.008379,
       "longitude": 135.755757
     },
+    "url": "http://www.seiwemon-museum.com",
     "openingHours": "10時～16時30分（入館は16時まで）",
     "price": "一般　900円大学生　700円高校生　400円中学生以下無料障害者手帳ご提示の方とその付添の方（1名）は無料呈茶席　700円（抹茶、お菓子付）※団体割引有り"
   },
@@ -11412,7 +11928,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1005",
     "name": "先斗町",
     "description": "京都五花街のひとつで、長さ550ｍ、幅2ｍ足らずの通り。英語のポイント（先）やポルトガル語のポント（尖り）が語源で、先の細い道を表している。昔ながらの料亭やお茶屋さんが建ち並び、四条河原町のにぎやかさとはうって変わってしっとりとしたムードが漂う。夕暮れ時、小路に灯がともる頃にお座敷へ向かう舞妓の姿が",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005104,
       "longitude": 135.77113
@@ -11422,22 +11938,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1006",
     "name": "spa TRINITE",
     "description": "京都市内を眺望できるホテルの最上階に、地下1,000mから湧き出る天然温泉を利用したspa TRINITEがある。京都らしい和のテイストを取り入れたサウナ、露天風呂、ジャグジー、岩盤浴（予約制・女性のみ）、エステサロン、ラウンジを併設しています。【泉質】ナトリウム-塩化物温泉（高張性・中性温泉）【効",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.007989,
       "longitude": 135.759345
     },
+    "url": "http://www.hotelmonterey.co.jp/kyoto/",
     "price": "スパ入浴利用　1回1,770円（宿泊者様料金）※会員様、宿泊者様以外の一般ビジターのお客様には各種プランをご用意しております。"
   },
   {
     "id": "spot-1007",
     "name": "壬生寺歴史資料室",
     "description": "仏像・絵画・工芸品などの寺宝と、壬生狂言や、新選組との関わりの資料の一部が展示されている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.001662,
       "longitude": 135.743964
     },
+    "url": "http://www.mibudera.com",
     "openingHours": "9時～16時",
     "price": "大人　200円小・中学・高校生　100円"
   },
@@ -11445,11 +11963,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1008",
     "name": "京菓子司よし廣",
     "description": "季節の生菓子2種類を各1個ずつ、計2個作り、職人が作った見本の生菓子2個と合わせて4個持ち帰ることができる。また、体験後には職人の実演を見て抹茶とお菓子を味わうことができる。グループごとに写真入り修了証書を1枚プレゼント。体験者のみ店頭商品10%割引サービス。定員／2名～50名（要予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.010324,
       "longitude": 135.738745
     },
+    "url": "http://www.yoshihiroseika.com/",
     "openingHours": "店舗　10時～17時体験　9時15分～、11時～、13時30分～、15時15分～",
     "price": "一般　2,200円（税込）小人（高校生まで）1,800円（税込）"
   },
@@ -11457,11 +11976,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1009",
     "name": "壬生寺",
     "description": "壬生寺は、延命地蔵菩薩を本尊とし、991年に創建した律宗寺院で、厄除、開運の寺として庶民の信仰を集めている。境内は保育園や老人ホームなどが建ち庶民的な雰囲気だが、毎年恒例の節分会や重要無形民俗文化財壬生狂言などの行事にはたくさんの人が訪れにぎわいをみせる。また、寺の近隣には幕末に新選組の駐屯所があり",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.00165,
       "longitude": 135.743326
     },
+    "url": "http://www.mibudera.com",
     "openingHours": "9時～16時※節分会2/2～2/4、壬生狂言4/29～5/5と10月連休の3日間",
     "price": "拝観料　境内は自由壬生塚、歴史資料室　拝観料　200円"
   },
@@ -11469,11 +11989,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1010",
     "name": "わくわく館（ワックジャパン）",
     "description": "100年の歴史ある京町家にて和の文化に触れませんか。茶道、華道、琴、おばんざいなど、多数の文化体験プログラムをご用意しております。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.014538,
       "longitude": 135.762587
     },
+    "url": "http://wakjapan.com/jp/",
     "openingHours": "無休（年末年始を除く）",
     "price": "体験により異なる※要予約"
   },
@@ -11481,11 +12002,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1011",
     "name": "堀野記念館",
     "description": "キンシ正宗の創業者、堀野家の旧本宅で初代松屋久兵衛が天明元年（1781）に創業した場所である。文治元年（1864）の「どんどん焼け」を生き抜いた貴重な建物で、名水桃の井が毎時3トンもの豊富な水量でわき出ている。他、歴史史料、コレクションなどを展示。また酒造り道具の展示や、桃の井の水及び清酒と地ビール",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.01409,
       "longitude": 135.763087
     },
+    "url": "http://www.kinshimasamune.com/",
     "openingHours": "記念館　11時～17時（見学受付は16時30分まで）",
     "price": "大人（20歳以上）　500円（試飲付）※団体（10名以上）は要予約"
   },
@@ -11493,22 +12015,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1012",
     "name": "フレンチレストラン　シェモア",
     "description": "烏丸錦のシェモアが、御幸町御池の細い路地奥の町家へ移転。テラスからの日差しも心地よく、シェフとマダム2人がもてなす小さなフランス料理のお店。（座席数14席）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.011242,
       "longitude": 135.766186
     },
+    "url": "http://www.chez-moi.co.jp",
     "openingHours": "12時～13時（ラストオーダー）18時～21時（ラストオーダー）"
   },
   {
     "id": "spot-1013",
     "name": "京友禅体験工房丸益西村屋",
     "description": "京町家を改築した複合スペース「繭」の一番奥にある友禅染めの工房にて、伝統工芸士の指導で型染め体験ができる。ハンカチ、ランチョンマット、扇子等の中から好きな素材を選び、図柄を決め、その型を使って染めていく。1名からでも気軽に体験できる。（要予約）施設内には、オリジナル和雑貨をそろえたお土産ショップもあ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.010477,
       "longitude": 135.754316
     },
+    "url": "http://www.marumasu-nishimuraya.co.jp/",
     "openingHours": "9時～19時（体験受付は17時まで）",
     "price": "ハンカチ（小）　1,400円ハンカチ（大）　1,500円スマホケース　1,900円ランチョンマット　2,200円テーブルセンター（綿）　2,000円ブックカバー　2,300円風呂敷（小）　2,500円風呂敷（大）　3,300円扇子（白）　2,300円扇子（色）　3,200円ペンケース　1,900円ミニタペストリー　3,000円Tシャツ　2,700円スクールトート　1,900円サコッシュ　3,000円～（すべて税込）※カード利用可"
   },
@@ -11516,33 +12040,36 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1014",
     "name": "香老舗　林龍昇堂",
     "description": "三条通に面し風情ある町家で、江戸末期（1834年）から続く香老舗。創業以来受け継いできた伝統を大切に、雅やかな京の香りをひとつひとつ丁寧に作っています。線香から香木まで扱い、可愛いパッケージのお香もあります。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.00864,
       "longitude": 135.752867
     },
+    "url": "https://hayashi-ryushodo.com",
     "openingHours": "9時～19時"
   },
   {
     "id": "spot-1015",
     "name": "永楽屋室町店",
     "description": "佃煮と和菓子を扱う老舗。佃煮では「一と口椎茸」、「茸くらべ」、「ちりめん山椒」、「京のおぶみそ」、和菓子では繊細で美しい「琥珀」が人気。からいもの（佃煮）とあまいもの（和菓子）の両方が揃い、1,000円前後から15,000円までと詰め合わせの種類も豊富なので、おみやげや贈り物にも最適。呉服屋筋である",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.006304,
       "longitude": 135.757924
     },
+    "url": "http://www.eirakuya.co.jp",
     "openingHours": "9時～18時"
   },
   {
     "id": "spot-1016",
     "name": "まんざら本店",
     "description": "河原町竹屋町東側にあるまんざら本店は和食を基本とした創作料理の店。大正時代の町家を改装して広々とした落ちついた空間に仕上がっている。なお、30名まで利用できる座敷もある。12名まで利用できる蔵もおすすめ。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.015236,
       "longitude": 135.769109
     },
+    "url": "http://www.manzara.co.jp/honten/",
     "openingHours": "平日　17時～22時（ラストオーダー21時30分）金曜日・土曜日・祝前日　17時～23時（ラストオーダー22時30分）",
     "price": "一人6,000円前後※カード利用可"
   },
@@ -11550,11 +12077,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1017",
     "name": "元離宮二条城",
     "description": "慶長8年（1603）に徳川家康が造営、3代将軍家光が後水尾天皇行幸に伴う大規模な改修で現在の形となった。徳川幕府における京都の拠点の役割を担い、二の丸御殿（国宝）の絢爛豪華な建築と内装は目をみはる。慶応3年（1867）15代将軍慶喜による大政奉還の意思が表明されたことは有名である。本丸御殿（重文）は",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.014239,
       "longitude": 135.748221
     },
+    "url": "https://nijo-jocastle.city.kyoto.lg.jp/",
     "openingHours": "入城時間　8時45分～17時（受付終了16時）",
     "price": "一般　1,030円（830円）中学・高校生　350円小学生　200円（ ）内は団体（30名以上）料金※二の丸御殿観覧料含む"
   },
@@ -11562,7 +12090,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1018",
     "name": "座辺の骨董　幾一里",
     "description": "重文・壬生狂言で著名な壬生寺や新撰組壬生の屯所旧蹟もすぐ近くの築百年の生家である町家を改装し骨董屋を開業。町家の風情を生かしたディスプレイと古陶磁器、木や鉄の古民具から気軽に楽しめる普段使いの骨董まで幅広く取り扱っている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.006786,
       "longitude": 135.744414
@@ -11573,11 +12101,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1019",
     "name": "晦庵　河道屋",
     "description": "300年の歴史ある数寄屋造りの蕎麦屋さん。「芳香炉（ほうこうろ」が名物。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.009629,
       "longitude": 135.765655
     },
+    "url": "http://www.kawamichiya.co.jp/",
     "openingHours": "11時～20時（ラストオーダー）※緊急事態宣言下、営業時間を変更させていただきます。11時～15時（ラストオーダー）、16時閉店",
     "price": "「芳香炉」2人前　8,600円ざるそば　900円かもなんば　1,100円にしんそば　1,400円、他（すべて税込）"
   },
@@ -11585,11 +12114,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1020",
     "name": "まんざら亭　NISHIKI",
     "description": "明治時代から残る京町家を和風創作居酒屋に改装し、木の温かみを感じながらゆっくりくつろいでいただける空間をお届けします。大・小、4室の個室など、いろいろなシチュエーションにも対応できるスペースをご用意しております。2階にのぼる階段は、びっくりするぐらいの急角度で名物となっています。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005026,
       "longitude": 135.75916
     },
+    "url": "http://manzara.co.jp/",
     "openingHours": "平日　17時～23時（ラストオーダー22時30分）金曜日・土曜日・祝前日　17時～23時30分（ラストオーダー23時）ランチ　11時30分～14時※営業時間変更の場合有り※要予約",
     "price": "平均1人4,000円～5,000円"
   },
@@ -11597,11 +12127,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1021",
     "name": "本家重兵衛",
     "description": "昼はセットメニューや関西寿司を中心に、お好みにぎりや、ご予約にて「おまかせ」もご用意しております。夜はお寿司や一品料理の「おまかせ」でのご用意をしております。また、お持ち帰りも承っております。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004865,
       "longitude": 135.75882
     },
+    "url": "http://www.sushijubei.jp/",
     "openingHours": "昼　11時30分～14時（ラストオーダー13時30分）夜　17時30分～22時（ラストオーダー21時）※お持ち帰りは時間外でも可。",
     "price": "昼・お持ち帰り　京寿司盛合せ　1,400円　鯖寿司　2,000円、4,000円　ちらし寿司　1,600円～3,700円　にぎり　2,500円～5,000円夜「おまかせ」　寿司のみ　8,000円～　一品料理（つまみ）のみ　8,000円～　寿司と一品料理（つまみ）　12,000円～※すべて税別"
   },
@@ -11609,11 +12140,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1022",
     "name": "京都万華鏡ミュージアム姉小路館",
     "description": "千変万化に広がる万華鏡の鮮やかな色と光の世界。小さな筒の中で繰り広げられる美と感動の小宇宙をお楽しみください。展示室では国内外の珍しい万華鏡を手にとって見ることができ、1時間おきに部屋全体に万華鏡が投影され、幻想的な世界を楽しめます。また、お土産や贈り物に大人気の、京都の思い出を詰めた万華鏡を短時間",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.009751,
       "longitude": 135.761687
     },
+    "url": "http://k-kaleido.org/",
     "openingHours": "火曜日～日曜日（祝日は開館）10時～18時（受付は17時30分まで）※時短の場合は、11時～17時（受付は16時30分まで）",
     "price": "ミュージアム入館料　大人　500円　高校生　300円　小・中学生　200円　（乳幼児は無料）"
   },
@@ -11621,11 +12153,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1023",
     "name": "セカンドハウス東洞院店",
     "description": "明治末期の町家を改装し、スパゲティーハウスとしてオープンした。1階は 喫茶とケーキショップ（28席）、2階はイタリアンカフェ（74席）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.006433,
       "longitude": 135.761007
     },
+    "url": "http://www.secondhouse.co.jp/",
     "openingHours": "11時～22時（ラストオーダー21時）",
     "price": "ランチセット　1,240円～単品スパゲティ　990円～ディナーセット　1,490円～（すべて税込）"
   },
@@ -11633,11 +12166,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1024",
     "name": "京都絞り工芸館",
     "description": "ギャラリーと絞り体験を兼ねそろえた本格的な絞り染めのテーマ館で、京都を代表する染色技法に触れ体験できる。貴重な絞りの作品を展示するミュージアムは職人の高度な技を堪能できる。絞りスカーフ体験は絹地を使用し、丁寧な指導で初めての人も染色完成まで楽しめる。英語での対応も可能。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.010123,
       "longitude": 135.753701
     },
+    "url": "http://shibori.jp/",
     "openingHours": "9時～17時",
     "price": "入館料　　大人　800円　中学・高校生　500円　小学生　300円絞り染め体験　3,850円～（入館料800円含む）"
   },
@@ -11645,11 +12179,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1025",
     "name": "鈴木一染織コレクション",
     "description": "春（3／1～5／30）　古渡更紗展夏（6／1～8／30）　竹屋町展秋（9／1～11／29）　名物裂展冬（12／1～2／27）　珍しい染織展",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.017274,
       "longitude": 135.757932
     },
+    "url": "http://sjk-kyoto.com/",
     "openingHours": "10時～17時",
     "price": "500円"
   },
@@ -11657,7 +12192,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1026",
     "name": "大極殿本舗　六角店　甘味処「栖園」",
     "description": "明治18年（1885）創業の和菓子店の六角店。築140年の自宅を使用した店舗には、四季折々の京菓子が揃い、進物やおみやげにも最適。又併設された甘味処では坪庭を眺めながら、作りたてのおぜんざいや、わらび餅、極上の生菓子等が楽しめる。（京都市指定歴史意匠建造物）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.007261,
       "longitude": 135.763008
@@ -11669,11 +12204,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1027",
     "name": "大江能楽堂／能・狂言",
     "description": "観世流大江家の能楽堂。明治41年（1908）に創建され、大正8年（1919）に現在の規模に改築、平成13年（2001）には明治の面影をそのまま残す形で基礎部分を大改修した。定期能が年4回開催されており、今では珍しい木枠で仕切った畳の桟敷席で鑑賞できる。（椅子席も66席余り有り。）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.012015,
       "longitude": 135.764365
     },
+    "url": "http://noh.fumi.org/",
     "openingHours": "定期能　2月、5月、9月、12月（番組、時間等要問合せ）",
     "price": "定期能会　当日　3,500円　学生　1,500円前売り　3,000円"
   },
@@ -11681,11 +12217,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1028",
     "name": "クラフトやまむら",
     "description": "京友禅（型絵染）テーブルセンター製作所要時間／1時間",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.010257,
       "longitude": 135.749299
     },
+    "url": "http://www.sky.sannet.ne.jp/craft/",
     "openingHours": "9時～16時",
     "price": "1,750円（税込）型絵染トートバック　1,550円"
   },
@@ -11693,11 +12230,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1029",
     "name": "たん熊　北店",
     "description": "入り口の染め抜きののれんと打ち水に老舗の風格が漂う。伝統の技に現代感覚を取り入れた独創的な京料理が味わえる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005195,
       "longitude": 135.770061
     },
+    "url": "http://www.tankumakita.jp/",
     "openingHours": "12時～15時、17時30分～22時※現在、新型コロナウイルス感染症拡大防止対策として時短営業をしています。11時30分～14時30分、16時30分～20時",
     "price": "昼　会席　6,600円～　半月弁当　3,850円　松花堂弁当　6,050円夜　会席　16,500円～（昼会席・夜会席料理は別途サービス料10%加算）"
   },
@@ -11710,6 +12248,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.017597,
       "longitude": 135.767491
     },
+    "url": "http://madam-ko-ran.com",
     "openingHours": "昼　11時30分～14時30分（ラストオーダー14時）夜　17時～21時30分（ラストオーダー21時）",
     "price": "おすすめコース　8,000円、5,000円お昼のミニ懐石　2,500円お昼の中華重　1,200円フカヒレ姿煮込み1枚　5,800円おみやげ用　東坡バーガー5ケ入　温1,650円、冷凍1,700円※すべて税別、カード利用可"
   },
@@ -11717,22 +12256,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1031",
     "name": "永楽屋　細辻伊兵衛商店　本店",
     "description": "江戸時代初めから続く京の綿布商。明治から昭和初期にかけてつくられた柄の復刻手ぬぐいや、現当主十四代が発表する新柄手ぬぐいなど常時200種類ほどの手ぬぐいが揃う。2階は明治から昭和初期にかけてつくられた「手拭い」を中心としたギャラリーで、アート感覚の手拭文化を発信している。店舗に併設されており、復刻手",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.009274,
       "longitude": 135.758132
     },
+    "url": "http://www.eirakuya.jp/",
     "openingHours": "10時～18時"
   },
   {
     "id": "spot-1032",
     "name": "京料理　梅むら",
     "description": "京料理特有の繊細な中に華やかさを秘めた雅な味と彩り。料理長が創りだす、心意気の込められた一品一品。伊藤博文が常宿された地。夏は納涼床を体験できる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.01035,
       "longitude": 135.770996
     },
+    "url": "http://www.umemura-kyoto.jp",
     "openingHours": "11時30分～14時、17時～22時",
     "price": "昼　鴨川御膳　6,831円夜　京懐石　13,915円～"
   },
@@ -11740,18 +12281,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1033",
     "name": "中華菜家　一品香",
     "description": "野菜がおいしい京チャイニーズ「一品香」。旬の野菜や海鮮などふんだんに使った個性香る小皿スタイルの中華料理を先斗町の町家でいただける。（1階18席、2階20席）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004484,
       "longitude": 135.77104
     },
+    "url": "http://www1.odn.ne.jp/~cda88300/",
     "openingHours": "12時～14時30分（ラストオーダー13時30分）17時～22時30分（ラストオーダー21時30分）"
   },
   {
     "id": "spot-1034",
     "name": "いけばな資料館",
     "description": "550年以上の歴史を持つ華道家元池坊伝来のいけばなに関する資料を中心に、六角堂（頂法寺）の什物等を常設展示。華道史上、代表的な花伝書や花器、池坊専好の立花図（重要文化財）などがある。（展示替有り）池坊ビル3階にあり完全予約制。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.008049,
       "longitude": 135.76006
@@ -11763,7 +12305,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1035",
     "name": "うれしなつ菓子　格子家",
     "description": "大正元年（1912）創業、初代がこの地でお菓子の製造卸を始めた。どろぼうしてでも食べたいほど美味しいと言われた黒糖菓子「どろぼう」をはじめ、昔懐かしいお菓子の専門店。町家の構えのお店で、うなぎの寝床の奥では手作りでお菓子を製造している。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.011702,
       "longitude": 135.74896
@@ -11775,7 +12317,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1036",
     "name": "京都生活工藝館「無名舎」",
     "description": "新町通りにある白生地の問屋であった町家を保存、公開しているもので、京商家の典型ともいうべき表屋造り。昔ながらの町屋で調度品や庭を眺めて時を過ごし、京の人々の日常の暮らしぶりを見てもらうことに重きを置いている。 京都市指定「景観重要建造物」、国指定登録有形文化財",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.006581,
       "longitude": 135.756413
@@ -11787,18 +12329,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1037",
     "name": "ハートプラザKYOTO三条",
     "description": "京都授産振興センター（現在：NPO法人京都ほっとはあとセンター）が、ほっとはあと製品（＝障害者施設の製品）の常設アンテナショップとして、2015年10月に「ハートプラザKYOTO三条」を新設（※1997年9月に開設した京都駅ビル内店舗の移転）した。この新店舗は、河原町三条通を西に向かって伸びている人",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.008651,
       "longitude": 135.768132
     },
+    "url": "http://www.kyoto-hotheart.jp",
     "openingHours": "10時30分～18時30分"
   },
   {
     "id": "spot-1038",
     "name": "長谷川松寿堂",
     "description": "色紙・短冊・和紙工芸品（友禅和紙等を使っての小箱・ノート・あぶらとり紙等や、便箋・封筒・葉書）の製造卸店。全国百貨店の京都展催事（京都府物産協会主催）や有名文具店等で販売している。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.008729,
       "longitude": 135.762745
@@ -11809,29 +12352,31 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1039",
     "name": "黄桜　祥風楼",
     "description": "酒蔵が提供する古都の風情あふれる店内で、一品料理や京懐石、蔵元直送の銘酒と地ビールなど「ほっこり」とした時間お楽しみください。また、足に優しい掘りごたつや高椅子のある座敷など、各種個室もご用意しております。（1階37席、2階38席）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004374,
       "longitude": 135.76995
     },
+    "url": "http://kizakura.co.jp",
     "openingHours": "11時30分～14時、17時～21時30分"
   },
   {
     "id": "spot-1040",
     "name": "先斗町いづもや",
     "description": "東山三十六峰と鴨川を眺めながら食事ができる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.00408,
       "longitude": 135.771162
     },
+    "url": "http://www.idumoya.co.jp/",
     "price": "うなぎ丼　1,800円～ひょうたん弁当　2,800円懐石　3,500円～（すべて税別）"
   },
   {
     "id": "spot-1041",
     "name": "とん漫",
     "description": "格子戸をくぐり抜け露地をつき当たればそこは気楽な肩の凝らないお食事処。京の真ん中、創業65年のとんかつ屋。（1階30席、2階座敷4室50席）和風ベースの秘伝のソースが、カツ丼にもかかり、あっさりした味をお楽しみください。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.009627,
       "longitude": 135.765266
@@ -11842,11 +12387,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1042",
     "name": "京都文化博物館",
     "description": "京都の歴史と文化をわかりやすく紹介する総合的文化施設。多彩な特別展のほか、総合展示室では京都の文化・歴史の他、美術・工芸品をはじめとする京都ゆかりの優品を折々の企画にあわせて紹介。3階フィルムシアターでは京都府所蔵の古典・名作映画を上映。1階の「ろうじ店舗」は江戸時代末の京の町家の表構えが復元されて",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.008798,
       "longitude": 135.762249
     },
+    "url": "https://www.bunpaku.or.jp/",
     "openingHours": "10時～19時30分（入場は19時まで）ただし特別展は18時（金曜日は19時30分）閉室（入場は各30分前まで）",
     "price": "一般　500円大学生　400円高校生以下無料20名以上の団体は2割引特別展は別途必要3階フィルムシアターは催事により有料の場合があります。"
   },
@@ -11854,11 +12400,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1043",
     "name": "京都国際マンガミュージアム",
     "description": "京都市と京都精華大学の共同事業で、マンガの収集・保管・展示および、マンガ文化に関する調査研究を行う博物館的機能と図書館的機能を併せ持つ新しい文化施設。マンガ資料は、明治の雑誌や戦後の貸本などの貴重な歴史資料や現在の人気作品、海外作品など約30万点。その内5万冊のマンガ本は館内のどこでも自由に読むこと",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.011917,
       "longitude": 135.759309
     },
+    "url": "http://kyotomm.jp",
     "openingHours": "10時～18時（最終入館17時30分）期間により閉館時間の変動有り",
     "price": "常設展入場　大人　800円（640円）　中学・高校生　300円（240円）　小学生　100円（80円）　（ ）は団体（20名以上）料金※特別展・企画展により別途入場料要"
   },
@@ -11866,11 +12413,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1044",
     "name": "金属工芸工房　竹影堂",
     "description": "18世紀末から続く錺（かざり）匠の工房。金・銀・銅などの金属を使い、錺金具や香炉、茶道具等を作っており、制作実演を見学できる。また、2時間程度の彫金体験も行っている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.012054,
       "longitude": 135.765622
     },
+    "url": "http://www.chikueidou.com",
     "openingHours": "10時～18時土曜日、日曜日、祝日　10時～17時体験・見学は平日10時～18時",
     "price": "銅板彫金体験　2,500円（10名まで、2時間程度）純銀しおり根付作り　4,800円（6名まで、3時間程度）純銀ペンダント作り　5,000円（6名まで、2時間程度）（すべて税別）"
   },
@@ -11878,11 +12426,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1045",
     "name": "本家　船はしや",
     "description": "昭和初期の表構えの大きな町家の、老舗の豆菓子店。なかでも、五色豆は京銘菓のひとつに数えられ、その歴史は古い。えんどう豆と砂糖だけでつくり出す素朴なお菓子。特に「柚子香（ゆずか）」と呼ばれる黄色い豆は、新鮮な柚子の果汁を包み込んでつくられ、ひときわ風味豊か。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.009101,
       "longitude": 135.771119
     },
+    "url": "http://www.shinise.ne.jp/funahashiya/",
     "openingHours": "10時～20時",
     "price": "古都五色豆　540円～3,800円"
   },
@@ -11890,11 +12439,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1046",
     "name": "ついぶ京都工房",
     "description": "京町家をリノベーションした工房で錺職人250年の流れを汲む伝統的な手法による指輪の手作り体験ができます。スタッフの指導でペアリング、ファミリーリングなどの他、エンゲージリングやマリッジリングも作れます。素材はシルバー・ゴールド・プラチナからお選びいただけます。所要時間／約3時間定員／体験は1名より実",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.012205,
       "longitude": 135.765942
     },
+    "url": "https://tsuibu.com/",
     "openingHours": "日曜日～土曜日　10時～18時",
     "price": "体験　シルバー　5,000円～（税別）　ゴールド・プラチナ　20,000円+材料費（税別）"
   },
@@ -11902,22 +12452,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1047",
     "name": "株式会社鼓月　本店",
     "description": "昭和20年（1945）創業の京菓子処。当時、和菓子には使用されていなかった材料を使い、新しい京菓子を開発、「千寿せんべい」といった代表銘菓となった。〈千寿せんべい〉あっさりとしたシュガークリームをはさんだおせんべい。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.01589,
       "longitude": 135.738439
     },
+    "url": "http://www.kogetsu.com",
     "openingHours": "平日　9時～19時日曜日、祝日　9時～18時"
   },
   {
     "id": "spot-1048",
     "name": "香老舗 松栄堂　京都本店",
     "description": "香房見学。昔ながらのお線香作りの現場を間近で見ることができる。また、お香の原料や種類、歴史などを紹介する。所要時間／約40分定員／10名まで（希望日の一週間前までに電話にて予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.014216,
       "longitude": 135.759809
     },
+    "url": "http://www.shoyeido.co.jp",
     "openingHours": "10時～12時、13時30分～15時",
     "price": "無料"
   },
@@ -11925,33 +12477,36 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1049",
     "name": "膳處漢ぽっちり",
     "description": "昭和初期に建てられた呉服問屋。入口は洋館だが奥に入るとほとんど手を加えていない町家のつくり。和洋折衷の空間で京都の季節の食材をふんだんに使った北京料理を。（座席数150席）重厚な扉で守られる蔵は、バーとして活用しております。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005007,
       "longitude": 135.757423
     },
+    "url": "http://www.kiwa-group.co.jp",
     "openingHours": "11時30分～15時（ラストオーダー14時）17時～22時30分（ラストオーダー21時30分）バー　18時頃～24時（ラストオーダー23時30分）"
   },
   {
     "id": "spot-1050",
     "name": "くろちく天正館",
     "description": "京の町家にしつらえた趣のある和雑貨工芸品ショップ。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005775,
       "longitude": 135.756384
     },
+    "url": "http://www.kurochiku.co.jp/",
     "openingHours": "10時～18時"
   },
   {
     "id": "spot-1051",
     "name": "錦の水",
     "description": "寺町錦小路を東に入った、新京極商店街の中心にある錦天満宮の境内から湧き出ている。錦天満宮の創建は長保年間（999～1004）で、天正15年（1587）豊臣秀吉公が現在の地へ移した。（元は源融公の庭園跡の六条河原院に歓善光寺の鎮守としてあった）祭神は菅原道真公で、知恵、商才にご利益があるといわれ参拝客",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005022,
       "longitude": 135.767387
     },
+    "url": "http://www.nishikitenmangu.or.jp/",
     "openingHours": "8時～20時",
     "price": "境内自由"
   },
@@ -11964,38 +12519,42 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.017186,
       "longitude": 135.767809
     },
+    "url": "http://shimogoryo.main.jp/",
     "openingHours": "6時開門～19時30分閉門授与所　9時～17時"
   },
   {
     "id": "spot-1053",
     "name": "永楽屋本店",
     "description": "佃煮と和菓子を扱う老舗。佃煮では「一と口椎茸」、「茸くらべ」、「ちりめん山椒」、「京のおぶみそ」、和菓子では繊細で美しい「琥珀」が人気。からいもの（佃煮）とあまいもの（和菓子）の両方が揃い、1,000円前後から15,000円までと詰め合わせの種類も豊富なので、おみやげや贈り物にも最適。2階には喫茶室",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004169,
       "longitude": 135.769528
     },
+    "url": "http://www.eirakuya.co.jp",
     "openingHours": "10時～20時2階喫茶は12時～19時（18時30分ラストオーダー）"
   },
   {
     "id": "spot-1054",
     "name": "アートコンプレックス1928",
     "description": "昭和3年（1928）武田五一氏の設計により、大阪毎日新聞社京都支局ビルとして建築された。バルコニーの形状や玄関左右のランプカバーの意匠に、アール・デコの影響が認められ、意匠史の上からも注目に値する建築物として、京都市登録有形文化財に登録されている。\"",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.008482,
       "longitude": 135.766516
-    }
+    },
+    "url": "http://www.artcomplex.net/ac1928/"
   },
   {
     "id": "spot-1055",
     "name": "香老舗 松栄堂　薫習館",
     "description": "京都本店の南隣に2018年7月11日に開設した日本の香文化の情報発信拠点。1階のKoh-labo「香りのさんぽ」では様々な香りに出会い、興味を持っていただけるスペースです。また、松栄堂の企画展を開催する「松吟ロビー」もあり、ワークショップや展覧会などを行っています。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.014218,
       "longitude": 135.759809
     },
+    "url": "http://www.kunjyukan.jp",
     "openingHours": "10時～17時",
     "price": "無料"
   },
@@ -12003,11 +12562,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1056",
     "name": "京都さがの館　京都四条本店（京あるき）",
     "description": "着物観光レンタル、フォトスタジオ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004247,
       "longitude": 135.758216
     },
+    "url": "http://kyoaruki.saganokan.com",
     "openingHours": "10時～19時（返却17時30分まで）",
     "price": "スタンダード着物プラン（着物、半巾帯、草履、巾着、小物一式、着付料込み）　2,990円（要事前予約）ヘアセット（女性のみ）　1,500円荷物のホテルお届け（京都市内）、着物の翌日フロント返却　1,500円京都四条本店限定・スタジオフォトプラン（キャビネサイズ台紙仕上げ2枚）　2,500円※すべて税別"
   },
@@ -12015,11 +12575,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1057",
     "name": "黒豆茶庵　北尾　錦店",
     "description": "錦市場のまんなかのほっこり空間。自分で石臼で挽いたきな粉をかけていただく甘味類が人気。また、50種類以上ある京の四季や名所などを描いた小箱に北尾自慢の黒豆菓子を自由に詰め合わせができるので、京都のお土産やプレゼントにもぴったり。中でも、大粒の黒豆をドライタイプの甘納豆に仕上げた「豆しぼり」や、あられ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005142,
       "longitude": 135.765122
     },
+    "url": "http://www.kitaoshoji.co.jp/",
     "openingHours": "販売　10時～18時喫茶　11時～17時（ラストオーダー）",
     "price": "お食事　京美白どり　照り焼き御膳　1,100円（税込）　黒豆そうめん　770円～　他甘味　黒豆コーヒー　495円　黒豆パンケーキ　1,100円（税込）　黒豆わらび餅　715円（税込）"
   },
@@ -12027,11 +12588,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1058",
     "name": "染・清流館",
     "description": "京都芸術センターの北隣に位置し、世界で初めての染色専門美術館。平成3年（1991）から始めた「染・清流展」に出品された作品の中から選択、現在までに収集した約600点の作品を中心に設立され、染色芸術の日本全国、そして世界への発信基地であり、同時に若手染色作家の育成を目的とした畳敷きの美術館です。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005591,
       "longitude": 135.758164
     },
+    "url": "http://www.someseiryu.net/",
     "openingHours": "10時～17時",
     "price": "大人　300円学生　200円"
   },
@@ -12039,17 +12601,18 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1059",
     "name": "先斗町歌舞練場",
     "description": "先斗町歌舞練場は大正14年（1925）に着工、昭和2年（1927）に完成しました。歌舞練場の屋根には中国の舞楽面を型取った鬼瓦が守り神として据えてあります。また、鴨川をどりや水明会の会場となっていますが、邦楽邦舞の発表会、講演会、展示会など幅広く一般の方々にご利用いただけます。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.008052,
       "longitude": 135.771279
-    }
+    },
+    "url": "http://www.kamogawa-odori.com"
   },
   {
     "id": "spot-1060",
     "name": "松彌",
     "description": "明治21年（1888）創業の京菓子店。夏季限定（ゴールデンウィーク頃から8月末頃）の創作菓子「金魚」が有名で、羊かん製のデメキン、リュウキンの2尾の金魚と水草を、梅酒で風味付けした寒天の中に入れ、金魚が泳ぐ様を表現しており、何とも涼しげである。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.013852,
       "longitude": 135.768104
@@ -12061,18 +12624,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1061",
     "name": "炭火焼鳥　串くら本店",
     "description": "築100年を超える京町家とその暮らしぶり。炭火焼きというシンプルだからこそ、素材・鮮度にこだわります。季節を愉しみ旬を愛でるおもてなしの歴史もご賞味ください。（座席数94席）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.011374,
       "longitude": 135.762261
     },
+    "url": "http://www.kushikura.jp",
     "openingHours": "11時30分～14時30分（ラストオーダー14時）17時～21時（ラストオーダー20時）"
   },
   {
     "id": "spot-1062",
     "name": "桔梗寿司",
     "description": "京都名物の鯖寿司・ちらし寿司・箱寿司。カウンターでの一品料理、にぎり寿司、天ぷらなども好評。（座席数40席）個室（2部屋）有り。お寿司、一日料理のお持ち帰りできます。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.017118,
       "longitude": 135.753353
@@ -12083,11 +12647,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1063",
     "name": "omo cafe",
     "description": "築100年近い町家の「離れ」や「蔵」を利用した個室や、厨房に面したカウンターがおもしろい、和スイーツと創作ごはんのカフェ。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005291,
       "longitude": 135.765425
     },
+    "url": "http://www.secondhouse.co.jp/omoya/omocafe.html",
     "openingHours": "11時～21時30分（ラストオーダー）",
     "price": "食事　1,100円～ごはんプレート　1,650円和スイーツ　500円～ドリンク　530円～"
   },
@@ -12095,11 +12660,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1064",
     "name": "亀甲屋",
     "description": "昭和初期築の町家を改装して営業。外観は古い町家。この外観の京都らしさと比べシンプルかつモダンな内装となっている。料理は京都ならではの食材を使ったリーズナブルな価格の料理を提供しており、焼酎、地酒も充実している。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.010312,
       "longitude": 135.762532
     },
+    "url": "http://web.kyoto-inet.or.jp/people/kikkoya/kikkoya/index.html",
     "openingHours": "17時～23時（ラストオーダー22時15分）",
     "price": "ひきあげゆば（小鍋を使って自分でゆば作りが楽しめる）　1,400円～生麩の田楽　720円京番茶だしのもち豚しゃぶしゃぶ鍋　2,400円他　宴会などのコース（5,000円～）有り※すべて税別"
   },
@@ -12107,22 +12673,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1065",
     "name": "京都一の傅　本店",
     "description": "創業以来90余年の月日に渡り伝統の味を守り続ける西京漬の老舗。町家空間に流れるゆったりとした時間の中で、焼きたての西京漬をお楽しみ下さい。（座席数45席）また、1階ではこだわりの西京漬をお買い求めいただけます。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.00604,
       "longitude": 135.764108
     },
+    "url": "http://www.ichinoden.jp",
     "openingHours": "お買物　10時～18時お食事　11時～16時（ラストオーダー14時30分）"
   },
   {
     "id": "spot-1066",
     "name": "京うちわ　阿以波",
     "description": "京うちわは、「御所うちわ」とも呼ばれ、団扇部分と把手（とって）を別々に作り、後で柄を付ける「差し柄構造」が特徴で、柄は、竹、栂、杉、漆塗などで、紙は主として美濃、八尾、越前の和紙を用い、絵柄は、人物、風景、俳句、和歌をモチーフとして押し絵、版画、手染、手彫の技法を使い個々の特徴を生かし、伝統に裏打ち",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.006482,
       "longitude": 135.763911
     },
+    "url": "http://www.kyo-aiba.jp/",
     "openingHours": "9時～18時",
     "price": "実用的なうちわ（片透かし、木版）　3,400円～（税別）飾りうちわ　11,000円～（税別）"
   },
@@ -12135,6 +12703,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.978138,
       "longitude": 135.781281
     },
+    "url": "http://www.mitera.org/",
     "openingHours": "9時～16時30分（12月～2月は9時～16時）",
     "price": "諸堂（伽藍、宝物館）　一般　500円　小・中学生　300円なお、御殿・庭園拝観志納料については300円（中学生以上、小学生以下は保護者同伴で無料）"
   },
@@ -12147,6 +12716,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.005422,
       "longitude": 135.782379
     },
+    "url": "https://www.chion-in.or.jp/",
     "openingHours": "9時～16時（受付終了）",
     "price": "境内自由友禅苑　300円方丈庭園　400円"
   },
@@ -12159,6 +12729,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.004327,
       "longitude": 135.777296
     },
+    "url": "https://tsuku2.jp/gion-k",
     "openingHours": "11時～19時（ラストオーダー18時30分）",
     "price": "お茶漬　1,650円11種の漬物が付いている。ごはんはおかわりができる。"
   },
@@ -12171,6 +12742,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.00058,
       "longitude": 135.779784
     },
+    "url": "http://www.kodaiji.com/museum",
     "openingHours": "9時30分～18時（ただし、高台寺・圓徳院の春・夏・秋の夜間拝観期間中は夜間も開館される）※受付は30分前まで",
     "price": "一般　300円（掌美術館のみ拝観）一般　600円（高台寺の拝観料込み）一般　900円（高台寺、圓徳院の拝観料込み）中学・高校生　250円団体（30名以上）　500円"
   },
@@ -12178,11 +12750,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1071",
     "name": "甘春堂東店",
     "description": "干菓子でできた茶碗「茶寿器」が有名な和菓子店。2階の茶房で、生菓子と抹茶のセットなどが賞味できる。また、上生菓子3個（1個はお抹茶と試食、2個は持ち帰り）、干菓子1種類の和菓子4種類を作る和菓子作り教室を実施している。（所要時間／約1時間）他に、修学旅行体験学習対象に和菓子3種類（上生菓子3個）を作",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991912,
       "longitude": 135.770671
     },
+    "url": "http://www.kanshundo.co.jp/",
     "openingHours": "茶房　10時～17時1階 　9時～18時体験　11時～16時（要問合せ）",
     "price": "和菓子と抹茶のセット　700円（税別）和菓子作り教室　1人2,530円（税込）修学旅行体験　1人1,980円（税込）修学旅行生体験（団体）　1人1,650円（税込）"
   },
@@ -12190,22 +12763,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1072",
     "name": "ゑびす神社",
     "description": "建二2年（1202）鎌倉期創建。八代言代主大神（やえことしろぬしのおおかみ）・大国主大神（おおくにぬしのおおかみ）・少彦名神（すくなひこなのかみ）を祀っている。1月10日を中心として前後5日間にわたって行われる「十日ゑびす」は、京の年中行事の1つとして名高い。その期間中は「吉兆笹」や、「ゑびす顔」、",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.999869,
       "longitude": 135.771731
     },
+    "url": "http://www.kyoto-ebisu.jp/",
     "openingHours": "8時30分～17時ご朱印は16時30分まで"
   },
   {
     "id": "spot-1073",
     "name": "京漬物・ニシダや",
     "description": "東大路通り今熊野交差点を東に入った、丸いオレンジに大原女マークがトレードマークの漬物屋です。大原に伝わるしば漬を参考に、本来ナスが主であったものをキュウリにチェンジさせた「しば漬風味おらがむら漬」がニシダやの看板商品です。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.985255,
       "longitude": 135.774379
     },
+    "url": "http://nishidaya.com/",
     "openingHours": "9時～17時",
     "price": "おらがむら漬け（1袋）　350円（税別）"
   },
@@ -12213,11 +12788,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1074",
     "name": "京都さがの館　京都祇園店（京あるき）",
     "description": "着物観光レンタル、ロケーションフォト",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.99945,
       "longitude": 135.777519
     },
+    "url": "http://kyoaruki.saganokan.com",
     "openingHours": "10時～19時（最終受付は17時まで、返却は18時まで）",
     "price": "スタンダード着物プラン（着物、半巾帯、草履、巾着、小物一式、着付料込み）　2,990円（要事前予約）ヘアセット（女性のみ）　1,500円荷物のホテルお届け（京都市内）、着物の翌日フロント返却　1,500円清水高台寺店限定・ロケーションフォトプラン（着物レンタル1着、着付け、女性のみヘアセット、撮影1時間、CDデータ70枚程度）　18,000円～（要事前予約）※すべて税別"
   },
@@ -12225,11 +12801,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1075",
     "name": "森陶器館",
     "description": "清水焼の絵付けなどの、製作体験。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.995896,
       "longitude": 135.781708
     },
+    "url": "https://moritoukikan.jp/",
     "openingHours": "9時～17時",
     "price": "土ひねり　2,960円～（税込）絵付け　1,280円～（税込）"
   },
@@ -12237,11 +12814,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1076",
     "name": "川勝總本家　清水参道店",
     "description": "清水寺への参拝者で賑わってきた参道にあります。清水寺へお参りの際は、ぜひお立ち寄りください。旅気分をくすぐる風情ある道をお楽しみください。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.995615,
       "longitude": 135.781862
     },
+    "url": "https://www.kawakatu.com",
     "openingHours": "8時30分～17時（観光シーズンは別途）"
   },
   {
@@ -12253,6 +12831,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.979834,
       "longitude": 135.781184
     },
+    "url": "http://www.kannon.jp",
     "openingHours": "8時～17時",
     "price": "参拝自由"
   },
@@ -12260,22 +12839,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1078",
     "name": "川勝總本家　高台寺二年坂店",
     "description": "京都随一の観光スポットにあります。清水寺から高台寺や八坂の塔へ行かれる際は、ぜひお立ち寄りください。二年坂の石段や石畳などの京都らしい雰囲気をお楽しみください。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.99917,
       "longitude": 135.780148
     },
+    "url": "https://www.kawakatu.com",
     "openingHours": "10時～18時（観光シーズンは別途）"
   },
   {
     "id": "spot-1079",
     "name": "南座",
     "description": "元和年間（1615～1624）、京都に公許された7つの櫓の伝統を継承している唯一の劇場で、毎年、師走の歌舞伎公演「吉例顔見世興行」は京の年中行事のひとつとして数えられています。そして、平成30年（2018）11月、耐震補強改修工事を終え、新開場しました。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003496,
       "longitude": 135.772335
     },
+    "url": "https://www.shochiku.co.jp/play/theater/minamiza/",
     "openingHours": "公演による",
     "price": "公演による"
   },
@@ -12288,6 +12869,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.007463,
       "longitude": 135.783146
     },
+    "url": "http://www.shorenin.com/",
     "openingHours": "9時～17時（受付は16時30分まで）",
     "price": "大人　500円（450円）高校生　400円（350円）中学生　400円（300円）小学生　200円（ ）内は団体（30名以上）の料金"
   },
@@ -12312,6 +12894,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.00389,
       "longitude": 135.780918
     },
+    "url": "https://kyoto-maruyama-park.jp",
     "openingHours": "入園自由"
   },
   {
@@ -12323,6 +12906,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.978555,
       "longitude": 135.772433
     },
+    "url": "https://www.doujyuin.jp/",
     "openingHours": "9時～16時",
     "price": "要予約（10名以上の学術目的の団体のみ拝観可能。）※秋の特別拝観時に御開帳大人　500円高校生以下無料"
   },
@@ -12335,17 +12919,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.005418,
       "longitude": 135.775346
     },
+    "url": "https://kiwa-group.co.jp/",
     "openingHours": "昼　11時30分～14時（ラストオーダー）夜　18時～21時（ラストオーダー）"
   },
   {
     "id": "spot-1085",
     "name": "霊山観音",
     "description": "〈坐禅会〉坐禅・法話・抹茶（要予約）〈写経会〉毎月18日（5/18は休み）",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.999909,
       "longitude": 135.781919
     },
+    "url": "http://www.ryozen-kwannon.jp/",
     "openingHours": "参拝　8時40分～16時20分（受付16時まで）坐禅会　8時30分～15時写経会　10時～12時、毎月18日（5/18は休み）",
     "price": "参拝　小学生　100円（線香なし）　中学・高校生　200円（線香付き）　大人（大学生以上）　300円（線香付き）坐禅会（要予約）　小・中学生　800円　高校生　900円　一般　1,000円写経会　入会金　1,000円　参加費　1,000円"
   },
@@ -12353,11 +12939,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1086",
     "name": "白碗竹カイ樓",
     "description": "京の風情を感じる新橋通に建つ元お茶屋を改装した中国料理店。「フカヒレ土鍋ごはん」は昼の一番人気メニュー。※店の名前の「カイ」は竹冠に快と書きます。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.00592,
       "longitude": 135.773556
     },
+    "url": "http://www.kiwa-group.co.jp/",
     "openingHours": "昼　11時30分～14時（ラストオーダー）夜　17時～21時30分（ラストオーダー）",
     "price": "紅焼大排翅（フカヒレ姿の白湯しょうゆ土鍋煮）100g　9,350円～（税込）ふかひれ土鍋ごはん　2,200円～（税込）※ディナーはサービス料としてご飲食代金の10%を別途頂戴しております。※カード利用可"
   },
@@ -12365,7 +12952,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1087",
     "name": "法住寺",
     "description": "〈写経と法話〉写経会。おつとめ～法話～写経～粗飯。〈護摩焚きと法話〉不動縁日。護摩焚き～法話。所要時間／約1時間〈写経〉随時実施。9時～15時所要時間／約1時間～1時間30分写経　毎日受付（1名～）〈坐禅〉随時時間／9時～15時所要時間／約1時間坐禅　毎日受付（5名～9名、2,000円、10名～、1",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.987474,
       "longitude": 135.772668
@@ -12377,7 +12964,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1088",
     "name": "八坂の塔（法観寺）",
     "description": "二年坂近く、聖徳太子により建立されたと伝えられる法観寺内にある五重塔。足利義教により再建されたこの塔は高さ46ｍ、6.4ｍ四方、本瓦葺の和様建築で初層内部、並びに二層目まで見学できる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.998587,
       "longitude": 135.779235
@@ -12406,6 +12993,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.004882,
       "longitude": 135.778845
     },
+    "url": "http://umenoi.jp",
     "openingHours": "昼　11時30分～13時（最終入店）夜　17時～19時30分（最終入店）",
     "price": "うな重　6,000円うな丼　3,000円おきまり 昼　5,000円、10,000円おきまり 夜　10,000円、15,000円"
   },
@@ -12413,17 +13001,18 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1091",
     "name": "京都東山荘",
     "description": "京を見守る東山三景を背に古き歴史につつまれた静かな佇まい。くつろぎのお部屋があなたをお待ちしています。玄関から一歩ふみ出せば、そこは情緒あふれる京の街並み。「清水坂」に面しており、東山観光に最適です。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.997335,
       "longitude": 135.77901
-    }
+    },
+    "url": "http://www.k-higashiyamaso.jp/"
   },
   {
     "id": "spot-1092",
     "name": "五条大橋",
     "description": "五条通りの鴨川に架かり、牛若丸と弁慶が出会ったという伝説の場所。橋の西側には、ふたりの石像がある。また、橋のたもとには清照尼が扇をつくった御影堂の跡があり、扇形の石碑と扇塚が建っている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.995825,
       "longitude": 135.766951
@@ -12433,7 +13022,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1093",
     "name": "京料理　道楽",
     "description": "創業は江戸時代初期の寛永年間の老舗料亭。島左近の邸宅跡と口伝されている。名品を用いた茶懐石、京料理コース。料理はすべて要予約。季節感あふれる伝承の京料理を趣深い京の町家のお座敷にてゆっくりと楽しめる。（京都市歴史的意匠建造物）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991755,
       "longitude": 135.769011
@@ -12450,6 +13039,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.988097,
       "longitude": 135.776398
     },
+    "url": "https://www.chisan.or.jp/",
     "openingHours": "9時～16時30分（入館は16時まで）",
     "price": "大人　500円中学・高校生　300円小学生　200円※特別拝観時は変更有り"
   },
@@ -12457,11 +13047,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1095",
     "name": "豊国さんのおもしろ市",
     "description": "18日は太閤さんの命日。毎月8日には古布、骨董の店が30店ほど並ぶ。毎月18日には手作り品、リサイクル品など30店ほどが並ぶ。毎月28日には手作り品中心のフリーマーケットが30店ほど並ぶ。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.99157,
       "longitude": 135.772495
     },
+    "url": "http://www.omosiro1.com/",
     "openingHours": "毎月8日、18日、28日10時～15時（雨天中止）"
   },
   {
@@ -12473,6 +13064,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.00312,
       "longitude": 135.780237
     },
+    "url": "https://www.chourakukan.co.jp",
     "openingHours": "喫茶　11時～18時30分（ラストオーダー18時）フレンチ「ル シェーヌ」　ランチ　11時30分～14時（ラストオーダー）　ディナー　17時30分～21時（ラストオーダー19時30分）ライブラリーバー「マデイラ」　17時～22時（ラストオーダー21時30分）",
     "price": "コーヒー　880円ジュース　880円～サンドウィッチ　1,320円～ケーキ　660円～デセールスイーツ各種　1,430円～アフタヌーンティー　4,400円～※上記は税込料金です。別途サービス料10%を申し受けます。"
   },
@@ -12485,6 +13077,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.009985,
       "longitude": 135.781376
     },
+    "url": "http://www.kyoto-namikawa.jp",
     "openingHours": "10時～16時30分（入館は16時まで）",
     "price": "大人　800円（600円）大学生・70歳以上　600円（500円）中学・高校生　400円（300円）小学生以下・障害者手帳をお持ちの方無料（ ）内は団体（20名以上）料金"
   },
@@ -12492,7 +13085,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1098",
     "name": "豊国神社宝物館",
     "description": "豊臣秀吉ゆかりの神社で、秀吉に関する宝物を収蔵。見ものは狩野内膳筆「豊国祭礼図屏風」、高台寺蒔絵を施した唐櫃など。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991099,
       "longitude": 135.772503
@@ -12504,11 +13097,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1099",
     "name": "清水三年坂美術館",
     "description": "幕末から明治時代にかけての金工、蒔絵、七宝、彫刻、京薩摩などの美術品約50点を1階で常時展示する。ほとんどがいったん海外に流出した美術品で、帝室技芸員の作品をはじめ、繊細で洗練された美しさを持つ名品が揃う。2階は企画展示室で3ヶ月ごとにテーマを設定して展示している。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.997423,
       "longitude": 135.781142
     },
+    "url": "https://www.sannenzaka-museum.co.jp/",
     "openingHours": "10時～17時（入館は16時30分まで）",
     "price": "大人　800円中学・高校・大学生　500円小学生　300円幼児無料団体（20名以上）2割引障害者手帳をお持ちの方と付き添い者1名は半額"
   },
@@ -12516,11 +13110,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1100",
     "name": "今井半念珠店",
     "description": "天正年間創業の念珠づくりの老舗。天然石を使ったブレスレットの製作体験。小・中学校の修学旅行生には、プラスチックの玉を使った腕輪製作体験もある。商品の特別割引有り。所要時間／約1時間定員／体験　2名より実施 （要予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991156,
       "longitude": 135.770129
     },
+    "url": "http://imaihan-nenjyu.jp",
     "openingHours": "9時～19時体験　月曜日～土曜日　9時～15時",
     "price": "体験天然石ブレスレット　3,000円"
   },
@@ -12533,6 +13128,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.97662,
       "longitude": 135.774367
     },
+    "url": "http://www.tofukuji.jp/",
     "openingHours": "4月～10月末　9時～16時（16時30分閉門）11月～12月初旬　8時30分～16時（16時30分閉門）12月初旬～3月末　9時～15時30分（16時閉門）",
     "price": "通常期拝観料　本坊庭園（方丈）　500円　通天橋・開山堂　600円　本坊庭園（方丈）、通天橋・開山堂共通拝観券　1,000円秋季拝観料（11/10～11/30）　本坊庭園（方丈）　500円　通天橋・開山堂　1,000円　本坊庭園（方丈）、通天橋・開山堂共通拝観券はありません。"
   },
@@ -12540,11 +13136,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1102",
     "name": "総本家にしんそば松葉",
     "description": "京都特有のそば料理、にしんそばの元祖。南座の隣りにある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003715,
       "longitude": 135.77224
     },
+    "url": "http://www.sobamatsuba.co.jp/",
     "openingHours": "11時～21時30分（ラストオーダー21時）",
     "price": "にしんそば  1,300円（税込1,430円）"
   },
@@ -12552,11 +13149,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1103",
     "name": "総本家ゆどうふ奥丹清水",
     "description": "湯豆腐の老舗。自家製の豆腐を使った湯豆腐、木の芽田楽、精進揚げなどのコースが楽しめる。個室も数室有る。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.997829,
       "longitude": 135.780701
     },
+    "url": "http://www.tofuokutan.info/",
     "openingHours": "平日　11時～16時30分（ラストオーダー16時）土曜日、日曜日、祝日　11時～17時30分（ラストオーダー17時）清水寺夜間拝観の時は11時～21時（ラストオーダー20時30分）",
     "price": "昔どうふコース　4,400円（税込）ゆどうふコース　3,300円（税込）他"
   },
@@ -12564,7 +13162,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1104",
     "name": "子安の塔",
     "description": "清水寺の塔頭、泰産寺にある子安の塔。三重塔で安産守護の千手観音像を安置している。ここは谷越しに清水寺の全景が見渡せる格好のビューポイントで、伽藍が一列に並んで見える。※ご利益：安産",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.992933,
       "longitude": 135.784963
@@ -12580,6 +13178,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.003477,
       "longitude": 135.776622
     },
+    "url": "https://www.kanjimuseum.kyoto/",
     "openingHours": "水曜日～日曜日11時～17時（入館16時30分まで）※休日は9時30分から",
     "price": "大人　800円高校・大学生　500円小・中学生　300円未就学児、障がい者　無料※その他、団体など割引制度有り（団体見学は要予約）"
   },
@@ -12597,11 +13196,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1107",
     "name": "半兵衛麸",
     "description": "元禄2年（1689）創業の約330年続く京麸、京ゆばのお店。五条大橋のたもとにある本店では、笹で巻いた麸まんじゅうや、やき麸、生ゆば等を販売しており、併設の茶房では「京麸・京ゆば」のおいしさを多くの方にお楽しみ頂きたいと、生麸、生ゆばを使った「むし養い」という料理を町家で味わうことができる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.99504,
       "longitude": 135.768634
     },
+    "url": "http://www.hanbey.co.jp/",
     "openingHours": "9時～17時茶房　11時～14時30分（最終入店）※茶房はお電話にて要予約（座席数40席）",
     "price": "笹巻麸5個入　1袋1,242円（税込）汲み上げゆば　1パック486円（税込）むし養い料理　1人3,850円（税込）※カード利用可"
   },
@@ -12626,6 +13226,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.0001,
       "longitude": 135.775502
     },
+    "url": "https://www.ii-museum.jp",
     "openingHours": "13時～17時（入館は16時30分まで）",
     "price": "一般　1,500円高校・大学生　1,000円小・中学生　500円"
   },
@@ -12638,6 +13239,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.003666,
       "longitude": 135.778553
     },
+    "url": "http://www.yasaka-jinja.or.jp/",
     "openingHours": "24時間参拝可",
     "price": "無料"
   },
@@ -12650,6 +13252,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.976736,
       "longitude": 135.772337
     },
+    "url": "https://tentokuin.jp/",
     "openingHours": "10時～16時※桔梗、紅葉の開花時期のみ拝観可",
     "price": "桔梗の頃　大人（大学生以上）　500円　小人（中高生）　300円　小学生以下無料※紅葉の頃は天得院ホームページでご確認ください。"
   },
@@ -12662,6 +13265,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.987754,
       "longitude": 135.775019
     },
+    "url": "http://www.chisan.or.jp/lodging",
     "openingHours": "一般拝観時間　9時～16時30分（来場は16時まで）",
     "price": "1泊朝食付　8,300円～（宿泊料、朝食、宿泊税込み）※部屋タイプ、宿泊人数、シーズンによって料金が変わります。夕食は別途お申し込みください。（税込3,300円～）"
   },
@@ -12686,6 +13290,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.002582,
       "longitude": 135.783527
     },
+    "url": "http://www.age.ne.jp/x/chouraku",
     "openingHours": "9時～17時",
     "price": "500円（4/1～5/10は抹茶付き1,000円、10/20～11/30は特別拝観料650円）筑前琵琶で語る「平家物語」　冥加料3,000円"
   },
@@ -12693,11 +13298,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1115",
     "name": "永楽屋　細辻伊兵衛商店　祇園店",
     "description": "江戸時代初期から続く京の綿布商。明治から昭和初期にかけてつくられた柄の復刻手ぬぐいや、現当主十四代が発表する新柄手ぬぐいなど常時200種類ほどの手ぬぐいが揃う。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003965,
       "longitude": 135.773389
     },
+    "url": "http://www.eirakuya.jp/",
     "openingHours": "12時～18時"
   },
   {
@@ -12709,6 +13315,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.000778,
       "longitude": 135.781113
     },
+    "url": "http://www.kodaiji.com/",
     "openingHours": "9時～17時（閉門17時30分）",
     "price": "拝観料　600円（中学・高校生250円）"
   },
@@ -12716,11 +13323,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1117",
     "name": "株式会社七條甘春堂　且坐喫茶",
     "description": "幕末期の町家をそのまま茶房として使用し、落ち着いた雰囲気の中でお茶と和菓子をいただける。お茶と和菓子は1人づつお盆で、希望により自分でお茶を点てることもできる。また、職人の指導による和菓子作りも体験できる。（要予約）お茶と共に自分で作ったお菓子をいただき、残りはおみやげとして持ち帰るようになっている",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.989422,
       "longitude": 135.770832
     },
+    "url": "http://www.7jyo-kansyundo.co.jp/",
     "openingHours": "茶房　10時～18時（ラストオーダー17時30分）",
     "price": "主菓子と抹茶　864円菓子膳　1,512円抹茶と主菓子の和菓子作り　一般　2,200円　学生　1,760円"
   },
@@ -12728,11 +13336,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1118",
     "name": "清水寺",
     "description": "「清水の舞台」として名高く、宝亀9年（778）延鎮上人の開創。春の桜と新緑、秋の紅葉と四季折々の美しさを背景にした舞台造りの本堂（国宝）は断崖の上にせりだし、市街地の眺望もすばらしい。境内には、奥の院・阿彌陀堂（いずれも重文）など多くの文化財を有する。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.994868,
       "longitude": 135.785048
     },
+    "url": "http://www.kiyomizudera.or.jp/",
     "openingHours": "6時～18時（7月、8月は6時～18時30分）",
     "price": "一般　400円小・中学生　200円"
   },
@@ -12752,11 +13361,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1120",
     "name": "京都霊山護國神社",
     "description": "境内には明治維新史跡があり、参道を「維新の道」と呼ぶ。嘉永6年（1853）以来国難殉じた維新の志士を始め、日清、日露、大東亜戦争での京都府出身の英霊73,011柱を奉祀する。坂本龍馬の墓からは市街を一望することができる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.999997,
       "longitude": 135.782923
     },
+    "url": "http://www.gokoku.or.jp/",
     "openingHours": "8時～17時（受付は9時～）",
     "price": "大人　300円小人　200円※30名様以上は250円（史跡のみ）"
   },
@@ -12764,11 +13374,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1121",
     "name": "藤平陶芸有限会社",
     "description": "清水焼発祥の地五条坂で、陶磁器製造を始めて100年近くになる。体験は、工房で働く職人さんのそばで行うことが出来る。（要予約）〈清水焼の絵付け体験〉 湯呑み・抹茶碗・皿などの素焼素地に絵付けを行う。 所要時間／30分～1時間 定員／1名～40名まで〈清水焼の手びねりの成形〉 湯呑み・皿・菓子鉢・抹茶碗",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.994526,
       "longitude": 135.775808
     },
+    "url": "http://www.fujihiratougei.co.jp/",
     "openingHours": "9時～16時ふじひら陶芸　10時～17時",
     "price": "絵付け体験　湯呑み　1,900円　抹茶碗　2,500円手びねり　3,900円～※いずれも消費税・送料別、要予約"
   },
@@ -12781,6 +13392,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.004429,
       "longitude": 135.779697
     },
+    "url": "http://www.imobou.com",
     "openingHours": "11時～20時30分（ラストオーダー20時）",
     "price": "いもぼう月御膳　2,400円いもぼう雪御膳　2,500円いもぼう花御膳　3,000円会席　6,000円～15,000円（すべて税別）※御予算に応じ、特別の御献立も承ります。"
   },
@@ -12793,6 +13405,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.002349,
       "longitude": 135.778888
     },
+    "url": "http://www.thehatanaka.co.jp",
     "price": "宿泊　2名1室お一人様34,100円～（税込）　3名1室お一人様29,700円～（税込）　4名1室お一人様27,500円～（税込）料理　京料理会席　15,180円、18,975円、22,770円　※牛しゃぶ、すき焼きなど各種鍋料理もご相談に応じます。舞妓さんの手配も可能です。"
   },
   {
@@ -12804,6 +13417,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.979019,
       "longitude": 135.780646
     },
+    "url": "http://www.raigoin.com",
     "openingHours": "9時～17時",
     "price": "拝観料（含翠庭のみ、他自由）一般　300円高校生以下　200円お抹茶　500円（含翠庭拝観者に限る）"
   },
@@ -12816,6 +13430,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.004571,
       "longitude": 135.780369
     },
+    "url": "http://www.kurochiku.co.jp/fd_kasuian.php",
     "openingHours": "朝　7時～10時30分（ラストオーダー）昼　11時30分～14時（ラストオーダー）夜　17時30分～20時30分（ラストオーダー）",
     "price": "花水　2,600円花風　3,400円華頂　4,200円木陰　5,300円月影　8,400円※すべて税別"
   },
@@ -12823,11 +13438,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1126",
     "name": "茶寮都路里",
     "description": "1階が日本茶の販売店、2階・3階が和風喫茶となっている。宇治茶舗「祇園辻利」が営む茶寮。宇治抹茶はもちろん、抹茶を使った豊富なデザートを楽しめる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003706,
       "longitude": 135.774495
     },
+    "url": "https://www.giontsujiri.co.jp/",
     "openingHours": "10時～21時（ラストオーダー平日20時、土曜日、日曜日、祝日19時30分）※新型コロナウイルス感染症対策の影響で変更の可能性があります。",
     "price": "特選都路里パフェ　1,441円（税込）"
   },
@@ -12835,11 +13451,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1127",
     "name": "京都和心館（ワックジャパン）",
     "description": "耐震構造が不十分だった古い町家を解体し、町家の風情を残しバリアフリーユニバーサルデザインを考えて再構築した体験施設です。蹲にじり口のある本格的なお茶室、30人が入る和室、少人数なら剣道や空手、合気道などができる部屋もあります。車椅子のまま様々な体験が可能です。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.990745,
       "longitude": 135.771084
     },
+    "url": "http://wakjapan.com/jp",
     "openingHours": "無休（年末年始を除く）",
     "price": "体験により異なる※要予約"
   },
@@ -12847,7 +13464,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1128",
     "name": "いづう",
     "description": "天明元年に創業。鯖姿寿司を名物とした京寿司のお店。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004851,
       "longitude": 135.774514
@@ -12859,11 +13476,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1129",
     "name": "レンタサイクルえむじか祇園店",
     "description": "当日レンタルから長期利用まで幅広いプランがあります。全車変速オートライト付き。所有台数50台。予約可能。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.001656,
       "longitude": 135.771604
     },
+    "url": "https://emusica-dmcy.com",
     "openingHours": "受付時間　9時～20時",
     "price": "当日20時まで　1,000円（翌朝10時まで+500円）1週間レンタル　4,000円2週間レンタル　5,000円1ヶ月レンタル　6,000円※レンタル1台ごとに預かり金2,000円が必要（自転車返却時に返金）"
   },
@@ -12871,7 +13489,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1130",
     "name": "権兵衛",
     "description": "祇園で親しまれてきた麺処。北山店（TEL.075-791-4534）も有り。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004154,
       "longitude": 135.774309
@@ -12883,11 +13501,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1131",
     "name": "天竺　広東倶楽部",
     "description": "木屋町で20年、祇園町南側で11年間、この度、祇園町北側に『天竺 広東倶楽部』としてリニューアルオープン。お客様に近い距離でサービスが出来るように工夫しており、赤を基調としたフロアは30名～最大35名様までの小宴会に適した空間となっております。もちろん少人数やカップルでのご利用にも快適にお過ごしいた",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004116,
       "longitude": 135.774845
     },
+    "url": "http://www.tenjiku-kyoto.jp",
     "openingHours": "17時～24時（ラストオーダー23時）",
     "price": "4,500円～"
   },
@@ -12895,7 +13514,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1132",
     "name": "養源院",
     "description": "養源院は文禄3年（1594）淀殿が父・浅井長政追善のため創建。のち焼失。元和7年（1621）徳川秀忠夫人・崇源院（お江）が伏見城の遺構を移し再建。以降、歴代将軍の位牌を祀る寺になる。また、本堂の広い廊下の天井には伏見城落城時に徳川の家臣・鳥居元忠らが自刃した廊下の板が使われ「血天井」として有名。本堂",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.987904,
       "longitude": 135.773624
@@ -12907,7 +13526,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1133",
     "name": "山口　西店",
     "description": "築100年以上のお茶屋を改装。箱階段や水屋などをそのまま利用している。営業して約45年祇園の真ん中で安く、ボリュームがあり、おいしく安心していただける店で、一人でも気楽に食事ができる。（カウンター9席、座敷4名10席）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005339,
       "longitude": 135.774614
@@ -12919,11 +13538,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1134",
     "name": "河井寛次郎記念館",
     "description": "陶芸家・民芸運動の推進者として活躍した河井寛次郎の生前の住まいと仕事場、登り窯を記念館として公開しているもので、作品をはじめ寛次郎自身によってデザインされた家具や調度類を通して、その精神世界を知ることができる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.993573,
       "longitude": 135.774374
     },
+    "url": "http://www.kanjiro.jp",
     "openingHours": "10時～17時（受付は16時30分まで）",
     "price": "一般　900円高校・大学生　500円小・中学生　300円"
   },
@@ -12936,13 +13556,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.002868,
       "longitude": 135.776962
     },
+    "url": "https://ayanokoji.jp",
     "openingHours": "10時～19時"
   },
   {
     "id": "spot-1136",
     "name": "壱銭洋食の店",
     "description": "壱銭洋食とは、昭和初期のお好み焼きの呼び名。牛肉、コンニャク、ちくわ、ネギ、桜エビなど9種類の具と卵2個が入り、とてもまろやかな味。メニューはこれ一品のみ。プーンと香るソースの匂いに食欲をそそられる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004048,
       "longitude": 135.773187
@@ -12966,7 +13587,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1138",
     "name": "産寧坂",
     "description": "大同3年（808）にできたことから三年坂と名付けられたといわれるが、清水の子安観音に安産祈願のために参る参詣道にあたることから産寧坂とも書く。石畳や石段のある狭い道に史跡やお寺、清水焼・西陣織・竹細工などの店がならび、京都らしい風情のある町並みとなっている。昭和51年（1976）、京都市産寧坂伝統的",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.996366,
       "longitude": 135.780877
@@ -12981,6 +13602,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.009835,
       "longitude": 135.782637
     },
+    "url": "http://jingumichihatano.web.fc2.com/",
     "openingHours": "昼　11時30分～15時夜　17時30分～23時（入店は20時まで）",
     "price": "昼　松花堂弁当　3,000円　刺身御膳　2,500円※団体の場合、要予約夜　懐石料理　10,000円、15,000円、20,000円※要予約（料金は全て税・サ別）"
   },
@@ -12988,7 +13610,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1140",
     "name": "二年坂",
     "description": "二年坂は大同2年（807）にできたといわれる石段の坂で、清水から円山公園へと続く。石畳の坂道に格子戸の古い家並みが連なる情景は、まるで京都の縮図版のよう。昔ながらのお土産物屋など小さな店も多く、旅情をかきたてる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.998128,
       "longitude": 135.780841
@@ -12998,11 +13620,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1141",
     "name": "ぎをん小森",
     "description": "伝統的建造物群特別保存地区にあり、25年前までお茶屋だった町家をそのまま使用した甘味どころ。入口から奥に続く畳敷きの廊下とわきに置かれたぼんぼりは実に幻想的。素材にもこだわっており、あずきは十勝の大納言、葛は吉野葛の最高級と厳選した一級品を使用し甘味を抑えて目にも舌にもぜいたくな甘味処。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005858,
       "longitude": 135.774572
     },
+    "url": "http://www.giwon-komori.com/",
     "openingHours": "11時～20時（ラストオーダー19時30分）",
     "price": "白玉あんみつ　1,100円小森あんみつ　1,250円抹茶ババロアパフェ　1,500円"
   },
@@ -13010,7 +13633,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1142",
     "name": "洛東遺芳館",
     "description": "江戸時代の京の豪商、江戸店持ち京商人柏屋の伝承品を収蔵。多岐にわたる伝承品のなかでも特に婚礼調度品については、貴重な資料とされている。春秋の企画展では、テーマにそって収蔵品を逐次展示している。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.993796,
       "longitude": 135.768326
@@ -13022,11 +13645,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1143",
     "name": "やげんぼり花見小路店",
     "description": "格式を誇る花街・祇園。その中でも保存地区のこの辺りは情緒が艶濃く残る場所です。お茶屋「一力さん」の向いを少し入ったところに紅殻格子と赤土壁が目印です。東京や外国からのお客様のおもてなしには特に嬉ばれています。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003349,
       "longitude": 135.774824
     },
+    "url": "https://www.yagenbori.co.jp/",
     "openingHours": "昼　11時30分～14時（ラストオーダー13時30分）夕　17時～23時（ラストオーダー22時15分）",
     "price": "昼　季節のお膳　2,600円　季節の点心　4,600円夕　菊　8,700円　竹　10,700円　梅　12,800円その他旬の一品もございます。※カード利用可"
   },
@@ -13046,11 +13670,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1145",
     "name": "建仁寺",
     "description": "建仁寺は日本に茶種を持ち帰り広く一般に喫茶の習慣を広めた栄西禅師によって建仁2年（1202）に建てられた。境内に入ると三門、法堂、方丈、書院と並び、周囲には名勝庭園のある霊洞院（非公開）など14の塔頭が連なり、禅寺らしいたたずまいを見せる。毎年春の栄西禅師誕生会には本坊で大茶会が催され、禅宗古来の茶",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.001059,
       "longitude": 135.77374
     },
+    "url": "https://www.kenninji.jp/",
     "openingHours": "10時～16時30分（閉門17時）",
     "price": "本坊拝観　600円（中学・高校生　300円、小学生　200円）"
   },
@@ -13058,11 +13683,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1146",
     "name": "地主神社",
     "description": "創建年代は神代（日本の建国以前）とされ、清水・八坂一帯の総産土神として古代より信仰を集めた。嵯峨・円融・白河天皇行幸。縁結びの社として有名で、本殿の前には縄文期より伝わる一対の恋占いの石がある。一方の石から目を閉じて歩き、もう一方の石に当たることができれば願いがかなうと言われ、恋愛成就を占う石として",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.99509,
       "longitude": 135.785001
     },
+    "url": "https://www.jishujinja.or.jp/",
     "openingHours": "9時～17時",
     "price": "参拝無料（ただし、清水寺通り抜けの拝観料は別途必要）"
   },
@@ -13070,11 +13696,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1147",
     "name": "甘春堂本店",
     "description": "干菓子でできた茶碗「茶寿器」が有名な和菓子店。その他かわいい干菓子がどこよりも種類が多い。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991727,
       "longitude": 135.767959
     },
+    "url": "http://www.kanshundo.co.jp/",
     "openingHours": "9時～18時",
     "price": "茶寿器（1個入1箱）2,300円"
   },
@@ -13082,11 +13709,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1148",
     "name": "鍵善良房本店",
     "description": "江戸中期・享保年間（1716～1736）創業の和菓子の老舗。茶房では「くずきり」やお抹茶をいただくことができます。この「くずきり」は昭和の初期、信玄弁当の器を模して累細製の器で供し、祇園に遊ぶ文人・墨客をはじめとして、通人・粋人といわれる人々に好まれ、賞賛されたものです。（全館禁煙）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004093,
       "longitude": 135.774747
     },
+    "url": "http://www.kagizen.co.jp/",
     "openingHours": "9時30分～18時（ラストオーダー17時45分）",
     "price": "くずきり　1,080円（税込）おうす生菓子付き　880円"
   },
@@ -13094,11 +13722,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1149",
     "name": "北座ぎをん思いで博物館",
     "description": "井筒八ッ橋本舗が明治中期まであった「北座」にちなみ外観を劇場風に改装し、本店と博物館を併設。館内の5階にある「北座ぎをん思いで博物館」では、祇園町の歴史や文化を紹介。花街に遊んだ吉井勇や谷崎潤一郎などの文化人の遺品や遺作、伝統的髪型などを展示。またビルの1階には直営売店、2階は「井筒茶店」がある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004478,
       "longitude": 135.772355
     },
+    "url": "https://www.yatsuhashi.co.jp",
     "openingHours": "10時～17時",
     "price": "大人　300円"
   },
@@ -13110,7 +13739,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.003666,
       "longitude": 135.778555
-    }
+    },
+    "url": "http://www.yasaka-jinja.or.jp/"
   },
   {
     "id": "spot-1151",
@@ -13121,6 +13751,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.977163,
       "longitude": 135.78013
     },
+    "url": "https://www.unryuin.jp",
     "openingHours": "9時～16時30分（受付終了）",
     "price": "拝観料　400円お抹茶　500円（点出し）写経・抹茶付き　1,500円"
   },
@@ -13128,7 +13759,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1152",
     "name": "音羽の滝",
     "description": "京都随一の清泉といわれ、そこから弘仁元年（810）清水寺の額を掲げた。奥の院の舞台崖下、本堂東側の石段を下りたところに三筋に分かれて流れ出ている。万病に効く霊水として名高い。古来「金色水」、「延命水」と呼ばれ、心身を清める霊水として名高くお茶の名水としても珍重されてきた。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.99444,
       "longitude": 135.785262
@@ -13138,11 +13769,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1153",
     "name": "六波羅蜜寺",
     "description": "民家の立て込む中にひっそりと建つ。西国三十三か所の第17番札所。本堂の背後に建つ宝物収蔵庫には平清盛公坐像や念仏を称える口から六体の阿弥陀が現れたと言い伝えられる空也上人像など、美術史上重要な仏像が数多く安置されている。1月1日から1月3日の皇服茶授与、8月8日から8月10日の万燈会のほか、12月1",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.997115,
       "longitude": 135.773353
     },
+    "url": "http://www.rokuhara.or.jp/",
     "openingHours": "8時～17時宝物館　8時30分～16時30分（受付終了）",
     "price": "境内参拝自由宝物館入館料　大人　600円　中学・高校・大学生　500円　小学生　400円"
   },
@@ -13155,6 +13787,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.003046,
       "longitude": 135.776935
     },
+    "url": "http://www.kameyakiyonaga.co.jp/",
     "openingHours": "8時30分～17時",
     "price": "清浄歓喜団　単品　550円　5個入り　2,850円※税別"
   },
@@ -13167,6 +13800,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.982777,
       "longitude": 135.777477
     },
+    "url": "http://www.sawasho.jp/",
     "openingHours": "菓子処　9時～19時茶寮　　12時～14時30分（ラストオーダー）　18時～19時30分（ラストオーダー）（夜は予約のみ）",
     "price": "そば会席　4,200円（税別）など"
   },
@@ -13174,18 +13808,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1156",
     "name": "扇や　半げしょう",
     "description": "店舗の奥にあるお座敷で、江戸時代から続く遊び「投扇興」が体験していただけます。源氏物語にちなんだ点数表を使った対戦方式で、老若男女問わずどなたでも楽しんで頂けます。横には自社工房があります。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.996652,
       "longitude": 135.770443
     },
+    "url": "https://hangesho.com",
     "openingHours": "10時30分～17時30分"
   },
   {
     "id": "spot-1157",
     "name": "高台寺一休庵",
     "description": "朱色の門構えが目印の精進料理専門店。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.999515,
       "longitude": 135.77939
@@ -13197,11 +13832,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1158",
     "name": "有喜屋　清水吉晴庵",
     "description": "昭和4年（1929）創業、京都で数少ない本格手打そば処。麺は江戸流の細打ち、だしは鰹の風味、豊かな当店秘伝の味です。大正時代の蔵を活かした店内で京情緒を感じながら、お召し上がりいただけます。（座席数40席）",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.997338,
       "longitude": 135.781086
     },
+    "url": "https://www.ukiya.co.jp",
     "openingHours": "11時～19時（清水寺ライトアップ時期は21時まで）"
   },
   {
@@ -13213,6 +13849,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.004207,
       "longitude": 135.775448
     },
+    "url": "http://www.kahitsukan.or.jp/",
     "openingHours": "10時～18時（入館は17時30分まで）",
     "price": "一般　1,000円中学・高校・大学生　800円小学生無料"
   },
@@ -13224,17 +13861,19 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.006468,
       "longitude": 135.775168
-    }
+    },
+    "url": "http://www.shinmonso.com/"
   },
   {
     "id": "spot-1161",
     "name": "京都国立博物館",
     "description": "館蔵品及び社寺などからの寄託品を保存・調査研究するとともに展示している。赤レンガ造りの明治古都館は明治期の重厚な建築で重要文化財に指定されている。（免震改修計画を進めるため、当分のあいだ展示を休止中。）平成26年（2014）にオープンした平成知新館では、館蔵品・寄託品をあわせ約14,000件（平成3",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.989999,
       "longitude": 135.773117
     },
+    "url": "https://www.kyohaku.go.jp/jp/index.html",
     "openingHours": "9時30分～17時（入館は閉館の30分前まで）※特別展期間中は18時まで※金曜日、土曜日は20時まで（庭園のみ開館期間を除く）",
     "price": "一般　700円大学生　350円高校生以下および18歳未満、70歳以上は無料※特別展は別料金"
   },
@@ -13242,11 +13881,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1162",
     "name": "三十三間堂",
     "description": "全長約120mの本堂をもち、堂の内陣柱間が33あるところから呼び名がついた。正式名称は蓮華王院。「日は永し、三十三間堂長し」と、あの夏目漱石も感嘆の声を挙げた本堂の中には1001体の千手観音立像と28体の護法神像、風神・雷神像、千手観音坐像が安置され、本堂と併せすべて国宝。毎年1月中旬には恒例の弓引",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.987895,
       "longitude": 135.771713
     },
+    "url": "http://www.sanjusangendo.jp",
     "openingHours": "4/1～11/15　8時～17時11/16～3/31　9時～16時（いずれも30分前に受付終了）",
     "price": "大人　600円中学・高校生　400円小学生　300円団体（25名以上）各50円引※1月中旬の日曜日（通し矢・楊枝のお加持当日）と3月3日（春桃会）は無料開放"
   },
@@ -13266,11 +13906,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1164",
     "name": "近藤悠三記念館　柳水（1階）、念々洞（2階）",
     "description": "古都京都の文化財として世界遺産登録された清水寺。京都が誇る陶芸の巨匠・故近藤悠三（人間国宝）の初期から晩年の作品を展示。代表作品である直径126cm、重さ約100kgの梅染付け大皿は世界最大級。自然の風物を大胆な筆致で描いた作品は見る者を圧倒します。近藤家の芸術作品を鑑賞していただきながら、京都老舗",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.994944,
       "longitude": 135.782218
     },
+    "url": "http://www.kondomuseum.com",
     "openingHours": "11時～18時（貸切のためご入館いただけないことがあります。）※2階の念々洞は企画展開催時のみ開場",
     "price": "入場料　1,000円（飲み物付き・日本酒、御抹茶、煎茶）"
   },
@@ -13278,11 +13919,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1165",
     "name": "キエフ",
     "description": "京都で唯一のロシア料理店。店内からの鴨川、東山などの景色は絶景。ロシア、ウクライナ、グルジアなど、味わい豊かでヘルシーな料理が楽しめる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.004282,
       "longitude": 135.772811
     },
+    "url": "http://www.restaurant-kiev.com/",
     "openingHours": "12時～22時（料理ラストオーダー21時）※行政の方針により閉店時間を繰り上げることがあります。",
     "price": "コース料理　3,850円～（税込）ランチ　1,440円～（税込）ワレーニキセット・ケーキセット　1,155円～（税込）"
   },
@@ -13295,6 +13937,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.001486,
       "longitude": 135.782057
     },
+    "url": "http://www.kikunoi.jp/",
     "openingHours": "昼　12時～12時30分（入店）夜　17時～19時30分（入店）※閉店時間を20時に時間短縮営業中（3/7まで）",
     "price": "昼　懐石　13,000円～（税、サ別）夜　懐石　20,000円～（税、サ別）"
   },
@@ -13317,6 +13960,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.980164,
       "longitude": 135.77482
     },
+    "url": "http://www.touan.co.jp/",
     "openingHours": "9時～16時",
     "price": "絵付け　2,000円～ロクロ　2,000円～手びねり　3,000円～※いずれも消費税・送料別"
   },
@@ -13324,11 +13968,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1169",
     "name": "幕末維新ミュージアム「霊山歴史館」",
     "description": "日本で唯一の明治維新総合資料館として知られ、幕末から明治維新にかけて活躍した人物にまつわる資料を展示している。歴史館の向かい側には、坂本龍馬らの墓碑がある霊山護国神社があり参拝ができる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.999018,
       "longitude": 135.782599
     },
+    "url": "https://www.ryozen-museum.or.jp/",
     "openingHours": "10時～17時30分（入館は17時まで）※季節により変動",
     "price": "一般・大学生　900円（800円）高校生　500円（400円）小・中学生　300円（200円）（ ）内は団体（20名以上）料金"
   },
@@ -13336,7 +13981,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1170",
     "name": "豊国神社",
     "description": "豊国神社は豊臣秀吉を祀っていたため、徳川幕府の時代には取り壊されていた社。今の社殿は明治13年（1880）に建立されたものだが、唐門だけは伏見城の遺構。境内奥には宝物館があり、太閤ゆかりの遺品などが展示されている。※ご利益：出世開運、良縁成就",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991452,
       "longitude": 135.772099
@@ -13348,7 +13993,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1171",
     "name": "かさぎ屋",
     "description": "二年坂の石段の途中にある大正3年（1914）創業の甘味どころ。店の前に「甘党の素通り出来ぬ二寧坂」の立て札があり、店内には夢二の絵が無造作に飾られ小じんまりした雰囲気。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.998117,
       "longitude": 135.780803
@@ -13360,11 +14005,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1172",
     "name": "六波羅蜜寺宝物館",
     "description": "念仏を称える口から六体の阿弥陀が現れたと言い伝えられる空也上人像や、平清盛公坐像等、藤原・鎌倉期の優れた仏像が多い。宝物館は本堂と通路で結ばれている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.997113,
       "longitude": 135.773355
     },
+    "url": "http://www.rokuhara.or.jp/",
     "openingHours": "8時30分～17時（16時30分受付終了）",
     "price": "大人　600円　中学・高校・大学生　500円　小学生　400円"
   },
@@ -13372,11 +14018,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1173",
     "name": "七味家本舗",
     "description": "清水坂・五条坂・三年坂のちょうど分岐点にある七味唐辛子の老舗。山椒・青のり・唐辛子・白ごま・黒ごま・麻の実・青しその七つの薬味がさわやかな風味をかもしだし、さっとひとふりするだけで、料理をいっそう美味しく引き立てる「七味唐がらし」。一切添加物を使っていないので冷蔵庫で保存し、早めにいただくのがコツ。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.996316,
       "longitude": 135.780782
     },
+    "url": "https://www.shichimiya.co.jp/",
     "openingHours": "9時～18時（季節によって変動）",
     "price": "七味小袋（15g）486円（税込）山椒袋（10g）648円（税込）一味袋（15g）486円（税込）"
   },
@@ -13384,7 +14031,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1174",
     "name": "方広寺",
     "description": "豊国神社のとなりにある方広寺は、「国家安康、君臣豊楽」の文字が刻まれた大鐘があることで知られている。これは、慶長19年（1614）、家康の文字を切り離したことで、大阪冬の陣のきっかけともなった。※ご利益：開運",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.992202,
       "longitude": 135.772101
@@ -13395,7 +14042,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1175",
     "name": "わらじや",
     "description": "豊臣秀吉が、わらじを脱いで一服したとか。それが屋号の由来です。うなぎの雑炊「うぞふすい」が名物です。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.989411,
       "longitude": 135.770423
@@ -13407,7 +14054,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1176",
     "name": "堀尾竹荘",
     "description": "ロクロ、手びねり、絵つけなど、清水焼の製作体験。後日、完成品を送付。お土産付。（湯飲み茶碗）送料は着払い。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.996087,
       "longitude": 135.776494
@@ -13419,11 +14066,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1177",
     "name": "高台寺 一念坂　金網つじ",
     "description": "金網製品の販売。とうふすくいの製作体験。商品販売あり。所要時間／約1時間定員／体験は1名～3名で実施（要予約）",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.999102,
       "longitude": 135.780397
     },
+    "url": "http://www.kanaamitsuji.com/",
     "openingHours": "10時～18時体験　11時～16時",
     "price": "体験  4,000円（税別）"
   },
@@ -13436,6 +14084,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.978371,
       "longitude": 135.792574
     },
+    "url": "http://www.toushun.com/",
     "openingHours": "9時～17時",
     "price": "見学無料陶芸教室　1,300円～（消費税・送料別）30名以上は団体割引有り手びねり　3,000円（消費税・送料別）要予約"
   },
@@ -13448,6 +14097,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.979671,
       "longitude": 135.79547
     },
+    "url": "http://zuiko-kashima.co.jp/",
     "openingHours": "月曜日～土曜日・予約制（前日まで）10時～16時",
     "price": "湯呑　500円お皿　500円～2,000円抹茶碗　1,000円コーヒーカップ　1,200円※送料別途"
   },
@@ -13455,7 +14105,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1180",
     "name": "川崎大師　京都別院　笠原寺",
     "description": "〈一日尼僧修行〉女性対象。日にち要相談、10時～15時30分実施。白衣着替～足香～法衣授与・念珠作製～瞑想・礼拝～昼食～法話・読経～厄除御護摩祈願～成満之証・法名授与定員／約20名（要予約）",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.970233,
       "longitude": 135.828176
@@ -13472,6 +14122,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.979422,
       "longitude": 135.794248
     },
+    "url": "http://www.kiyomizuyaki.or.jp",
     "openingHours": "9時～17時",
     "price": "見学無料 陶芸体験は有料（詳しくはお問い合わせください。）"
   },
@@ -13484,6 +14135,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.979435,
       "longitude": 135.795924
     },
+    "url": "https://kyoto-oike.co.jp",
     "openingHours": "9時～17時",
     "price": "体験　3,300円（花かご製作、材料費込）"
   },
@@ -13491,7 +14143,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1183",
     "name": "疏水公園",
     "description": "桜や楓が植えられた疏水沿いは、疏水のおだやかな流れと溶けあい、まるで京都市内とは思えないほどのどかな風景。新緑、紅葉と四季折々に変わる表情が楽しめますが、なかでもあたり一面が桜に染まる春は、見事な散歩道になる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.997093,
       "longitude": 135.818943
@@ -13506,6 +14158,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.001311,
       "longitude": 135.818806
     },
+    "url": "http://bishamon.or.jp/",
     "openingHours": "9時～17時（12月～3月15日は16時30分まで）",
     "price": "殿舎拝観は500円"
   },
@@ -13518,6 +14171,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.997396,
       "longitude": 135.807003
     },
+    "url": "http://www.kunaicho.go.jp",
     "openingHours": "8時30分～17時",
     "price": "無料"
   },
@@ -13530,6 +14184,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.970217,
       "longitude": 135.795715
     },
+    "url": "http://www.ooishijinja.com",
     "openingHours": "拝観自由宝物殿　9時～17時",
     "price": "無料宝物殿拝観料無料"
   },
@@ -13554,6 +14209,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.959335,
       "longitude": 135.816562
     },
+    "url": "http://www.zuishinin.or.jp/",
     "openingHours": "9時～16時30分",
     "price": "拝観料　大人　500円　中学生　300円梅園入場料（3/6～3/31まで公開）　大人　500円　中学生　300円　小学生以下無料※令和3年は梅園を無料開放します。はねず踊りのみ　1,000円（令和3年は中止）写経・写仏　各2,000円（拝観料・浄写料・経本含）"
   },
@@ -13578,6 +14234,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.994927,
       "longitude": 135.827938
     },
+    "url": "http://www.kosoin.com",
     "openingHours": "10時～17時（入館は16時30分まで）",
     "price": "一般　500円中学・高校・大学生　400円小学生無料団体割引有り（10名以上で100円割引）"
   },
@@ -13585,11 +14242,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1191",
     "name": "福寿園京都本店",
     "description": "宇治茶の老舗福寿園が、京都にある素晴らしい伝統の技を、茶という命題で結集し、品格のある憧れの世界を創成しようと、京都の中心、四条富小路に設立。京都本店限定の宇治茶の販売や宇治茶をつかったフランス料理など、宇治茶文化をまるごと体感できます。体験所要時間／約30分～90分（詳細はお問い合わせください。）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003545,
       "longitude": 135.764816
     },
+    "url": "https://www.fukujuen-kyotohonten.com",
     "openingHours": "B1階、1階、5階　11時～18時2階　11時～17時30分（ラストオーダー）3階　ランチ11時30分～15時、ディナーご予約のみ4階　11時～17時30分（ラストオーダー）",
     "price": "〈お茶の体験講座〉地下1階「京の茶蔵」　おいしいお茶の淹れ方体験「宇治コース」　2,200円　3種飲み比べ体験　1,980円　ほか〈京都本店限定宇治茶〉1階「京の茶舗」　宇治銘茶「平安京 玉露」（100g缶入り）　7,560円　宇治銘茶「平安京 煎茶」（100g缶入り）　4,320円　ほか〈宇治茶を使ったスイーツ〉2階「茶寮FUKUCHA四条店」　抹茶ブランマンジェVERT　1,650円　ほか〈宇治茶を使ったフランス料理〉3階「メゾン・ド・マツダ福寿園」　ランチ「昼の茶膳」　4,950円～　ディナー「夜の茶膳　天雲コース」　9,350円　ほか〈茶室での抹茶体験〉4階「京の茶庵」　抹茶体験　2,750円　薄茶と京菓子　1,320円～　ほか〈福寿園ブランド茶器〉5階「京の茶具」　花蕾宝瓶　9,350円　花蕾湯さまし　5,500円　花蕾玉露碗　3,630円　ほか"
   },
@@ -13597,11 +14255,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1192",
     "name": "田ごと",
     "description": "賑やかな四条通りから一歩踏み入れば打ち水された石畳が続き、京都の中心部とは思えない静かな佇まいが広がります。居心地の良いしつらいで、京料理をお楽しみください。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003992,
       "longitude": 135.768297
     },
+    "url": "http://www.kyoto-tagoto.co.jp/",
     "openingHours": "11時30分～15時、17時～20時",
     "price": "会席コース　6,000円、8,000円、10,000円ゆば料理　3,000円～光悦水指弁当　3,200円～お昼のお弁当　1,550円～（すべて税別）"
   },
@@ -13609,18 +14268,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1193",
     "name": "天之真名井",
     "description": "市比賣神社は延暦14年（795）、垣武天皇の勅命で創建。藤原冬嗣公が宗像三女神を勧請した。その境内には平安京唯一の官営市場があり大いに賑わった。以来、その守護神として信仰を集め、またその祭神がすべて女神であることから、女性の守り神として崇敬されてきた。境内の左手奥に、こんこんと涌く天之真名井がある。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.993936,
       "longitude": 135.764662
     },
+    "url": "http://ichihime.net",
     "price": "境内自由"
   },
   {
     "id": "spot-1194",
     "name": "京都総合観光案内所　京なび",
     "description": "京都市を含む府域全域の観光案内、観光情報発信などを多言語・ワンストップで行う総合観光案内所。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.985681,
       "longitude": 135.758267
@@ -13631,11 +14291,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1195",
     "name": "亀屋良長",
     "description": "職人と共に京の四季に合わせた生菓子3種類を作ります。和三盆糖のお干菓子のデモンストレーションをご覧いただき、出来たての生菓子と干菓子をお抹茶と共にお召し上がりいただきます。（学生の方はほうじ茶になります。）生菓子2個はお土産としてお持ち帰りいただきます。所要時間／約70分",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003781,
       "longitude": 135.752977
     },
+    "url": "https://kameya-yoshinaga.com",
     "openingHours": "体験　14時～※10名様以上で午前中の開催も可能です。",
     "price": "一般　1人2,750円（税込）学生（高校生以下）　1人2,200円（税込）"
   },
@@ -13643,11 +14304,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1196",
     "name": "京都タワー",
     "description": "京都駅正面にそびえる京都タワーは鉄骨を使わないモノコック（応力外被）構造。地上100mにある展望室からは京都の四季折々の景色を楽しむことはもちろん、夜景を眺めることもできる。また、京都タワービル地下3階には大浴場があり、ゆったりと旅の疲れを癒やす、おすすめのスポットです。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.987554,
       "longitude": 135.759218
     },
+    "url": "https://www.keihanhotels-resorts.co.jp/kyoto-tower/",
     "openingHours": "京都タワー展望室　9時～21時20分（最終入場は21時まで）地下3階京都タワー大浴場～YUU～　7時～22時（最終入場は21時30分まで）※当面の間、営業時間を変更しております。京都タワー展望室　11時～19時（最終入場は18時30分まで）地下3階京都タワー大浴場～YUU～　13時～21時（最終入場は20時30分まで）※予告なく営業時間を変更することがあります。ホームページをご確認ください。",
     "price": "京都タワー展望室入場料　　大人　800円　高校生　650円　小・中学生　550円　幼児　150円京都タワー大浴場～YUU～入浴料　大人　770円　小人（小学生以下）450円　回数券5枚綴り　3,400円（有効期限6ヶ月）　土曜日、日曜日、祝日は大人910円※フェイスタオル1枚無料貸出"
   },
@@ -13655,7 +14317,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1197",
     "name": "京風宮廷タイ料理　佛沙羅館",
     "description": "築90年の元お茶屋を利用したタイ料理店。タイの風を京都に運んで32年間。タイ料理を食べやすくアレンジした「和スタイル」から本場の味をそのままに「タイスタイル」まで辛さや旨さを自分の「スタイル」で、また今秋から、天ぷら、しゃぶしゃぶ、モツ鍋、グリーンカレー鍋など、幅広く楽しめます。また、ソムリエ監修の",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.999764,
       "longitude": 135.769103
@@ -13667,11 +14329,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1198",
     "name": "角屋もてなしの文化美術館",
     "description": "角屋は揚屋建築唯一の遺構で、京の六大花街の中で最も古い歴史をもつ島原にあって、江戸文化の華やかさを今に伝えている。（重要文化財）美術館では与謝蕪村のふすま絵などの美術品を随時展示、公開している。また、特別公開の2階は螺鈿（らでん）細工が見事な「青貝の間（あおがいのま）」や扇が天井を彩る「扇の間」など",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.992148,
       "longitude": 135.74316
     },
+    "url": "http://sumiyaho.sakura.ne.jp",
     "openingHours": "10時～16時",
     "price": "1階常設展　一般  1,000円　中学・高校生  800円　小学生  500円2階の特別公開の座敷の見学は要予約、別途入場料が必要　大人　800円　中学・高校生　600円　小学生以下入場不可"
   },
@@ -13679,11 +14342,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1199",
     "name": "田中長奈良漬店",
     "description": "寛政元年（1789）創業。都錦味淋漬（なら漬）の製造販売の専門店。元々は、この場所で味淋醸造を本業としていたが、味淋醸造は戦前までで止め、約2年間の歳月と手間をかけ、味淋特有のうま味とコクのある京のなら漬=都錦味淋漬を開発し、現在に伝えている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.002312,
       "longitude": 135.758808
     },
+    "url": "http://www.tanakacho.co.jp/",
     "openingHours": "8時30分～18時",
     "price": "都錦味淋漬（なら漬）うり、すいか、きゅうり、なす（各180g入り）900円（税別）※カード利用可"
   },
@@ -13691,11 +14355,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1200",
     "name": "亀屋陸奥",
     "description": "代々本願寺の菓子職を務めている、応永28年（1421）創業の老舗菓子舗。白味噌仕立てのカステラ風の京銘菓「松風」で有名。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.989416,
       "longitude": 135.753344
     },
+    "url": "http://kameyamutsu.jp",
     "openingHours": "8時30分～17時",
     "price": "松風（16枚入り）　1,100円～（税込）"
   },
@@ -13703,7 +14368,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1201",
     "name": "鴨川畔　佐々木",
     "description": "鴨川西岸の二条から五条の間を流れるみそそぎ川に床を出して夕涼みをしながら京料理を味わうことのできる店のひとつ。夏は「はものおとし」や「鮎の石焼」、冬は「スッポン鍋」、「カニスキ」、「オキスキ」など、四季折々の京料理を楽しむことができる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.000077,
       "longitude": 135.769212
@@ -13715,11 +14380,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1202",
     "name": "ブリキのおもちゃと人形博物館（TIN TOYS & DOLL MUSEUM）",
     "description": "戦前・戦後の懐かしいブリキ玩具・セルロイド人形など15,000点のコレクションから約3,000点を常設展示。ペコちゃん、アトム、鉄人28号、企業キャラクターなどのコーナーもあり、特にブリキの国産車300台や、ウルトラ怪獣300体は必見です。常設展は月に1割ほど入れ替え、特別展も行っています。また、販",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003524,
       "longitude": 135.753084
     },
+    "url": "http://kyoto-tintoy.jp",
     "openingHours": "10時～16時（最終入館）",
     "price": "中学生以上　500円小学生　300円園児　100円団体（10名以上）、身障者の方（手帳掲示）は50円引き"
   },
@@ -13727,7 +14393,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1203",
     "name": "志る幸",
     "description": "お汁を中心にした京料理のお店。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.00426,
       "longitude": 135.77
@@ -13744,6 +14410,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.986975,
       "longitude": 135.742845
     },
+    "url": "http://www.kyotorailwaymuseum.jp",
     "openingHours": "10時～17時（入館は16時30分まで）",
     "price": "入館料　一般　1,200円（960円）　高校・大学生　1,000円（800円）　小・中学生　500円（400円）　幼児（3歳以上）　200円（100円）障がい者入館料　一般　600円　高校・大学生　500円　小・中学生　250円　幼児（3歳以上）　100円SLスチーム号乗車料金　大人（高校生以上）　300円　小人（3歳以上）　100円※中学・高校・大学生（専門学校、短期大学、高専を含む）は、学生証の掲示をお願いします。※障がい者手帳をご掲示のお客様と付添者1名様は「障がい者入館料」とさせていただきます。※（ ）内は団体（20名以上）料金"
   },
@@ -13756,6 +14423,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.991267,
       "longitude": 135.74508
     },
+    "url": "http://web.kyoto-inet.or.jp/people/aroma-a/",
     "openingHours": "9時～17時（時間外は要相談）開始時間　9時～16時までの1時間ごと",
     "price": "匂い袋作り（調合）　1,500円+税～ブレス作り　2,100円+税～京念珠作り　女性用　4,500円+税～　男性用　5,410円+税～マスクチャーム作り　1,620円+税～マスク留め作り　2,100円+税～ブレス型念珠作り　2,600円+税～ストラップ作り　1,000円+税～※出張は要相談"
   },
@@ -13763,11 +14431,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1206",
     "name": "東本願寺（真宗本廟）",
     "description": "真宗大谷派の本山、正式には真宗本廟という。慶長7年（1602）、本願寺第12代教如上人が、徳川家康から烏丸六条の土地を寄進され、東本願寺を創立した。江戸時代に4度の火災に遭い、現在の御影堂は、明治28年（1895）に再建されたものであり、世界最大級の木造建築である。2019年に、御影堂、阿弥陀堂など",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991038,
       "longitude": 135.758483
     },
+    "url": "http://www.higashihonganji.or.jp",
     "openingHours": "3月～10月　5時50分～17時30分11月～2月　6時20分～16時30分",
     "price": "無料"
   },
@@ -13775,11 +14444,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1207",
     "name": "風俗博物館",
     "description": "源氏の館「六條院」の「春の御殿」を具現（四分の一）し、人形等により源氏物語の世界を体感できる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.992973,
       "longitude": 135.753341
     },
+    "url": "http://www.iz2.or.jp/",
     "openingHours": "10時～17時",
     "price": "入館料一般　500円中学・高校・大学生　300円小学生　200円"
   },
@@ -13792,6 +14462,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.98986,
       "longitude": 135.749967
     },
+    "url": "https://www.ryukoku.ac.jp/omiya.html",
     "openingHours": "8時～21時（授業開講日のみ）",
     "price": "無料散策自由"
   },
@@ -13804,6 +14475,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.989005,
       "longitude": 135.748551
     },
+    "url": "http://www.sasayaiori.com/",
     "openingHours": "9時～17時",
     "price": "どら焼1棹　1,620円（税込）"
   },
@@ -13811,11 +14483,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1210",
     "name": "美好園茶舗",
     "description": "茶道体験[1]抹茶体験（喫茶室）美味しい抹茶と季節のお菓子を簡単に楽しむことができる。修学旅行生にも大変好評。体験時間／15分定員／1名～14名[2]茶会体験（茶室）　※日時等は相談可お茶室でお菓子やお抹茶のいただき方の簡単な作法を学びながら、気軽にお茶会の雰囲気を楽しむことができる。初心者の方大歓",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.99229,
       "longitude": 135.753626
     },
+    "url": "http://www.bikouen.com/",
     "openingHours": "10時～17時（相談可）",
     "price": "[1]抹茶体験　1人500円（税別）[2]茶会体験　1人3,000円（税別）[3]抹茶点て体験　1人1,300円（税別）"
   },
@@ -13828,6 +14501,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.986638,
       "longitude": 135.745334
     },
+    "url": "http://www.kyoto-ga.jp/",
     "openingHours": "日本庭園「朱雀の庭」・「いのちの森」　9時～17時（入園は16時30分まで）チンチン電車　土曜日、日曜日、祝日　10時～16時",
     "price": "入場無料　ただし日本庭園「朱雀の庭」・「いのちの森」　200円「チンチン電車」1日乗車券　310円"
   },
@@ -13835,11 +14509,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1212",
     "name": "竹笹堂",
     "description": "竹笹堂は【木版の摺（す）りの技術】を120年余り前から継承してきた老舗の木版印刷の店。和雑貨を中心に木版製品を販売している。ここでは、木版画の下絵・彫り・摺りが体験でき、ハガキが作成できる。（不定期に開催、ホームページでご確認ください。）所要時間／約2時間（14時～16時）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.002932,
       "longitude": 135.755692
     },
+    "url": "http://www.takezasa.co.jp/",
     "openingHours": "11時～18時",
     "price": "体験料　3,000円（税込）※現金のみでのお支払い"
   },
@@ -13847,11 +14522,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1213",
     "name": "美術館「えき」KYOTO",
     "description": "京都駅ビル内のジェイアール京都伊勢丹7階に隣接する美術館。絵画、写真、ファッション、アニメなど、古典から現代アートまで、国内外を問わず、幅広いジャンルの展覧会を企画・開催している。観光や買い物帰りに気軽に立ち寄れるのも魅力。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.98585,
       "longitude": 135.758784
     },
+    "url": "https://kyoto.wjr-isetan.co.jp/museum/",
     "openingHours": "10時～19時30分※百貨店営業時間に準ずるため、変更の場合有り（入館は閉館の30分前まで）",
     "price": "展示内容により異なる"
   },
@@ -13859,11 +14535,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1214",
     "name": "KCIギャラリー",
     "description": "近世以降の西欧の服飾品など収蔵品の一部を不定期に紹介している。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.982795,
       "longitude": 135.732952
     },
+    "url": "http://www.kci.or.jp/gallery/index.html",
     "openingHours": "9時30分～17時（入館は16時30分まで）",
     "price": "無料"
   },
@@ -13871,11 +14548,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1215",
     "name": "本願寺（西本願寺）",
     "description": "浄土真宗本願寺派の本山。境内の御影堂、阿弥陀堂（ともに国宝）の威容には圧倒される。伏見城からの移築とも言われる唐門、現存する能舞台では日本最古と言う北能舞台や、白書院、黒書院、飛雲閣（いずれも国宝）の建築物は、華麗な桃山文化の粋を今に伝えている。他には、天明の大火（1788）の折、水を噴きかけ御影堂",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991748,
       "longitude": 135.751737
     },
+    "url": "http://www.hongwanji.kyoto",
     "openingHours": "5時30分～17時",
     "price": "自由参拝"
   },
@@ -13883,18 +14561,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1216",
     "name": "川勝總本家　本店",
     "description": "創業以来、味とのれんを守り続けている京漬物の老舗。京町家の佇まいを残している本店では、漬物職人が素材を生かし、ひと樽ひと樽、精魂込めて漬け込んだ四季折々の京漬物の試食とお茶の接待をさせて頂いております。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.998049,
       "longitude": 135.748991
     },
+    "url": "https://www.kawakatu.com",
     "openingHours": "9時～18時"
   },
   {
     "id": "spot-1217",
     "name": "鉄道案内所",
     "description": "列車の京都駅発車時刻や所要時間、効率のよい乗り継ぎや遠方へのアクセスなど、JR線全般に関する案内をしている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.985434,
       "longitude": 135.757724
@@ -13904,11 +14583,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1218",
     "name": "東華菜館",
     "description": "レトロ建築が目印の本格北京料理店。夏は鴨川に床が出される。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.003667,
       "longitude": 135.77104
     },
+    "url": "http://www.tohkasaikan.com",
     "openingHours": "11時30分～21時30分（ラストオーダー21時）",
     "price": "コース料理　1人5,000円～（税・サービス料別途）他一品料理各種"
   },
@@ -13921,6 +14601,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.98734,
       "longitude": 135.747331
     },
+    "url": "https://www.kyoto-aquarium.com",
     "openingHours": "10時～18時（季節によって変動有り）※入場受付は閉館時間の1時間前まで",
     "price": "大人　2,200円高校生　1,700円小・中学生　1,100円幼児（3歳以上）　700円団体料金有り"
   },
@@ -13928,7 +14609,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1220",
     "name": "鳥彌三",
     "description": "天明8年（1788）創業。230年以上もの間、人々の舌を魅了してやまないのが創業当時より守り継がれるコクのある白いスープが自慢の鶏の水炊き。5月～9月までの間、京の夏の風物詩、川床もある。平成16年（2004）に国の登録有形文化財に指定された。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.002047,
       "longitude": 135.770318
@@ -13940,11 +14621,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1221",
     "name": "森田和紙　倭紙の店",
     "description": "全国の手すき和紙1,200種を扱う和紙の店。和紙・染紙・千代紙に加えてそれらを使ったちぎり絵・紙人形などの工芸品を販売。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.001708,
       "longitude": 135.76131
     },
+    "url": "https://www.wagami.jp/",
     "openingHours": "10時～16時"
   },
   {
@@ -13956,6 +14638,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.987048,
       "longitude": 135.744367
     },
+    "url": "http://www.tedukuri-ichi.com/",
     "openingHours": "毎月第1土曜日（1月、5月は休み）9時～16時※雨天決行",
     "price": "「手づくり市」への入場のみ無料梅小路公園の他の施設の利用の際は料金を要する施設もある。"
   },
@@ -13963,11 +14646,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1223",
     "name": "ちもと",
     "description": "享保3年（1718）創業。四条大橋西詰鴨川畔に面し木造3階建の本格数寄屋で古都の香りに満ちた料亭。伝統の味に新しい工夫を加え年変り月変りの献立が楽しめる。芸妓、舞妓の申し込みも可能。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.00339,
       "longitude": 135.770954
     },
+    "url": "http://chimoto.jp",
     "openingHours": "12時～14時30分17時～20時（ラストオーダー）",
     "price": "昼　8,800円、11,330円（4名様以上）、19,030円～（2名様以上）夜　19,030円～（2名様以上）（すべてサービス料、消費税込み）"
   },
@@ -13975,11 +14659,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1224",
     "name": "京扇堂",
     "description": "京扇子の製作最終工程見学、ビデオ上映と絵付け実習。絵付け後、仕上げをして約1ヶ月後に完成品を送付。所要時間／約90分定員／50名（要予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991861,
       "longitude": 135.761192
     },
+    "url": "http://www.kyosendo.co.jp/",
     "openingHours": "月曜日～土曜日　9時、10時30分、13時、15時日曜日、祝日　10時、13時、15時",
     "price": "2,300円（税込）"
   },
@@ -13987,11 +14672,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1225",
     "name": "COCON KARASUMA　古今烏丸",
     "description": "平成16年（2004）12月4日にオープンした複合商業施設。B1階～3階は商業フロア、4階～8階はオフィスフロアになっている。各店舗（階、店舗名、内容、電話）については次の通り。[3階]京都シネマ（映画館）TEL.075-353-4723kara-S（京都精華大学）（ギャラリー＆ショップ＆イベント）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.00307,
       "longitude": 135.759222
     },
+    "url": "https://www.coconkarasuma.com/",
     "openingHours": "10時～24時（店舗により異なる）"
   },
   {
@@ -14003,6 +14689,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.987369,
       "longitude": 135.74949
     },
+    "url": "http://www.iwaicycle.com",
     "openingHours": "10時～18時",
     "price": "1日1,100円翌朝返却　1,650円1台につき保証金3,000円（保証金は自転車返却時、返金）平日 月曜日～金曜日は20％割引短時間貸し1時間220円（1時間毎に110円加算）"
   },
@@ -14010,11 +14697,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1227",
     "name": "京湯元　ハトヤ瑞鳳閣",
     "description": "敷地面積・延床面積　約1,843平方メートル・約8,200平方メートル・客室数　102室（内、源泉かけ流し風呂付特別室3室有り）・和レストラン　1ヶ所・Bar　1ヶ所・洋宴会場（348平方メートル）　1ヶ所・和宴会場　1ヶ所・温泉施設（180平方メートル）　2ヶ所（半露天風呂2ヶ所）※自家源泉（加温",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.986876,
       "longitude": 135.755003
     },
+    "url": "http://www.kyoto-hatoya.jp/",
     "openingHours": "年中無休",
     "price": "1泊朝食付き　1人18,000円～（1室2名利用時）"
   },
@@ -14022,11 +14710,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1228",
     "name": "渉成園（枳殼邸）",
     "description": "「お東さん」と京都市民が親しげに呼ぶ真宗大谷派の本山東本願寺（真宗本廟）の庭園。周囲に枳殼（からたち）が植えてあったことから枳殼邸とも呼ばれる。（広さ約1万600坪）寛永18年（1641）、徳川家光によって現在の土地が寄進され、さらに慶安3年（1650）から、東本願寺第13代宣如上人と親交があった石",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991407,
       "longitude": 135.763238
     },
+    "url": "http://www.higashihonganji.or.jp/shoseien/",
     "openingHours": "3月～10月　9時～17時（受付は16時30分まで）11月～2月　9時～16時（受付は15時30分まで）",
     "price": "庭園維持寄付金500円以上でガイドブック贈呈※高校生以下は250円以上"
   },
@@ -14034,11 +14723,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1229",
     "name": "SUNRISE TOURS JTB",
     "description": "サンライズツアーは、英語ガイドの案内による観光ツアーです。日本の歴史、伝統芸能、文化体験など、多様なコースを海外からのお客様に満足していただけるよう幅広くご用意しております。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.983792,
       "longitude": 135.760418
     },
+    "url": "https://www.sunrise-tours.jp",
     "openingHours": "連日運行、コースによる",
     "price": "コースにより異なる"
   },
@@ -14046,11 +14736,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1230",
     "name": "すし岩（すし割烹会席）",
     "description": "天然物だけを使う、旬の魚料理と京野菜が食べられる店。1階席はカウンターとテーブル、2階席は個室のイス・テーブル席。（4名～20名）ワイン、焼酎、各地の日本酒も充実している。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.990263,
       "longitude": 135.761785
     },
+    "url": "http://www.sushiiwa.jp/",
     "openingHours": "昼　12時～14時夜　17時30分～22時30分",
     "price": "コース料理　昼　8,000円～（税別）　夜　10,000円～（税別）※別途サービス料がかかります。英語メニュー有り。英語の話せるスタッフもいる。"
   },
@@ -14058,11 +14749,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1231",
     "name": "オムロンコミュニケーションプラザ",
     "description": "京都駅から徒歩5分、オムロン株式会社の隣にある「コミュニケーションプラザ」は、過去、現在、未来に続くオムロンの取り組みを紹介する企業博物館です。館内は、歴史フロアと技術フロアから構成されています。歴史フロアは、各時代の社会的課題を解決しながら、成長を遂げてきたオムロンの歩みを当時の製品や映像を交えて",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.986912,
       "longitude": 135.753932
     },
+    "url": "https://www.omron.co.jp/about/promo/showroom/plaza/",
     "openingHours": "10時～16時",
     "price": "無料"
   },
@@ -14070,11 +14762,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1232",
     "name": "秦家住宅",
     "description": "京都市有形文化財指定。代々薬屋を営んできた老舗住宅。明治初期の建物で、京都市の伝統的商家の風格と趣を伝えている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.001102,
       "longitude": 135.753602
     },
+    "url": "http://www.hata-ke.jp/",
     "openingHours": "見学　9時30分～16時30分料理「秦家」　昼　12時～15時　夜　18時～21時",
     "price": "見学　大人　1,000円　高校生　800円　中学生　500円料理「秦家」　昼　5,000円（税別）　夜　8,000円（税別）、10,000円（税別）　（4名以上）"
   },
@@ -14082,11 +14775,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1233",
     "name": "京都市学校歴史博物館",
     "description": "明治2年、京都の町衆が主体となり、地域（番組）ごとに創設された「番組小学校（日本初の学区制小学校64校）」を中心に、京都の学校創設・教育の歴史や学校・園が所蔵してきた美術工芸品・教具教材等を展示している。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.000685,
       "longitude": 135.766217
     },
+    "url": "http://kyo-gakurehaku.jp/",
     "openingHours": "9時～17時（入館は16時30分まで）",
     "price": "大人200円（160円）小・中学・高校生100円（80円）（ ）内は団体（20名以上）料金※京都市内の小・中学生は土曜日、日曜日無料※ただし、企画展・特別展期間中の料金は変わる場合があります。"
   },
@@ -14094,7 +14788,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1234",
     "name": "正行院（猿寺）",
     "description": "天文七年（1538）動物（猿）にまで南無阿弥陀仏の名号のお守りを与え化益された円誉上人の開創。本堂には膝上に合掌猿をのせた円誉上人像がまつられ災難除けの「猿寺」として信仰を集めている。見ざる・聞かざる・言わざるの三猿の他に八匹の仏道を教えている猿がいる。また、門前の地蔵堂には、慶長5年（1600）に",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.986607,
       "longitude": 135.762115
@@ -14105,22 +14799,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1235",
     "name": "杉本家住宅",
     "description": "国の重要文化財、杉本氏庭園名勝指定。明治3年（1870）建造の大規模な大店の町家。内外ともに端正な意匠で、露地庭、座敷庭、坪庭などにも趣向が凝らされている。通常は一般非公開、保存会会員にのみ公開。（要予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.002546,
       "longitude": 135.755839
     },
+    "url": "http://www.sugimotoke.or.jp/",
     "price": "特別公開（節句、祭礼にちなんだ所蔵品によるハレのしつらえの公開）　大人　1,500円　高校生以下　800円週末限定の一般公開（京町家の日常のしつらえの公開）※要予約　大人　1,500円　高校生以下　800円※いずれも、ボランティアスタッフによる案内と説明があります。邸内を自由に見学できます。※開催日など詳細はホームページ（http://www.sugimotoke.or.jp）をご確認ください。定員制、要予約"
   },
   {
     "id": "spot-1236",
     "name": "株式会社若林佛具製作所",
     "description": "本社内及び東隣の卯兵衛館（うへえかん）で、寺院用仏具や家庭用仏壇の木地製作及び、組立作業、京仏壇ミュージアムの見学。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.98912,
       "longitude": 135.757343
     },
+    "url": "https://www.wakabayashi.co.jp/",
     "openingHours": "9時30分～11時30分、13時30分～16時30分",
     "price": "無料"
   },
@@ -14128,11 +14824,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1237",
     "name": "薫玉堂",
     "description": "創業文禄3年（1594）の老舗。お店の1階は仏事用の焼香・線香、2階はお香・香炉・匂袋・練香などを販売しており、聞香体験は1階の香室、3階の教室で行っている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991711,
       "longitude": 135.75334
     },
+    "url": "http://www.kungyokudo.co.jp/",
     "openingHours": "9時～17時30分聞香体験　毎月第4土曜日（変更の場合有り）、10時からと14時からの2回",
     "price": "2,500円（税込）抹茶、和菓子、おみやげ付き"
   },
@@ -14140,11 +14837,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1238",
     "name": "京都劇場",
     "description": "JR京都駅ビル内にあり抜群のアクセス。「京都劇場」は演劇・コンサート・バレエ・舞踏などあらゆるジャンルの舞台芸術を華やかに、表現力豊かに演出することができる劇場です。座席数941席の中規模劇場ながら設備環境は大劇場に匹敵する充実ぶり。しかも、幅広い舞台運営のニーズに応えるフレキシビリティさを兼ね備え",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.986077,
       "longitude": 135.760316
     },
+    "url": "https://www.kyoto-gekijo.com/",
     "openingHours": "公演ごとに異なる",
     "price": "公演ごとに異なる"
   },
@@ -14152,7 +14850,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1239",
     "name": "みやこばし　すす竹（箸）（市原平兵衞商店）",
     "description": "すす竹（建材として天井裏などに使われた竹は、囲炉裏やかまどの煙でいぶされ丈夫になったもので、150年程の年月がかけられている）を使って作られた箸で、箸先にも工夫がほどこされ使い易く、材料が丈夫なので長持ちする。市原平兵衞商店は、明和元年（1764）創業以来、繊細な技により創りあげ、また伝統を守ってい",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.002952,
       "longitude": 135.763421
@@ -14163,11 +14861,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1240",
     "name": "五明金箔工芸",
     "description": "京の雅「金箔押」の一端に触れていただくことを目的に、金箔押し体験を2000年から実施。ユネスコ世界文化遺産の緑付け金箔を使い漆器に金箔押が体験できる。作品は黒朱の角皿から1点選び、デザインテープ張りの後、実際に箔箸を使って金箔の貼り付け、仕上げて完成。定員／2名以上で実施（要予約）体験用にゆるい液を",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.991226,
       "longitude": 135.756439
     },
+    "url": "http://www.gomei.ne.jp/",
     "openingHours": "9時～16時（体験は9時～9時30分、13時～14時の開始にて）",
     "price": "2,500円（作品は当日持ち帰り）"
   },
@@ -14180,6 +14879,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.977263,
       "longitude": 135.741275
     },
+    "url": "http://www.yubani-kyoto.com",
     "openingHours": "11時30分～18時30分（ラストオーダー）",
     "price": "見学無料湯葉懐石　3,200円～6,600円（いずれも税込）※見学は要予約・相談"
   },
@@ -14192,6 +14892,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.982788,
       "longitude": 135.747879
     },
+    "url": "http://www.toji.or.jp",
     "openingHours": "9時～17時（受付は16時30分まで）",
     "price": "大人　500円小人　300円"
   },
@@ -14204,6 +14905,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.980607,
       "longitude": 135.747786
     },
+    "url": "http://www.toji.or.jp",
     "openingHours": "拝観　8時～17時（受付は16時30分まで）宝物館特別公開　春　3/20～5/25　秋　9/20～11/25　9時～17時（受付は16時30分まで）弘法市　毎月21日　8時～16時（雨天決行）",
     "price": "拝観（金堂・講堂）　大人　500円（350円）　高校生　400円（280円）　　 　小・中学生　300円（200円）宝物館のみ　大人　500円（400円）　中学生以下　300円（240円）（ ）内は団体（30名以上）料金"
   },
@@ -14211,11 +14913,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1244",
     "name": "京都アバンティ",
     "description": "京都駅八条口にあるホテル京阪京都グランデ、結婚式場マリアージュグランデ、龍谷大学響都ホール校友会館などと一体化したファッションビル。書店のほか、ファッション、レストラン街などのお店がある。このビルの前から関西空港リムジンバスや八条口発着の定期観光バスが出ている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.983537,
       "longitude": 135.760181
     },
+    "url": "http://kyoto-avanti.com",
     "openingHours": "物販　10時～21時レストラン　11時～22時ドン・キホーテ（2階）　8時～24時アベイル（3階）　10時～20時しまむら（4階）　10時～20時"
   },
   {
@@ -14233,11 +14936,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1246",
     "name": "京都テルサ（京都府民総合交流プラザ）",
     "description": "テルサホールと各種会議室があり、イベント、式典、会議などに利用できる。また、館内にはレストランもあり、宴会懇親会にも使用できる。定員／テルサホール　856名、会議室　8名～160名",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.977479,
       "longitude": 135.755954
     },
+    "url": "http://www.kyoto-terrsa.or.jp/",
     "openingHours": "9時～21時30分利用受付　9時～19時（土曜日、日曜日、祝日は18時まで）",
     "price": "要問合せ"
   },
@@ -14250,6 +14954,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.984612,
       "longitude": 135.723692
     },
+    "url": "http://www.okutanigumi.jp/",
     "openingHours": "平日の9時～16時",
     "price": "志納（文化財保護のため、寄付をお願いしています。）※団体見学者、または修学旅行生の方は、お1人様500円以上のご寄付をお願いしています。"
   },
@@ -14262,17 +14967,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.98121,
       "longitude": 135.747617
     },
+    "url": "http://www.touji-ennichi.com/",
     "openingHours": "毎月21日5時～16時頃まで※季節や天候、出展者によって異なります。"
   },
   {
     "id": "spot-1249",
     "name": "博物館さがの人形の家",
     "description": "優雅な御所人形や可愛い加茂人形、気品のある嵯峨人形と各地の郷土人形など、江戸時代のものを中心に20万点が収蔵されている。収蔵品の中には、京都で制作された人形約4,000点が国指定・重要有形文化財に指定されている。京の座敷からくり人形は種類も数も豊富で、来館者に実演している。お多福は見る人を心の底から",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.024195,
       "longitude": 135.668763
     },
+    "url": "http://www.sagano.or.jp/",
     "openingHours": "春期（2月下旬～5月末）、秋期（9月中旬～12月中旬）10時～17時",
     "price": "一般　800円中学・高校生　500円小学生　200円"
   },
@@ -14285,6 +14992,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.0139,
       "longitude": 135.693217
     },
+    "url": "https://www.ndg.jp/tenzan/",
     "openingHours": "10時～深夜1時（受付は深夜12時まで）",
     "price": "大人（中学生以上）一般　1,050円一般会員　950円KYODOカード会員　750円小人（4歳～小学生）　500円3歳以下無料一般会員入会金　200円"
   },
@@ -14292,11 +15000,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1251",
     "name": "常寂光寺",
     "description": "小倉山の山腹、静寂で清らかな、まるで常寂光土に遊ぶような趣があるということから名付けられた。茅葺きの仁王門をくぐり石段を登ったところには本堂、その後方には均整のとれた多宝塔が建ち、そこから眺める嵯峨野の景色は絶品。秋は周囲の木々が紅葉し、ぜひ訪れたい古刹。山門を入ると全山もみじと桜の老木に被われ、春",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.019656,
       "longitude": 135.668673
     },
+    "url": "http://www.jojakko-ji.or.jp",
     "openingHours": "9時～17時（閉門）（受付は16時30分まで）",
     "price": "拝観料　500円"
   },
@@ -14309,17 +15018,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.989888,
       "longitude": 135.715377
     },
+    "url": "http://www.kyoto-aquarena.com",
     "openingHours": "9時～21時"
   },
   {
     "id": "spot-1253",
     "name": "扇子司　伊藤常",
     "description": "※新型コロナウィルス感染症の影響により、営業内容等に一部変更があります。最新情報は公式ホームページでご確認ください。扇子絵付体験工房。画材など全て用意されており、オリジナルの扇子を作ることができる。描いた絵は約1ヶ月で扇子になる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.014638,
       "longitude": 135.677762
     },
+    "url": "http://www.itotsune.co.jp/",
     "openingHours": "10時～17時",
     "price": "2,200円（消費税別途、送料サービス）"
   },
@@ -14327,11 +15038,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1254",
     "name": "仁和寺御室会館",
     "description": "京都洛西観光の拠点。仁和寺の境内にある宿泊施設。世界文化遺産に登録され、また御室桜で有名な仁和寺直営の宿坊。和食堂、大広間、会議室も併設。嵐山・龍安寺・金閣寺などに近く、しっとり心を落ち着かせる旅に最適。和室4畳半～18畳まで収容人員67名12室。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.028692,
       "longitude": 135.715356
     },
+    "url": "http://www.ninnaji.jp/syukubou/",
     "openingHours": "チェックイン　16時～22時チェックアウト　9時門限　23時レストラン　　10時30分～16時（喫茶）　11時～14時（食事）",
     "price": "1泊2食付　大人　11,000円　小学生　8,900円1泊朝食付　大人　7,200円　小学生　6,600円1泊素泊り　大人　6,200円　小学生　5,600円（税・サ込）※幼児無料（希望により寝具、食事実費にて用意）"
   },
@@ -14339,7 +15051,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1255",
     "name": "二尊院",
     "description": "二尊院と呼ばれるのは、釈迦如来と阿弥陀如来の二体の仏像を本尊とするため。境内には伏見城の薬医門を移した総門をはじめ、堂々とした建物がいくつも建ち並び、角倉了以・伊藤仁斎など名家・文人・学者のお墓も数多くある。広い参道や石段、築地塀などは春には新緑、秋には紅葉で染まり、風情あるたたずまいをみせる。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.021795,
       "longitude": 135.669549
@@ -14351,11 +15063,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1256",
     "name": "嵐山駅はんなり・ほっこりスクエア",
     "description": "物販や食事処が16店舗入る嵐電「嵐山」駅にある観光商業施設。「京友禅」ポールが600本立ち並んだ「キモノフォレスト」は日没より毎日ライトアップされ、写真撮影スポットでも人気。1階 もり嵐山店（京漬物） 井筒八ツ橋本舗（京銘菓） くろちく（和雑貨） こすもす（和ざっか） ARINCO（ロールケーキ） ",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.015232,
       "longitude": 135.677714
     },
+    "url": "http://www.kyotoarashiyama.jp",
     "openingHours": "9時～20時（ただし2階は11時～20時ラストオーダー）※冬期は1階　10時～18時、2階　11時～18時ラストオーダー"
   },
   {
@@ -14367,6 +15080,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.034494,
       "longitude": 135.718285
     },
+    "url": "http://www.ryoanji.jp",
     "openingHours": "3月～11月　8時～17時12月～2月　8時30分～16時30分",
     "price": "一般　500円小・中学生　300円"
   },
@@ -14374,11 +15088,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1258",
     "name": "もみぢ家",
     "description": "もみぢ家は本館の高雄山荘、別館川の庵とがあり、京都市内よりタクシーで30分のところ。春は桜と山つつじ、夏季は3～5度位涼しい川床での昼食・夕食が人気があり有名。特に6月上旬から7月上旬にかけては源氏ぼたる鑑賞の夕べと舞妓はん、7月上旬～9月下旬には川床料理と舞妓はんが好評。四季折々旬の素材、京野菜等",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.055696,
       "longitude": 135.673771
     },
+    "url": "https://www.momijiya.jp/",
     "openingHours": "チェックイン　15時チェックアウト　10時料理　昼　11時～14時　　　　夜　18時～20時",
     "price": "昼食　春　4,950円～6,050円　夏　6,050円～8,800円夕食　13,750円～16,500円宿泊　本館　　8畳、風呂・トイレ付　17,600円～　　10畳　19,250円～　別館　　10畳　風呂なし・トイレ付　17,600円～　　露天付離れ　33,000円～"
   },
@@ -14386,11 +15101,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1259",
     "name": "祇王寺",
     "description": "祇王寺は「平家物語」で知られる祇王と、妹の祇女、母の刀自（とじ）そして仏御前が出家したところといわれている。祇王と仏御前は、ともに平清盛の寵愛を失って尼僧になったとされている。庵には本尊大日如来と、4人の木像が安置されている。萱葺きの庵は、苔の庭に楓や竹の間から木もれ日が差し込み、いにしえの物語にふ",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.0235,
       "longitude": 135.66682
     },
+    "url": "https://www.giouji.or.jp",
     "openingHours": "9時～17時（受付は16時30分まで）",
     "price": "大人　300円小・中学・高校生　100円祇王寺＝大覚寺共通拝観券　600円（大人）"
   },
@@ -14398,18 +15114,19 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1260",
     "name": "川勝總本家　嵐山店",
     "description": "五条大宮の本店と同じ京町家風の店構え。嵐山の観光名所である天龍寺や渡月橋の近くにあります。嵐山観光の際にはぜひお立ち寄りください。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.014686,
       "longitude": 135.677337
     },
+    "url": "https://www.kawakatu.com",
     "openingHours": "10時～18時（観光シーズンは別途）"
   },
   {
     "id": "spot-1261",
     "name": "滝口寺",
     "description": "滝口寺は、平重盛家臣・滝口入道時頼と建礼門院の侍女・横笛の悲恋の舞台となったお寺。本堂には横笛と滝口入道の比翼の木像が安置され、参道には横笛の歌石がひっそりと立っている。また境内周辺は、平安時代、滝口寺と祇王寺を子院とする往生院があったところと伝えられている。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.023028,
       "longitude": 135.666553
@@ -14421,11 +15138,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1262",
     "name": "京つけもの もり　本社工場・本社三条店",
     "description": "京漬物の製造工程ビデオ鑑賞と、漬物に関する話、売店でのお買い物、お手洗い休憩。ご希望の場合、職人による実演も可能。所要時間／約20分～50分対応人数／120名※要予約",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.013706,
       "longitude": 135.705003
     },
+    "url": "http://www.kyoto-mori.com/",
     "openingHours": "9時～18時"
   },
   {
@@ -14437,6 +15155,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.026784,
       "longitude": 135.664513
     },
+    "url": "http://www.nenbutsuji.jp/",
     "openingHours": "3月～11月　9時（開門）～16時30分（受付終了）4月、5月、10月、11月の土曜日、休日　9時（開門）～17時（受付終了）12月、1月、2月　9時（開門）～15時30分（受付終了）※閉門は、いずれも受付終了後30分以内〈千灯供養〉　8月最終土・日　17時30分（開門）～20時30分（受付終了）（行事開始18時から）",
     "price": "大人　500円（400円）中学・高校生　400円（300円）（ ）内は団体（30名以上）料金千灯供養　大人1,000円"
   },
@@ -14444,21 +15163,23 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1264",
     "name": "羽田酒造有限会社",
     "description": "明治26年（1893）創業。代表銘柄　「六友」純米吟醸原酒〈精米歩合〉50％〈使用米〉京都産五百万石100%〈アルコール度数〉17.5度〈日本酒度〉+3.0〈酸度〉1.6〈特徴〉濃醇かつ奥行きのある上品な品位とキレがある味わい。【販売店舗】ジェイアール京都伊勢丹（B1階）和酒売場大丸京都店（B1階）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.157989,
       "longitude": 135.631867
-    }
+    },
+    "url": "http://www.hanedashuzo.co.jp/"
   },
   {
     "id": "spot-1265",
     "name": "宝篋院",
     "description": "平安期創建の善入寺に始まる。境内には、室町幕府の二代将軍足利義詮と南朝の武将楠正行（正成の子）の両者の墓が並んで建っている。四季折々の花が咲く庭園は美しく、秋の紅葉は見事。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.022524,
       "longitude": 135.673574
     },
+    "url": "http://www.houkyouin.jp/",
     "openingHours": "拝観　9時～16時",
     "price": "拝観料　大人　500円　小・中学生　200円"
   },
@@ -14466,7 +15187,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1266",
     "name": "清凉寺",
     "description": "嵯峨の釈迦堂の名前でも親しまれており、嵯峨野でも有数の古刹。寛平7年（895）、源融の没後、別荘を寺としたのが創始。長和5年（1016）に五台山清凉寺が建立された。本瓦葺きの2階二重門という堂々とした仁王門をくぐると正面に本堂、周囲に阿弥陀堂、多宝塔などが建つほか、嵯峨天皇の皇子・源融の墓などの石造",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.023509,
       "longitude": 135.674289
@@ -14483,6 +15204,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.013742,
       "longitude": 135.673808
     },
+    "url": "http://www.samac.jp",
     "openingHours": "10時～17時（入館は16時30分まで）※カフェ「嵐山OMOKAGEテラス」の営業時間も同じ",
     "price": "一般・大学生　900円（800円）高校生　500円（400円）小・中学生　300円（250円）障がい者と介添人1名まで500円（400円）幼児無料（ ）内は20名以上の団体料金※常設展もご覧いただけます。"
   },
@@ -14490,11 +15212,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1268",
     "name": "神護寺",
     "description": "高雄山中腹に立つ神護寺は真言宗の遺迹本山で、密教寺院有数の名刹。境内には書院や五大堂、毘沙門堂、大師堂、金堂など優れた建築物が建ち並んでおり、金堂の西にある地蔵院では厄除けのかわらけ投げが楽しめ、秋の紅葉シーズンには真っ赤に染まった錦雲渓にたくさんのかわらけが吸い込まれる。国宝の絵画・古文書の多数が",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.055036,
       "longitude": 135.670867
     },
+    "url": "http://www.jingoji.or.jp",
     "openingHours": "9時～16時",
     "price": "中学生以上　600円小学生　300円"
   },
@@ -14507,6 +15230,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.023175,
       "longitude": 135.720186
     },
+    "url": "http://myoshinji.or.jp/",
     "openingHours": "令和3年1月12日より自由拝観9時～15時30分受付、16時閉門",
     "price": "拝観料（法堂・大庫裏）一般　700円小・中学生　400円団体（30名以上）1割引"
   },
@@ -14514,11 +15238,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1270",
     "name": "天翔の湯大門",
     "description": "京都で初めての天然温泉銭湯で、露天風呂に温泉が使われており、源泉かけ流しとなっている。黄土色をした湯は飲泉可能で、かなり強い塩味と苦みがあり慢性消化器病や慢性便秘に効くといわれている。また、内湯には水素風呂を設置。美肌効果、毛穴やシワ、シミ、そばかす、美白、血流促進、活性酸素排除、老化血行不良などに",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.989156,
       "longitude": 135.72653
     },
+    "url": "http://tensyonoyu.web.fc2.com/",
     "openingHours": "14時～24時",
     "price": "大人　450円小学生　150円乳幼児　60円（銭湯料金）"
   },
@@ -14526,11 +15251,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1271",
     "name": "落柿舎",
     "description": "芭蕉の高弟、俳人向井去来が閑居した草庵跡。芭蕉の往来地で『嵯峨日記』を著す。庭には俳句の草木や去来の句碑などが、裏の墓地には去来墓がある。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.020513,
       "longitude": 135.670889
     },
+    "url": "http://www.rakushisha.jp/",
     "openingHours": "9時～17時（1月、2月は10時～16時）",
     "price": "300円200円（5名様以上）学生　150円小学生以下無料"
   },
@@ -14543,6 +15269,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.016811,
       "longitude": 135.708626
     },
+    "url": "https://www.toei-eigamura.com",
     "openingHours": "[1] 9:20集合　 9:30～10:15[2] 10:20集合　10:30～11:15[3] 11:20集合　11:30～12:15[4] 12:20集合　12:30～13:15[5] 13:20集合　13:30～14:15[6] 14:20集合　14:30～15:15[7] 15:20集合　15:30～16:15※夏季・冬季は変更になります。※詳しくは「エヴァンゲリオン京都基地」特設サイトをご確認ください。",
     "price": "無料※映画村の入村料別途必要"
   },
@@ -14555,6 +15282,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.004152,
       "longitude": 135.694907
     },
+    "url": "http://www.umenomiya.or.jp",
     "openingHours": "9時～17時（16時30分入苑受付終了）",
     "price": "庭園拝観料　大人　600円（20名以上は500円）　小人　400円"
   },
@@ -14567,6 +15295,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.021874,
       "longitude": 135.719224
     },
+    "url": "http://www.taizoin.com/",
     "openingHours": "9時～17時",
     "price": "拝観料　大人　600円（550円）　小・中学生　300円（270円）　6歳以下無料　（ ）内は団体（30名以上）料金お抹茶　500円（菓子付き）坐禅体験　修学旅行生（小・中学・高校生対象）　　50名以上　700円／人　　50名未満　900円／人　（先生無料、所要時間60分、要予約）　一般　1,100円／人"
   },
@@ -14574,11 +15303,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1275",
     "name": "仁和寺",
     "description": "宇多天皇が仁和4年（888）に創建、後に出家し、僧坊である御室を営み、後に地名となった。江戸時代に建立された二王門（重文）は京の三大門のひとつ。境内には金堂（国宝）、五重塔（重文）があり、御殿は、宸殿、黒書院、白書院からなる御所風建築で平安王朝文化の薫りが漂う。茶室の遼廊亭（りょうかくてい）・飛濤亭",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.031102,
       "longitude": 135.713818
     },
+    "url": "http://www.ninnaji.jp",
     "openingHours": "3月～11月　9時～17時12月～2月　9時～16時30分（受付は30分前まで）",
     "price": "一般　500円小・中学生　300円"
   },
@@ -14586,11 +15316,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1276",
     "name": "嵐山-高雄パークウエイ",
     "description": "嵯峨鳥居本から国道162号線高雄口までの10.7km。高雄・槙尾・栂尾の三尾の景観や清滝川の渓谷が見事で、特に紅葉の頃が見事。コース内には展望台が4ヵ所、駐車場が9ヵ所ある。菖蒲谷池畔にあるドッグラン「ワン遊ランド」は、約2000平方メートルの広さがあり、小型犬用と中・大型犬用と仕切っており、ハード",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.053893,
       "longitude": 135.675509
     },
+    "url": "https://www.parkway-hankyu.com/",
     "openingHours": "夏季営業（4月～11月）　8時～19時（入場は18時まで）※11月のみ20時まで営業（入場は19時まで）冬季営業（12月～3月）　9時～18時（入場は17時まで）ワン遊ランドは営業開始時間～17時",
     "price": "パークウエイ通行料　二輪車（126cc以上）　850円　軽・普通自動車　1,200円　マイクロバス　3,000円　大型バス　4,880円ワン遊ランドは利用料無料（通行料金要）パークウエイ内駐車場はすべて無料"
   },
@@ -14598,11 +15329,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1277",
     "name": "西院春日神社",
     "description": "平安初期、このあたりに淳和天皇の離宮・淳和院（西院）があり、その鎮守社として奈良の春日大神を勧請したのが起こりといわれている。毎月1日、11日、15日のみ公開される「疱瘡（ほうそう）石」は平安時代より病傷快復にご利益がある。境内にまつられている還来神社は旅行安全として信仰を集めており、社前にある「梛",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.005029,
       "longitude": 135.729657
     },
+    "url": "http://www.kasuga.or.jp",
     "openingHours": "常時開門",
     "price": "無料"
   },
@@ -14615,6 +15347,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.996764,
       "longitude": 135.712239
     },
+    "url": "http://yatuhasian.jp/",
     "openingHours": "9時～17時",
     "price": "ねりきり細工とお抹茶体験　2,190円（税込）おとうふづくり体験　1,680円（税込）京七味づくり体験　1,250円（税込）みたらし団子づくり体験　1,450円（税込）抹茶パフェ作り体験　1,680円（税込）極上の体験「つぶあん入り生八つ橋を極める」　2,500円（税込）生八つ橋手づくり体験（小学生用）　1,050円（税込）生地からつくる生八つ橋手づくり体験（一般用）　1,280円 （税込）京染　手描き友禅　1,350円（税込）食育プログラム　和食の「だし」づくりとお手製お食事体験　3,280円（税込）、3,780円（税込）"
   },
@@ -14634,11 +15367,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1280",
     "name": "嵐山温泉「駅の足湯」",
     "description": "嵐山温泉の湯を使った「駅の足湯」は嵐電嵐山駅ホーム内にある。疲労回復の効果がある足湯に浸かりながら「キモノフォレスト」が眺められる。足湯の入口には額のびゃくごうがハート型の「ふれあい地蔵」が迎える。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.015333,
       "longitude": 135.678121
     },
+    "url": "http://www.kyotoarashiyama.jp",
     "openingHours": "9時～20時（冬季は18時まで）※受付は営業終了の30分前まで",
     "price": "200円（タオル付き）利用券は、嵐山駅券売機または嵐山駅インフォメーションで購入。"
   },
@@ -14646,11 +15380,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1281",
     "name": "念佛寺",
     "description": "浄土宗西山禅林寺派の寺。比叡山延暦寺の開祖最澄の慈母妙徳夫人の生誕地として1200年の歴史を有する寺院である。また、宗教の如何を問わず、水子供養の菩提所として信仰されている。本尊の阿弥陀如来像は鉄で鋳造されており、秘仏となっている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.008454,
       "longitude": 135.723584
     },
+    "url": "http://www.nenbutsuji.or.jp/",
     "openingHours": "拝観  10時～15時"
   },
   {
@@ -14667,11 +15402,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1283",
     "name": "大覚寺",
     "description": "正式名称は「旧嵯峨御所大本山大覚寺」。平安時代に嵯峨天皇の離宮として造られた。諸堂が回廊で結ばれ、宸殿の襖には狩野山楽筆の「牡丹図」、「紅梅図」などが描かれている。春は桜、秋は紅葉と賑わい、中秋に行われる観月の夕べも有名である。〈写経〉受付時間　9時～15時30分所要時間　約60分（団体は要予約）※",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.028248,
       "longitude": 135.677746
     },
+    "url": "https://www.daikakuji.or.jp/",
     "openingHours": "9時～16時30分（17時閉門）",
     "price": "参拝料　大人　500円　小・中学・高校生　300円※大沢池エリアは別途有料写経　1,000円"
   },
@@ -14684,6 +15420,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.022938,
       "longitude": 135.676279
     },
+    "url": "http://www.kanshundo.co.jp/",
     "openingHours": "1階　9時～17時茶房　10時～16時30分",
     "price": "和菓子と抹茶セット　700円あんみつ（黒蜜付）　850円※すべて税別"
   },
@@ -14691,22 +15428,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1285",
     "name": "錦",
     "description": "嵐山は中ノ島公園にある京料理店。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.011935,
       "longitude": 135.679496
     },
+    "url": "http://www.kyoto-nishiki.com/",
     "price": "5,500円～"
   },
   {
     "id": "spot-1286",
     "name": "京都嵐山　嵐丼",
     "description": "湯葉や豆腐などが入った京都らしい丼から京都中央卸市場直送の海鮮を使用した華やかな海鮮丼、こだわりの出し巻きなどのサイドメニューもお楽しみいただけます。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.015233,
       "longitude": 135.677714
     },
+    "url": "http://www.kurochiku.co.jp/fb_randon.php",
     "openingHours": "11時～20時30分※12月中旬～3月下旬は18時30分まで",
     "price": "嵐山丼　1,550円ヘルシー丼　980円ネギトロ丼　1,380円"
   },
@@ -14719,6 +15458,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.013647,
       "longitude": 135.674649
     },
+    "url": "https://kyoto-kitcho.com",
     "price": "昼　40,000円～（税・サ別）夜　50,000円～（税・サ別）"
   },
   {
@@ -14730,6 +15470,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.026994,
       "longitude": 135.699367
     },
+    "url": "https://www.yh-kyoto.or.jp/utano_yh/",
     "openingHours": "チェックイン　15時～23時チェックアウト　10時",
     "price": "19歳以上　3,450円18歳以下　2,930円ツイン　4,190円朝食　700円夕食　1,150円※1泊あたり200円の宿泊税が別途必要"
   },
@@ -14737,29 +15478,31 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1289",
     "name": "萬長",
     "description": "つれづれ弁当が人気。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.026042,
       "longitude": 135.71978
     },
+    "url": "http://www.mantyo.com",
     "price": "3,200円～（税別）"
   },
   {
     "id": "spot-1290",
     "name": "嵐山保勝会",
     "description": "嵐山エリアの観光等の案内を行っている。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.014752,
       "longitude": 135.677293
     },
+    "url": "http://www.arashiyamahoshokai.com/",
     "openingHours": "10時～16時"
   },
   {
     "id": "spot-1291",
     "name": "福徳寺",
     "description": "和銅4年（711）、聖武天皇の勅願で行基によって創られ、当時は弓削寺とよばれていたと伝えられている。その後天正7年（1579）明智光秀が周山城を築いた時、寺を壊して城の用材としたため廃絶した。現在ある建物は江戸時代に入ってから再興されたもの。収蔵庫には重要文化財に指定された藤原時代の木造薬師如来坐像",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.193551,
       "longitude": 135.640737
@@ -14771,7 +15514,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1292",
     "name": "京北ふれあい朝市",
     "description": "「町内で生産された農産物の販売所を」という声を受け、「ふるさと京北鉾杉塾」が地元農家に参加を呼びかけ開設。現在（平成24年1月から）は、生産者が独自で開設している。地産地消を合い言葉に、低農薬・減農薬につとめ、安心・安全な野菜・米などを販売している。生産者が直接対面販売しているので、お客様とも馴染み",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.155091,
       "longitude": 135.633495
@@ -14782,22 +15525,24 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1293",
     "name": "宇津峡公園",
     "description": "コテージ、オートキャンプ場、ディキャンプ場、魚つかみ取り（夏期のみ）",
-    "congestionLevel": 3,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.144586,
       "longitude": 135.573815
     },
+    "url": "http://fuw.jp/utsukyoh/",
     "price": "入園料　　中学生以上　310円　小学生　200円オートキャンプ場　1区画5,230円（持込テント料830円）デイキャンプ場　テント（持込）　830円　テント（貸出）　2,090円コテージ　1棟15,710円（5名まで）"
   },
   {
     "id": "spot-1294",
     "name": "らんぶらレンタサイクル",
     "description": "嵐電嵐山駅にあるレンタサイクルの店。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.015098,
       "longitude": 135.677623
     },
+    "url": "http://www.kyotoarashiyama.jp",
     "openingHours": "9時～17時（冬期10時～17時）※貸出受付は15時まで",
     "price": "3段変速付き　1日1,100円、2時間600円電動付き　1日　1,600円「駅の足湯」利用引換券付"
   },
@@ -14810,6 +15555,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.018582,
       "longitude": 135.679661
     },
+    "url": "https://www.sagano-kanko.co.jp/",
     "openingHours": "10時～17時（受付は15時まで）",
     "price": "電動アシスト自転車　1日　1,700円普通自転車　1日　1,000円　1泊　1,600円子供用自転車　1日　800円※全車両保証金込み手荷物一時預かり　1日　400円/個"
   },
@@ -14817,7 +15563,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1296",
     "name": "蚕の社（木嶋坐天照御魂神社）",
     "description": "正しくは、木嶋坐天照御魂神社（このしまにますあまてるみたまじんじゃ）といい、本殿東側に摂社の養蚕神社（こかいじんじゃ）があることから通称「蚕の社（かいこのやしろ）」とよばれており、渡来人の秦氏が養蚕と織物の神を祀ったのがはじまりと伝えられている。本殿西の神池には、珍しい3本柱の鳥居がある。※ご利益：",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.014868,
       "longitude": 135.713533
@@ -14829,11 +15575,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1297",
     "name": "武将体験　時代劇の高津商会",
     "description": "映画、テレビで使用した鎧、甲を着用して武将気分が体験できる。（お子様は5歳以上、身長110cm以上）※写真撮影可",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.014839,
       "longitude": 135.703834
     },
+    "url": "http://www.kouzu.jp/busho/",
     "openingHours": "10時～15時※受付は土曜日、日曜日、祝日を除く9時～17時（1週間前までに要予約）",
     "price": "鎧のランクに応じ、6,000円、11,000円、15,000円（すべて税別、衣裳を含む）※写真撮影、メイクのオプション有り。"
   },
@@ -14841,7 +15588,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1298",
     "name": "常照皇寺",
     "description": "常照皇寺は臨済宗天龍寺派の禅寺。北朝初代の光厳天皇が開き、南北朝の動乱という歴史の渦に巻き込まれ、ここに隠棲した。また天皇は周辺の自然を庭に見立て、寺の裏山を猿帰嶂、滝を白玉泉、山全体を万樹林と名付け、周囲の十勝を選ばれたという言い伝えがあり、今もこの景観はほとんど楽しむことができる。国重文指定の弥",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.200915,
       "longitude": 135.685366
@@ -14853,7 +15600,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1299",
     "name": "栗尾峠",
     "description": "周山街道にある峠で、この辺りを一望できる絶好の展望地として古くから知られている。時折濃い霧が町を包み込み雲海からポッカリのぞかせる山並みは、どことなく神秘的。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.133615,
       "longitude": 135.64034
@@ -14868,6 +15615,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.016084,
       "longitude": 135.688948
     },
+    "url": "http://www.kurumazakijinja.or.jp/",
     "openingHours": "9時～17時",
     "price": "無料"
   },
@@ -14880,6 +15628,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.015106,
       "longitude": 135.673657
     },
+    "url": "http://www.tenryuji.com",
     "openingHours": "11時～14時",
     "price": "雪（一汁五菜）3,300円月（一汁六菜）5,500円花（一汁七菜）8,000円※月・花は2名以上で要予約、雪も予約が望ましい※別途、庭園参拝料（500円）が必要"
   },
@@ -14899,7 +15648,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1303",
     "name": "大河内山荘庭園",
     "description": "百人一首で有名な小倉山の南面に、映画俳優大河内伝次郎（1898～1962）が、自ら一木一草にも丹精込めて創作した庭園である。庭園には数多くの松、桜、楓が興を添え、朝な夕な、七色に変化する比叡の峰々が望め、徒然草にゆかりの双ヶ丘に連なる洛西の風光が楽しめ、数多い京の庭園のなかでも屈指の名園といえる。ま",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.017249,
       "longitude": 135.669363
@@ -14911,11 +15660,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1304",
     "name": "茶房竹林の里",
     "description": "龍安寺近くにあるお茶席料理とお茶会の専門店。麺類、豆腐料理に加え、本格的なゆば料理や京懐石が味わえて、お抹茶やぜんざい、コーヒーも味わえる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.032206,
       "longitude": 135.71931
     },
+    "url": "http://www.tikurin-kinukake.sakura.ne.jp",
     "openingHours": "10時45分～15時（ラストオーダー）",
     "price": "抹茶と和菓子のセット　950円～お食事　1,300円～"
   },
@@ -14923,7 +15673,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1305",
     "name": "広隆寺",
     "description": "広隆寺は、山城最古の寺院であり、平安文化の発祥の地であり、ひときわ閑静なたたずまいを見せている。ここに祀られているのが国宝指定第1号の宝冠弥勒菩薩半跏思惟像。右手を頬にあて微笑する姿は、何時間でも見とれてしまいそうな神秘的な美しさを持っている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.014348,
       "longitude": 135.707311
@@ -14952,6 +15702,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.0296,
       "longitude": 135.706334
     },
+    "url": "http://www.ryoutokuji.or.jp",
     "openingHours": "大根焚き12/9、12/10（9時～16時）",
     "price": "大根焚きは有料"
   },
@@ -14959,11 +15710,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1308",
     "name": "株式会社竹定商店",
     "description": "建設用、庭園用竹製品の製作過程の見学、竹製品の販売あり。定員／約10名（要予約）",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.014375,
       "longitude": 135.70567
     },
+    "url": "https://takesada-shoten.co.jp/",
     "openingHours": "8時30分～17時30分",
     "price": "無料"
   },
@@ -14976,6 +15728,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.019889,
       "longitude": 135.677974
     },
+    "url": "http://www.nakajima-zougan.jp",
     "openingHours": "8時30分～17時30分体験　8時30分～15時",
     "price": "入場無料体験　3,500円～（送料込み、ペンダント・ストラップ・タイピン・イヤホンジャック）"
   },
@@ -14999,7 +15752,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.031165,
       "longitude": 135.709863
-    }
+    },
+    "url": "http://ymbk.sakura.ne.jp"
   },
   {
     "id": "spot-1312",
@@ -15017,11 +15771,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1313",
     "name": "本家桜もち琴きき茶屋",
     "description": "渡月橋北詰角の大きな赤い提灯が目印。名物桜餅はあんが入ってなく、白い道明寺餅を塩漬けの桜の葉二枚ではさんだもの。もう一種は、道明寺餅を甘さ控えめのこしあんで包んだものの二種類が楽しめる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.013716,
       "longitude": 135.677678
     },
+    "url": "http://www.kotokikichaya.co.jp/",
     "openingHours": "10時～17時（ラストオーダー16時30分）",
     "price": "抹茶とセット　660円6個入り　1,080円10個入り　1,620円"
   },
@@ -15034,6 +15789,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.022867,
       "longitude": 135.675268
     },
+    "url": "http://www.sagatofu-morika.co.jp/",
     "openingHours": "9時～17時",
     "price": "嵯峨豆腐1パック（2丁分入・1パック）410円油揚げ1枚　205円飛龍頭（ひろうす）1個　230円からし豆腐　1個150円、1パック（2個入）300円（販売期間5月中旬～9月中旬）（すべて消費税別）"
   },
@@ -15041,11 +15797,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1315",
     "name": "あうる京北（京都府立ゼミナールハウス）",
     "description": "京都市内から国道162号線を北へ車で約60分。右京区京北の豊かな自然に包まれた宿泊・生涯学習・研修施設。小・中学・高校生の学習やスポーツ合宿、大学生のゼミ合宿、企業研修など多人数から、ご家族やご友人との観光旅行まで、どなたでも良心的な料金でご利用いただけます。また、京都府の生涯学習の拠点施設として、",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.199388,
       "longitude": 135.634342
     },
+    "url": "https://kyosemi.or.jp/",
     "openingHours": "利用時間研修室　9時30分～、13時～、18時～宿泊室　チェックイン　16時30分　チェックアウト　9時30分",
     "price": "料金の一例研修室　洋室　学生　20人用　1,500円～　一般　20人用　2,200円～　学生　280人用　9,100円～　一般　280人用　12,700円～宿泊室（京都市宿泊税1人200円別途必要）　一般　2,750円～　大学生　1,800円～　高校生　1,500円～　小・中学生　900円～食事　定食　　朝　600円　昼　800円　夜　1,500円会席料理　4,000円、5,000円、6,000円各種鍋料理　2,500円～バーベキュー（焼きそば付き）　3,500円"
   },
@@ -15053,11 +15810,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1316",
     "name": "ゆどうふ竹仙",
     "description": "清凉寺内、源氏物語の光源氏のモデルといわれる源融の山荘跡にある。おススメはゆどうふおきまり。京湯葉、京生麩、京野菜を使った料理となめらかな口あたりの湯豆腐をゆずの香りを楽しみながらいただける。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.023336,
       "longitude": 135.674785
     },
+    "url": "http://www.kyoto-chikusen.com",
     "openingHours": "10時～17時（ラストオーダー16時）※夕食は予約のみ（10名以上～40名）",
     "price": "ゆどうふおきまり　3,850円（税込）湯葉懐石　4,950円（税込）"
   },
@@ -15065,11 +15823,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1317",
     "name": "大沢池",
     "description": "現存する日本最古の人工の庭池で、形もほとんど原形をとどめている。池に浮かぶ天神島や菊ヶ島などに植えられた桜やモミジ、松など周囲の景色は絶品で、平安時代前期の庭園として貴重な名勝地。昔から池を周遊しての観月はここよりほかはないと賞されるほどで、嵯峨天皇も舟遊びをしたと言われている。島のひとつ、菊ヶ島に",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.028237,
       "longitude": 135.680388
     },
+    "url": "https://www.daikakuji.or.jp/",
     "openingHours": "9時～16時30分（17時閉門）",
     "price": "参拝料　大人　300円　小・中学・高校生　100円※お堂エリアは別途有料"
   },
@@ -15087,7 +15846,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1319",
     "name": "清凉寺（嵯峨釈迦堂）霊宝館",
     "description": "春と秋に「国宝阿弥陀三尊像」や「普賢菩薩騎象像」などの寺宝を公開している。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.023507,
       "longitude": 135.674289
@@ -15104,6 +15863,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.059892,
       "longitude": 135.634443
     },
+    "url": "http://atagojinjya.jp/",
     "openingHours": "9時～16時（通常）冬期　9時～15時",
     "price": "無料"
   },
@@ -15116,6 +15876,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.031403,
       "longitude": 135.661108
     },
+    "url": "http://www.otagiji.com",
     "openingHours": "8時～16時30分",
     "price": "拝観料　300円"
   },
@@ -15123,7 +15884,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1322",
     "name": "広隆寺霊宝殿",
     "description": "国宝第一号の「弥勒菩薩半跏思惟像」をはじめ飛鳥～鎌倉の各時代を代表する仏像が安置されている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.015531,
       "longitude": 135.707329
@@ -15140,6 +15901,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.021241,
       "longitude": 135.721203
     },
+    "url": "https://www.myoshinji.or.jp",
     "openingHours": "毎週土曜日17時30分～翌朝9時まで",
     "price": "初回2,000円　2回目より1,000円"
   },
@@ -15147,7 +15909,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1324",
     "name": "西明寺",
     "description": "紅葉の名所として知られる寺。10月下旬から11月末までの間、紅葉を愛でながらお抹茶が賞味できる。なお、本堂は徳川5代将軍綱吉の生母、桂昌院の寄進により建てられた。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.057248,
       "longitude": 135.674869
@@ -15164,6 +15926,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.018612,
       "longitude": 135.680293
     },
+    "url": "https://www.sagano-kanko.co.jp/",
     "openingHours": "9時～17時（最終受付）※トロッコ列車の運行スケジュールによっては営業開始時間が変更になる場合があります。事前にホームページ等でご確認ください。",
     "price": "ジオラマ入場料　大人　530円　小人　320円トロッコ列車乗車割引　大人　420円　小人　210円※模型操作は別料金"
   },
@@ -15171,11 +15934,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1326",
     "name": "仁和寺霊宝館",
     "description": "御室の仁和寺は、「御室桜」と呼ばれる背丈の低い桜の名所として有名だが、その歴史も古く平安前期の仁和4年（888年）、宇多天皇によって創設された古刹。以後明治維新まで歴代天皇の皇子皇孫が門跡として継承してきた。この様に、千年以上の歴史のある寺院であるため、数多くの名宝が残されており、そのジャンルは書跡",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.029302,
       "longitude": 135.71439
     },
+    "url": "http://www.ninnaji.jp",
     "openingHours": "4/1～5月第4日曜日、10/1～11/239時～17時（受付は16時30分まで）",
     "price": "一般・大学生　500円　中学・高校生　300円　小学生無料（保護者同伴の場合のみ）"
   },
@@ -15195,11 +15959,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1328",
     "name": "西京極総合運動公園",
     "description": "公園内には、京都市体育館（ハンナリーズアリーナ）、京都市市民スポーツ会館、陸上競技場兼球技場（たけびしスタジアム京都）、補助競技場、野球場（わかさスタジアム京都）などがある。サッカーやバスケットボール、女子野球といったプロスポーツの本拠地として賑わうほか、高校駅伝や女子駅伝など多くの全国大会が開催さ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.992652,
       "longitude": 135.71555
-    }
+    },
+    "url": "http://www.kyoto-sports.or.jp/"
   },
   {
     "id": "spot-1329",
@@ -15210,6 +15975,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.016815,
       "longitude": 135.708625
     },
+    "url": "https://www.toei-eigamura.com",
     "openingHours": "9時～17時※夏季・冬季は変更になります。",
     "price": "入村料　　大人　2,400円　中学・高校生　1,400円　3歳以上　1,200円　（学校団体別料金有り）変身料　5,800円～11,500円（予約優先）"
   },
@@ -15233,6 +15999,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.01566,
       "longitude": 135.673749
     },
+    "url": "http://www.tenryuji.com/",
     "openingHours": "3/21～10/20　8時30分～17時30分10/21～3/20　8時30分～17時（ただし、11/13～11/30は早朝参拝で7時30分～）※法堂の特別参拝3/21～10/20　9時～17時10/21～3/20　9時～16時30分",
     "price": "庭園参拝料　一般500円（諸堂参拝は300円追加）※法堂の特別参拝は別途500円必要"
   },
@@ -15245,6 +16012,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.016812,
       "longitude": 135.708626
     },
+    "url": "https://www.toei-eigamura.com",
     "openingHours": "9時～17時※夏季・冬季は変更になります。",
     "price": "無料※映画村の入村料別途必要"
   },
@@ -15257,6 +16025,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.013206,
       "longitude": 135.674813
     },
+    "url": "http://arashiyama-yakatabune.com",
     "openingHours": "食事付の場合　11時～16時（乗船時刻は指定）遊覧船　9時～16時30分冬期（12月中旬～3月中旬）は10時～16時",
     "price": "乗合船（繁忙時のみ）　大人　1,500円　小人　800円（4～12歳）貸切船　2人まで　3,700円　1人増毎　1,200円　小人　600円風流屋形船　お食事+船料金（1人4,800円～、10名様以上）"
   },
@@ -15269,6 +16038,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.018585,
       "longitude": 135.676188
     },
+    "url": "http://www.orgel-hall.com/",
     "openingHours": "10時～17時（最終案内は16時15分）",
     "price": "大人　1,000円大学生　700円中学・高校生　600円小学生　300円障がい者・同伴者　各500円シニア（65歳以上）　700円お着物の方　800円カップル割　2人で1,500円団体10名以上は10％引き（要予約）"
   },
@@ -15276,11 +16046,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1335",
     "name": "上桂川の魚釣り",
     "description": "品種　アユ※各魚種解禁はホームページでご確認ください。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.145841,
       "longitude": 135.638232
     },
+    "url": "http://www.kamikatsura.info/",
     "price": "アユ　年券　14,100円 　日券　4,500円アマゴ　年券　6,000円     　日券　3,000円雑魚（ハエ、ゴリ、ウナギ、コイ）　年券　2,500円　日券　1,000円※18歳以下無料※2021年1月現在"
   },
   {
@@ -15292,6 +16063,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.017254,
       "longitude": 135.676618
     },
+    "url": "http://oimatu.co.jp/",
     "openingHours": "9時～17時菓子教室　10時～、13時30分～の1日2回",
     "price": "菓子教室　一般（5個作成、抹茶付き）　2,750円　修学旅行生（3個作成、香煎茶付き）　1,650円"
   },
@@ -15299,11 +16071,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1337",
     "name": "レンタサイクル京都",
     "description": "自転車台数50台、他に子供乗せ自転車、子供用自転車有り。鍵をなくした時や緊急時のためにパトロールカーを用意している。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.013864,
       "longitude": 135.677925
     },
+    "url": "http://www.sinpachi.com",
     "openingHours": "10時～17時（貸出は15時まで）",
     "price": "24・26インチ普通自転車時間コース　2時間　600円（後1時間ごと300円）1日コース　900円子供乗せ自転車（後乗せ固定）時間コース　2時間　800円（後1時間ごと400円）1日コース　1,300円 ※時間延長の場合は、別途料金がかかります。"
   },
@@ -15311,11 +16084,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1338",
     "name": "京都市京北森林公園",
     "description": "手ぶらでのバーベキューや石窯ピザ手作り体験が人気。流しそうめんや木工など、アウトドア体験が充実している。木製遊具や芝生広場もあり、春と秋にはきのこ狩りも楽しめる。家族ではもちろん、グループや団体でも、おいしい空気を胸いっぱいに吸いながら、リーズナブルに一日中遊べる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.182639,
       "longitude": 135.660919
     },
+    "url": "https://park.morimori.land",
     "openingHours": "9時～17時",
     "price": "きのこ狩り　1回　520円きのこ栽培体験　1本　1,040円野外炉　1基　1,040円網、鉄板、トングなどのレンタル品　各110円自家製エコ木炭　1袋（2.5kg）　880円手ぶらdeBBQセット　2,200円～"
   },
@@ -15328,6 +16102,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.012648,
       "longitude": 135.689325
     },
+    "url": "https://www.kyoto-saga.ac.jp/",
     "openingHours": "展示会開催時開館10時～17時",
     "price": "無料"
   },
@@ -15335,11 +16110,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1340",
     "name": "ローケツ染・職人体験やまもと",
     "description": "2時間ほどで完成するろうけつ染めを100％体験出来、すぐに持ち帰ることが出来る。ろうけつ染めとはろうを熱で溶かし、綿生地に模様を白く染め抜いたもの。図案は100～200種類と豊富にあり、オリジナルの図案も出来る。Ｔシャツ、のれん、タペストリー、テーブルセンター、額なども染められる。直売品もあり。定員",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.999196,
       "longitude": 135.713324
     },
+    "url": "http://www.roketsu.com/",
     "openingHours": "10時～18時",
     "price": "45×45cm　3,000円45×90cm　3,500円サイズありＴシャツ　3,500円（好評）のれん　3,500円"
   },
@@ -15364,6 +16140,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.998244,
       "longitude": 135.709051
     },
+    "url": "http://yatuhasian.jp/",
     "openingHours": "9時～17時15分",
     "price": "入館無料生八つ橋手づくり体験（教育旅行用）　1,050円（税込）生地から作る生八つ橋手作り体験（一般用）　1,280円（税込）京七味づくり体験　1,250円（税込）みたらし団子づくり体験　1,450円（税込）本格おとうふづくり体験　1,680円（税込）京野菜まんじゅう手づくり体験　1,450円（税込）京の生菓子「ねりきり細工」　1,550円（税込）、1,860円（税込）おあそびししゅう講座　1,300円（税込）京染　手描き友禅　1,350円（税込）まゆ人形づくり　1,450円（税込）いちごちゃんづくり（10月～6月限定）　1,450円（税込）いちご大福づくり（10月～6月限定）　1,450円（税込）"
   },
@@ -15371,11 +16148,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1343",
     "name": "栗山工房",
     "description": "沖縄の紅型染めと同じ手法による着物などの製作工程を見学できる。また、紅型染めによるテーブルセンター制作と藍染めによるハンカチ制作も体験できる。定員／見学　1名～12名、体験　3名～12名",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.036147,
       "longitude": 135.698363
     },
+    "url": "http://www.kuriyamakoubo.com/",
     "openingHours": "10時～16時（休憩12時～13時）",
     "price": "工房見学　大人　1,800円（オリジナルお土産付き）　中学・高校生　500円　小学生　400円藍染ハンカチ　1,100円紅型テーブルセンター　1,100円"
   },
@@ -15388,6 +16166,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.026476,
       "longitude": 135.666188
     },
+    "url": "http://www.mayumura.com/",
     "openingHours": "9時～17時",
     "price": "1,300円"
   },
@@ -15395,7 +16174,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1345",
     "name": "西山艸堂",
     "description": "天龍寺塔頭の一つ妙智院の書院を座敷として使っている。嵯峨豆腐の老舗「森嘉」の豆腐を使った湯豆腐の定食が賞味できる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.015326,
       "longitude": 135.676998
@@ -15407,11 +16186,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1346",
     "name": "道の駅ウッディー京北",
     "description": "平成22年（2010）4月に京都市初の「道の駅」となった。京北の朝採り新鮮野菜、加工食品、杉桧を使った木工品などが数多く並ぶ。木の香り漂う館内には樹齢600年のやぐら杉のモニュメントがそびえる。喫茶コーナーもあり、食事が出来る。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.156129,
       "longitude": 135.633213
     },
+    "url": "https://fuw.jp/woody/",
     "openingHours": "9時～18時",
     "price": "無料"
   },
@@ -15424,13 +16204,14 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.016757,
       "longitude": 135.677181
     },
+    "url": "http://www.kyoto-hotheart.jp",
     "openingHours": "10時～17時"
   },
   {
     "id": "spot-1348",
     "name": "京北運動公園",
     "description": "野球場兼運動場（1面）、テニスコート（5面）、クラブハウス、その他サイクルステーションや芝生広場など自然がいっぱいの公園です。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.182457,
       "longitude": 135.662216
@@ -15447,6 +16228,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.028497,
       "longitude": 135.662357
     },
+    "url": "http://ayuchaya-hiranoya.com",
     "openingHours": "11時30分～21時（ラストオーダー19時）",
     "price": "鮎料理　15,000円～昼膳　8,000円～湯どうふ　5,000円～おうす（名物しんこ付）　880円あまざけ　700円　など※お料理には税金、サービス料23%が入る。"
   },
@@ -15454,11 +16236,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1350",
     "name": "蓮華寺",
     "description": "仁和寺の東側にあり、土用に行われる「きゅうり封じ」で知られている。深草の石峰寺とともに石仏群の双璧としても有名で、五智如来のほか11体の石仏が境内に並んでいる。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.029392,
       "longitude": 135.715625
     },
+    "url": "http://rengezi.com",
     "openingHours": "8時～17時（12月～2月は16時まで）",
     "price": "見学無料"
   },
@@ -15471,6 +16254,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.173002,
       "longitude": 135.655485
     },
+    "url": "http://www.kyoto-jinjacho.or.jp/shrine/27/210/",
     "openingHours": "参拝は自由"
   },
   {
@@ -15498,7 +16282,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1354",
     "name": "八丁渓谷",
     "description": "鴨瀬林道または、山国小塩から峠を越えて八丁に行くと一帯に原生林が広がっている。春はツツジ、シャクナゲが咲き乱れ、夏はすがすがしい渓谷美が実に見事。そして秋の紅葉、冬の雪景色と四季折々の表情が非常に豊か。",
-    "congestionLevel": 1,
+    "congestionLevel": 2,
     "location": {
       "latitude": 35.252646,
       "longitude": 135.71394
@@ -15508,7 +16292,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1355",
     "name": "臨川寺",
     "description": "天龍寺の東に建つ開山堂で、建武2年（1335）、後醍醐天皇が第2皇子・世良親王の菩提を弔うために建てられた。嵐山のにぎわいにもおかされず静寂さを保つ境内には枯山水の龍華三会の庭があり、その奥には開山・夢窓国師のお墓もある。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.015002,
       "longitude": 135.679227
@@ -15538,7 +16322,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1358",
     "name": "周山城址",
     "description": "天正7年（1579）明智光秀により築城された。この辺は縄野と呼ばれていたが、光秀は自らを周の武王になぞらえて周山と改めたといわれている。現在は本丸跡の石垣、かじや丸、馬かけ場など15の遺構が残るのみ。また、山麓にある慈眼寺には光秀の木像が安置されている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 35.15724,
       "longitude": 135.626682
@@ -15548,7 +16332,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1359",
     "name": "渡月橋",
     "description": "桜、紅葉の名所として知られる嵐山を水面に映しながら流れる大堰川。渡月橋は大堰川に架かる橋で、月が渡るさまに似ているところから亀山天皇が渡月橋と命名したと伝わる。現在のものは昭和9年（1934）に完成したもので、嵐山の景勝にとけ込むように設計されている。またこの付近ではボート遊び、屋形船の遊覧、そして",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.01339,
       "longitude": 135.677805
@@ -15558,7 +16342,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1360",
     "name": "中ノ島公園",
     "description": "大堰川の中州にあり、行楽客の憩いの場となっている。対岸の嵐山国有林を眺めるには絶好の場所。松、桜が多く特に花見時はたくさんの人でにぎわう。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.012134,
       "longitude": 135.67802
@@ -15568,11 +16352,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1361",
     "name": "野宮神社",
     "description": "野宮とは、かつて宮中から斎宮として選ばれた皇女が伊勢神宮へ向かうまでの間みそぎを行ったところ。宮中の初斎院以外の清らかな場所を選んで造られ、当時の様子は、源氏物語「賢木巻」や謡曲「野宮」でうかがうことができる。年代によって嵯峨野の各所に設けられたため、この野宮神社がいつの時代のものかは不明。※ご利益",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.017841,
       "longitude": 135.674227
     },
+    "url": "http://www.nonomiya.com",
     "openingHours": "9時～17時",
     "price": "無料"
   },
@@ -15591,7 +16376,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1363",
     "name": "阪急レンタサイクル嵐山",
     "description": "保有台数／自転車100台変速付、子供用自転車（22インチ、適応身長125ｃｍ～）もあります。数に限りがありますので、行楽シーズンは、お早めにお越しください。",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.010638,
       "longitude": 135.680984
@@ -15608,6 +16393,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.967719,
       "longitude": 135.660136
     },
+    "url": "http://www.1008senya.com",
     "openingHours": "柿狩り　10月20日～11月30日　10時～16時ぶどう狩り　9月1日～9月中旬（なくなり次第終了）　10時～16時筍とすき焼き　4月上旬～5月上旬　10時～16時",
     "price": "柿狩り入園料（柿食べ放題）　大人　800円（税別）　小人　600円（税別）　幼児　400円（税別）（お土産は産地価格で販売）ぶどう狩り入園料（税別）　3歳以上　200円　ぶどう買い取り制　1房500円～1,500円（お土産、箱詰めは早めに注文のこと）※ぶどう狩りはなくなり次第終了のため、予約がおすすめ。筍とすき焼き　牛すき　3,900円（税別）　鶏すき　3,500円（税別）　バーベキュー　3,900円（税別）（筍ごはん、香の物等）※すき焼き、バーベキューとのセット価格あるいは、オールシーズンでのすき焼き（牛・鶏）、バーベキュー価格等については要問い合わせ"
   },
@@ -15620,6 +16406,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.000345,
       "longitude": 135.685506
     },
+    "url": "http://www.matsunoo.or.jp",
     "openingHours": "9時～16時（日曜日、祝日は16時30分まで）",
     "price": "庭園拝観料（神像館入館料含む）　大人　500円　学生　400円　子供　300円"
   },
@@ -15627,7 +16414,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1366",
     "name": "嵐山温泉",
     "description": "京都を代表する景勝地・嵐山に湧出した温泉。【泉質】単純温泉（低張性弱アルカリ性温泉）【適応症】神経痛、筋肉痛、関節痛、五十肩、慢性消化器病、冷え性、疲労回復、健康増進など",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.010478,
       "longitude": 135.678655
@@ -15637,11 +16424,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1367",
     "name": "鈴虫寺（華厳寺）",
     "description": "一年中、鈴虫の音が聞ける寺として、鈴虫寺の愛称で親しまれている。お茶・お菓子を召し上がりながら、肩の凝らない和尚の法話を聞くことができる。山門前の『わらじ』をはいた幸福地蔵尊は、一つだけ願いを叶えて下さる仏様として信仰を集めている。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.993605,
       "longitude": 135.684856
     },
+    "url": "http://www.suzutera.or.jp",
     "openingHours": "9時～16時30分",
     "price": "500円（お茶・菓子付）"
   },
@@ -15649,11 +16437,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1368",
     "name": "西芳寺（苔寺）",
     "description": "約120種類の苔が境内を覆い、緑のじゅうたんを敷き詰めたような美しさから「苔寺」とよばれている。奈良時代の僧行基が天平3年（731）に開創したと伝えられ、室町時代初期の暦応2年（1339）に夢窓国師が中興開山した臨済宗の寺院。寺宝として夢窓国師像軸（重文）が所蔵されている。世界文化遺産に登録。庭園（",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.992181,
       "longitude": 135.683712
     },
+    "url": "http://saihoji-kokedera.com/",
     "openingHours": "申込時に指定される（詳細は返信ハガキでお知らせ）",
     "price": "冥加料　3,000円～"
   },
@@ -15666,6 +16455,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.990432,
       "longitude": 135.686027
     },
+    "url": "http://takenotera-jizoin.jp/",
     "openingHours": "9時～16時30分（受付16時15分まで）",
     "price": "500円"
   },
@@ -15678,6 +16468,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.956906,
       "longitude": 135.655524
     },
+    "url": "http://www.kyoto-shoboji.com/",
     "openingHours": "9時～17時",
     "price": "300円"
   },
@@ -15690,6 +16481,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.984002,
       "longitude": 135.709572
     },
+    "url": "http://sankan.kunaicho.go.jp/",
     "price": "有料※参観は事前申込、または当日申込が必要申込方法及び料金については、宮内庁ホームページ（http://sankan.kunaicho.go.jp/）をご確認ください。"
   },
   {
@@ -15701,6 +16493,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.990813,
       "longitude": 135.691903
     },
+    "url": "https://barocksaal.com/",
     "openingHours": "受付　9時30分～18時ホール使用時間　10時30分～21時30分",
     "price": "演目による"
   },
@@ -15708,11 +16501,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1373",
     "name": "夢アトリエ",
     "description": "ハーブの香る町家風のアトリエでアートを体験。（選べる3つのアート体験）[1]京都北山杉森のあかり作り体験[2]京都北山杉オリジナル時計作り体験※京都北山杉アート作家の作品を手軽に作ることができる[3]初めての人でも手軽に作れるオリジナル陶芸体験所要時間／約1時間",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.009746,
       "longitude": 135.684646
     },
+    "url": "http://e-joho.org/yume/",
     "openingHours": "9時～21時",
     "price": "一般[1]、[2]、[3]　3,000円（別途消費税）修学旅行生[1]、[2]　2,500円（別途消費税）[3]　2,000円（別途消費税）※体験受講は1日前までに要予約。団体10名以上は7日前までに要予約。出張体験教室可能（講師派遣）"
   },
@@ -15725,6 +16519,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.960277,
       "longitude": 135.656254
     },
+    "url": "http://oharano-jinja.jp/",
     "openingHours": "拝観自由"
   },
   {
@@ -15748,6 +16543,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.96071,
       "longitude": 135.651674
     },
+    "url": "http://www.shoujiji.jp/",
     "openingHours": "9時30分～16時（受付終了）",
     "price": "大人　400円中学・高校生　300円小学生　200円"
   },
@@ -15755,11 +16551,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1377",
     "name": "京都花鳥館",
     "description": "花や鳥を題材とした作品を中心に、ドイツの名窯マイセン磁器と花鳥画の第一人者・上村淳之画伯の作品を展示。洋の東西を越えた花と鳥が織りなす美しく愛らしい世界を心ゆくまで楽しめる。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.99584,
       "longitude": 135.686852
     },
+    "url": "http://www.kachokan.jp/",
     "openingHours": "10時～17時（入館は16時30分まで）",
     "price": "一般　1,500円中学・高校・大学生　1,200円"
   },
@@ -15796,6 +16593,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.938112,
       "longitude": 135.64447
     },
+    "url": "http://www.yoshiminedera.com/",
     "openingHours": "8時～17時（受付は16時45分まで）",
     "price": "大人　500円高校生　300円小・中学生　200円"
   },
@@ -15808,6 +16606,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.989049,
       "longitude": 135.665606
     },
+    "url": "http://www.fureaikaikan.com/yacho.html",
     "openingHours": "水曜日～日曜日、10時～17時（体験館は16時まで）",
     "price": "野鳥遊園入園料　無料ものづくり体験館　入館料　100円　体験料　1人1作品　200円　貸館料　1日　4,000円　（午前のみ1,600円、午後のみ2,400円）"
   },
@@ -15827,11 +16626,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1383",
     "name": "松尾大社お酒の資料館",
     "description": "「日本第一醸造神」お酒の神様で、日本酒の歴史にふれる。酒ができるまでの行程をわかりやすく解説し、古くから伝わる酒造道具・手法等、また現代陶芸家によるさまざまな窯の酒器をはじめ、お酒に関する展示。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.999985,
       "longitude": 135.686093
     },
+    "url": "http://www.matsunoo.or.jp",
     "openingHours": "9時～16時",
     "price": "入場無料"
   },
@@ -15844,6 +16644,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.974452,
       "longitude": 135.663772
     },
+    "url": "http://libmuse.kcua.ac.jp/muse/",
     "openingHours": "年間150日程度開館（展示期間、開館日についてはホームページ（http://libmuse.kcua.ac.jp/muse/）参照）9時～17時",
     "price": "無料"
   },
@@ -15851,11 +16652,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1385",
     "name": "中村軒",
     "description": "桂離宮のすぐ南にある明治16年（1883）創業の甘味どころ。今でも大きなかまどでクヌギを燃やして、じっくりあんを炊く昔ながらの製法を守り続けている。たっぷり粒あんを使った「麦代餅」が名物。また、四季折々のお菓子を奥の茶店でいただくこともできる。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.982957,
       "longitude": 135.711562
     },
+    "url": "http://www.nakamuraken.co.jp",
     "openingHours": "8時30分～17時30分※茶店は休止中（2021年4月下旬にリニューアルオープン予定、詳細はホームページをご確認ください。）",
     "price": "麦代餅　290円"
   },
@@ -15868,6 +16670,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.959123,
       "longitude": 135.686975
     },
+    "url": "http://www.rakusai-nt.com/tikurin",
     "openingHours": "9時～17時（入園は16時まで）",
     "price": "無料"
   },
@@ -15875,11 +16678,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1387",
     "name": "うお嘉",
     "description": "大原野神社の東2kmほどのところにあるのが、うお嘉。四季折々の料理を楽しむことができるが、やはり名物の竹の子料理（3月下旬～5月下旬）を味わいたいところ。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.953815,
       "longitude": 135.67436
     },
+    "url": "http://www.kyoto-uoka.co.jp/",
     "openingHours": "11時30分～22時（入店は20時まで）※夜は予約のみ",
     "price": "たけのこ弁当（平日の昼のみ）　5,000円たけのこ会席　10,000円～（別途消費税・サービス料10%）"
   },
@@ -15892,6 +16696,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.973954,
       "longitude": 135.682561
     },
+    "url": "http://www.juntei.jp/",
     "openingHours": "12時～22時（ラストオーダー19時30分、入店19時まで）※入店が17時以降の場合は要予約",
     "price": "お昼の季節御膳　5,500円～（12時～16時）開運御膳　7,700円（12時～16時）筍コース　12,100円～18,150円（4月・5月のみ販売、12時～終日）会席料理　9,680円～18,150円昼食メニュー　西山御膳　3,100円　湯どうふ御膳　3,300円（12時～16時まで、ただし、4月・5月・10月・11月は販売なし）その他追加で一品料理もあり※上記すべてサービス料・税込み※予約が望ましい。"
   },
@@ -15904,6 +16709,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.938125,
       "longitude": 135.644535
     },
+    "url": "http://www.yoshiminedera.com/",
     "openingHours": "平成31年春期公開　4/1～4/14、4月・5月・6月の土曜日・日曜日・祝日秋期公開　10月・11月の土曜日・日曜日・祝日、11/9～12/19時～16時30分",
     "price": "無料ただし、入山料（大人500円、高校生300円、小・中学生200円）が必要"
   },
@@ -15915,7 +16721,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 35.000186,
       "longitude": 135.684792
-    }
+    },
+    "url": "http://www.matsunoo.or.jp"
   },
   {
     "id": "spot-1391",
@@ -15926,6 +16733,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.975834,
       "longitude": 135.687912
     },
+    "url": "http://www.nizaemon.com/",
     "openingHours": "10時～深夜0時（土曜日、日曜日、祝日は8時～深夜0時）※最終受付は23時30分（時短営業中です）",
     "price": "中学生以上　　平日　700円　土曜日、日曜日、祝日　850円小学生　平日　350円　土曜日、日曜日、祝日　450円幼児　平日　250円　土曜日、日曜日、祝日　300円※変更の可能性有り"
   },
@@ -15933,11 +16741,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1392",
     "name": "嵐山モンキーパーク",
     "description": "嵐山モンキーパーク（160m）は嵐山連山の中腹にあり、昭和31年（1956）の開園以来ニホンザルの棲息地として有名である。ここからの京都市内の展望は素晴らしく比叡山、北山、東山を一望の下におさめることができ、また四季折々の景色の変化も美しい。現在ここには1群120頭のニホンザルがおり、嵐山群と呼ばれ",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.011346,
       "longitude": 135.676687
     },
+    "url": "http://www.monkeypark.jp",
     "openingHours": "9時～16時",
     "price": "大人（高校生以上）550円（450円）子供（4才以上中学生まで）250円（200円）（ ）は団体（30名以上）料金"
   },
@@ -15945,11 +16754,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1393",
     "name": "染匠よしかわ",
     "description": "京都の伝統染色工芸の格調高い絞り染め。ハンカチの絞り染めは、自由な絞り方で様々な絵模様が描き出せる。オリジナルのハンカチを作り、作品はすぐに持ち帰ることができる。出張体験もでき、ホテル、旅館、その他会場でもOK。所要時間／60分",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.998508,
       "longitude": 135.686742
     },
+    "url": "http://seijiy.gooside.com",
     "openingHours": "来社体験　10時～16時（完了）出張体験　10時～21時（完了）",
     "price": "来社体験　4人～20人　一人1,300円（税込）出張体験　20人～250人　一人1,500円（税込）"
   },
@@ -15957,11 +16767,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1394",
     "name": "法輪寺",
     "description": "嵐山の山腹に立つ真言宗の寺。十三まいりの虚空蔵さんとして有名で3月13日から5月13日まで数え年13歳になった男子と女子が福徳と智恵を授かるために参詣する。参詣後渡月橋を渡り切るまでに後ろを振り返ったら、授かった智福を失うといわれている。このほか、境内には針塚や針供養塔があり、毎年12月8日針供養が",
-    "congestionLevel": 4,
+    "congestionLevel": 3,
     "location": {
       "latitude": 35.010123,
       "longitude": 135.677464
     },
+    "url": "https://www.kokuzohourinji.com",
     "openingHours": "拝観自由",
     "price": "無料"
   },
@@ -15969,11 +16780,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1395",
     "name": "茶房竹聲",
     "description": "明治12年（1879）創業の日本茶専門店「椿堂茶舗」。茶房「竹聲」では、店主が厳選した産地銘茶や、品評会受賞の宇治茶を生菓子と共にお楽しみいただけます。「抹茶ぜんざい」等甘味もご用意しています。2階茶室では、江戸中期の文人墨のあいだで流行した「煎茶道」が体験できます。お稽古体験もできます。定員／2名",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.948344,
       "longitude": 135.769951
     },
+    "url": "http://tsubakido.kyoto/chikusei/",
     "openingHours": "椿堂茶舗　10時～18時茶房竹聲　12時～16時30分煎茶道体験は、ご希望の日時を電話にてご予約ください。お稽古体験は、木曜日・土曜日　9時～13時（都合により休講することがあるため、前日までに要予約）",
     "price": "煎茶道体験　2,500円"
   },
@@ -15986,17 +16798,19 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.947342,
       "longitude": 135.750901
     },
+    "url": "http://www.pulseplaza.jp/",
     "openingHours": "8時～18時（展示場）9時～21時30分（ホール、会議室等）"
   },
   {
     "id": "spot-1397",
     "name": "特定非営利活動法人伏見観光協会",
     "description": "特定非営利活動法人伏見観光協会の観光スポット",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.929769,
       "longitude": 135.761248
     },
+    "url": "http://kyoto-fushimi.or.jp/",
     "openingHours": "10時～17時"
   },
   {
@@ -16008,6 +16822,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.935453,
       "longitude": 135.761777
     },
+    "url": "http://www.kyotopublic.or.jp",
     "openingHours": "0時～24時（24時間営業）",
     "price": "〈普通車〉8時～20時　20分ごと100円、昼間上限1,000円20時～8時　60分ごと100円、夜間上限500円"
   },
@@ -16020,6 +16835,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.951049,
       "longitude": 135.818267
     },
+    "url": "http://www.daigo-ugetsu.jp/",
     "openingHours": "9時～18時（ラストオーダー17時30分）ただし、食事は11時から※季節により変動",
     "price": "雨月　1,760円一味膳　2,200円"
   },
@@ -16027,11 +16843,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1400",
     "name": "黄桜記念館（お酒の資料館）・河童資料館",
     "description": "かっぱをイメージキャラクターにしたCMで知られる黄桜株式会社直営、キザクラカッパカントリー内にある「河童資料館」は、かっぱの世界をわかりやすく解説し意外と知られていないかっぱの概要を紹介している。資料展示室には、各地に残る伝説や祭り、民謡など幅広くパネルで解説。また、黄桜記念館にはお酒に関する資料が",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.930725,
       "longitude": 135.760224
     },
+    "url": "http://www.kizakura.co.jp",
     "openingHours": "10時～16時",
     "price": "無料"
   },
@@ -16039,11 +16856,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1401",
     "name": "京都教育大学教育資料館（まなびの森ミュージアム）",
     "description": "明治9年（1876）に京都府師範学校として創立以来の教材、教具、作品などを整理して学術研究や学校教育、社会教育に役立てるため、平成23年（2011）に開館しました。所蔵品は、200点以上の理化学実験器具、動植物や岩石の標本、古代エジプトのミイラの一部、絵画、書、彫刻、楽器、歴史文書、考古書などを展示",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.948759,
       "longitude": 135.774373
     },
+    "url": "https://www.kyokyo-u.ac.jp/museum/",
     "openingHours": "毎週月曜日14時～17時※最新のスケジュールはホームページにてご確認ください。",
     "price": "無料"
   },
@@ -16056,6 +16874,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.967149,
       "longitude": 135.772672
     },
+    "url": "http://inari.jp/",
     "openingHours": "参拝自由",
     "price": "無料"
   },
@@ -16068,6 +16887,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.93227,
       "longitude": 135.776487
     },
+    "url": "http://nogi-jinja.jp/web/",
     "openingHours": "9時～16時",
     "price": "内苑拝観料　一般・中学・高校・大学生　100円　小学生　50円"
   },
@@ -16075,11 +16895,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1404",
     "name": "石峰寺",
     "description": "伏見稲荷大社の南にあり、石仏の寺として知られる禅寺。本堂背後の竹林に立つ五百羅漢などの石仏は、安永半ばより天明初年まで前後10年余りをかけ、京都の画家・伊藤若冲が下絵を描き石工に彫らせたものと伝えられている。釈迦の誕生から涅槃までを表わす様は見事で、秋、紅葉の季節にはとくに映える。9月10日若冲忌・",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.964735,
       "longitude": 135.775105
     },
+    "url": "https://www.sekihoji.com/",
     "openingHours": "9時～16時",
     "price": "300円"
   },
@@ -16092,6 +16913,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.940732,
       "longitude": 135.77212
     },
+    "url": "https://www.ffpri.affrc.go.jp/fsm/",
     "openingHours": "森の展示館、樹木園9時～16時（ただし、12時～13時を除く）",
     "price": "無料"
   },
@@ -16104,6 +16926,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.951172,
       "longitude": 135.771706
     },
+    "url": "http://www.fujinomorijinjya.or.jp/",
     "openingHours": "9時～17時※新型コロナウイルスの状況により、授与所の受付時間が短縮することがあります。（9時～16時）また、行事の縮小や取り止めの場合もあります。",
     "price": "宝物殿のみ志納金あじさい苑は入苑料300円"
   },
@@ -16111,11 +16934,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1407",
     "name": "京都府立伏見港公園",
     "description": "【設置目的】[1] 府民の健康増進と体力の向上を通じ心身の健全な育成を図る。[2] 府民スポーツ・レクリエーションの普及振興を図る。【施設の特色】総合体育館、夜間照明を備えたテニスコートなどがある。レンタサイクル有り。【施設内容】競技場／ハンド1面、バスケット2面、バレー3面、バドミントン10面、卓",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.925262,
       "longitude": 135.758676
     },
+    "url": "http://www.kyoto-park.or.jp/fushimi/",
     "openingHours": "9時～21時レンタサイクル貸出時間　9時～20時（最終受付16時30分まで）",
     "price": "競技場　3,570円～30,720円テニスコート　1,680円～13,460円プール　大人　200円～600円相撲場　330円～660円（1時間）会議室　200円（1時間）レンタサイクル　9時～20時　1,000円　15時～20時　600円※駐車場利用者、利用当日の駐車券提示でレンタサイクル料金半額※詳細はお問い合わせください。"
   },
@@ -16128,6 +16952,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.951094,
       "longitude": 135.74651
     },
+    "url": "https://www.jonangu.com/",
     "openingHours": "参拝　9時～17時30分神苑拝観　9時～16時30分（受付は16時まで）",
     "price": "参拝は無料神苑拝観　大人　600円　小・中学生　400円"
   },
@@ -16140,6 +16965,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.951095,
       "longitude": 135.74651
     },
+    "url": "https://www.jonangu.com/",
     "openingHours": "9時～16時",
     "price": "参拝は無料神苑拝観　大人　600円　小・中学生　400円"
   },
@@ -16152,6 +16978,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.952631,
       "longitude": 135.754822
     },
+    "url": "http://www.anraku.or.jp/",
     "openingHours": "日中随時",
     "price": "境内自由"
   },
@@ -16159,32 +16986,35 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1411",
     "name": "神聖蔵元直売店",
     "description": "鳥せい本店の隣に位置する蔵元直売店。山本本家のお酒や酒ケーキなど、伏見のお土産も販売。※鳥せい本店（山本本家直営店）において、蔵出しの日本酒を堪能できます。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.931005,
       "longitude": 135.762128
     },
+    "url": "http://www.yamamotohonke.jp/",
     "openingHours": "11時30分～19時"
   },
   {
     "id": "spot-1412",
     "name": "株式会社山本本家",
     "description": "延宝5年（1677）創業。現在も慶応4年（1868）に立てられた建物をそのまま本社として使っており、そのたたずまいは積み重ねられた歴史の風格を留めている。「京の食文化に育まれた伏見の酒」というのがモットー。代表銘柄「松の翠」（表千家而妙斎千宗且宗匠御名）「神聖」、「名誉冠」、「明ごころ」、「鉄斎」【",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.931122,
       "longitude": 135.761619
-    }
+    },
+    "url": "http://www.yamamotohonke.jp/"
   },
   {
     "id": "spot-1413",
     "name": "齊藤酒造株式会社",
     "description": "明治28年（1895）創業。大正4年（1915）に商標を「英勲」にする。日本酒は本来食事の際に一緒に飲んでもらう食中酒。いわば、主役の料理を引き立たせ、主役とともに味わいを楽しんでもらえる脇役。ならば、名脇役と呼ばれるような、助演男優賞をとれるような酒を造っていきたい。代表銘柄　古都千年　純米大吟醸",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.931844,
       "longitude": 135.752686
-    }
+    },
+    "url": "http://www.eikun.com/"
   },
   {
     "id": "spot-1414",
@@ -16194,23 +17024,25 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.930068,
       "longitude": 135.748414
-    }
+    },
+    "url": "http://www.kizakura.co.jp/"
   },
   {
     "id": "spot-1415",
     "name": "株式会社北川本家",
     "description": "明暦3年（1657）創業以来酒造り一筋三百余年。酒どころ伏見の老舗蔵元。代表銘柄「富翁　大吟醸山田錦」〈精米歩合〉39％以下〈主な使用米〉山田錦〈日本酒度〉+5〈酸度〉1.1〈アミノ酸度〉0.9〈アルコール度数〉15度〈特徴〉「富翁」には、飲む人の心まで豊かになるような酒を造りたい、そんな思いが込め",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.932513,
       "longitude": 135.756683
-    }
+    },
+    "url": "http://www.tomio-sake.co.jp/"
   },
   {
     "id": "spot-1416",
     "name": "株式会社小山本家酒造京都伏見工場",
     "description": "文化5年（1808）埼玉県で創業。平成7年（1995）に創業者、小山屋又兵衛の修行の地「伏見」において、小山本家酒造の第二の酒造蔵として稼働を開始し、伏見の名水を用いて、ソフトでふくよかな味わいの酒を醸している。代表銘柄「世界鷹」〈精米歩合〉40％〈主な使用米〉山田錦〈日本酒度〉+4〈酸度〉1.3",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.930478,
       "longitude": 135.762683
@@ -16220,11 +17052,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1417",
     "name": "月桂冠株式会社",
     "description": "月桂冠は1637年（寛永14年）京都伏見で創業。勝利と栄光のシンボル「月桂冠」を酒銘として採用。常に革新性・創造性をもってチャレンジを続けながらお客様に世界最高品質の商品を届けている。代表銘柄「月桂冠　特撰」〈アルコール度数〉16度以上17度未満〈特長〉優雅な香りと上品でふくらみのある風味の本醸造酒",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.929725,
       "longitude": 135.762203
-    }
+    },
+    "url": "https://www.gekkeikan.co.jp/"
   },
   {
     "id": "spot-1418",
@@ -16235,6 +17068,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.940229,
       "longitude": 135.742642
     },
+    "url": "http://www.tsukinokatsura.co.jp/",
     "openingHours": "9時～17時"
   },
   {
@@ -16245,7 +17079,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.940612,
       "longitude": 135.76205
-    }
+    },
+    "url": "http://www.kinshimasamune.com/"
   },
   {
     "id": "spot-1420",
@@ -16255,7 +17090,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.93334,
       "longitude": 135.754287
-    }
+    },
+    "url": "http://www.momonoshizuku.com/"
   },
   {
     "id": "spot-1421",
@@ -16266,6 +17102,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.952213,
       "longitude": 135.819548
     },
+    "url": "https://www.daigoji.or.jp/",
     "openingHours": "3月～12月第1日曜日　9時～17時12月第1日曜日の翌日～2月末日　9時～16時30分※拝観受付は閉門30分前まで",
     "price": "拝観券【通常期】三宝院庭園、伽藍の2箇所　大人　1,000円　中学・高校生　700円　小学生以下無料【春期（3/20～5月G.W.最終日まで）】三宝院庭園、伽藍、霊宝館の3箇所　大人　1,500円　中学・高校生　1,000円　小学生以下無料"
   },
@@ -16273,11 +17110,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1422",
     "name": "魚三楼",
     "description": "明和元年（1764）創業の京料理の老舗で、名前の通り魚料理が自慢。鳥羽・伏見の戦では薩摩藩の料理方として御香宮へ出向いたという。店の表格子にはその時の銃弾跡が今なお残っている。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.932336,
       "longitude": 135.764743
     },
+    "url": "http://www.uosaburo.com/",
     "openingHours": "昼の部　11時30分～15時（入店は14時まで）夜の部　17時～22時（入店は19時30分まで）※日曜日は20時30分閉店、ただし月曜日が祝日の場合は日曜日22時まで、月曜日は20時30分閉店",
     "price": "会席　10,000円～季節膳　8,000円（サービス料、税別）お昼の花籠御膳　5,500円（税・サ込み）"
   },
@@ -16297,11 +17135,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1424",
     "name": "月桂冠大倉記念館",
     "description": "酒の史料館。京都・伏見の歴史と酒文化、この地の酒造りの発展を牽引してきた月桂冠のスピリッツを感じることができる。見学後には、季節ごとに揃えたさまざまな日本酒のきき酒も。伏見城外堀だった宇治川派流にそって並ぶ酒蔵や、伝統ある数々の建物が、酒どころ伏見を彷彿とさせる。京都百景の一つ。所要時間／約1時間",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.929148,
       "longitude": 135.761611
     },
+    "url": "https://www.gekkeikan.co.jp/enjoy/museum/",
     "openingHours": "9時30分～16時30分（受付は16時まで）",
     "price": "20歳以上　600円13歳～19歳　100円12歳以下無料（13歳以上はお土産付き）"
   },
@@ -16314,6 +17153,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.951033,
       "longitude": 135.819565
     },
+    "url": "https://www.daigoji.or.jp/",
     "openingHours": "3月～12月第1日曜日　9時～17時12月第1日曜日の翌日～2月末日　9時～16時30分※拝観受付は閉門30分前まで",
     "price": "拝観券【通常期】三宝院庭園、伽藍の2箇所　大人　1,000円　中学・高校生　700円　小学生以下無料【春期（3/20～5月G.W.最終日まで）】三宝院庭園、伽藍、霊宝館の3箇所　大人　1,500円　中学・高校生　1,000円　小学生以下無料"
   },
@@ -16321,11 +17161,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1426",
     "name": "十二単記念撮影館 雪月花苑（株式会社弥栄）",
     "description": "平安装束の魅力を広く知ってもらうため、男性には平安貴族の平服・直衣（のうし）を、女性には十二単などを着付けとともに希望者には歴史や文様などを解説。持参カメラにてスタッフが撮影。また、プロカメラマンによる記念撮影もできます。特別な記念日におすすめします。所要時間／2名2時間30分程",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.960507,
       "longitude": 135.764198
     },
+    "url": "http://www.iyasaka-kyoto.co.jp",
     "openingHours": "9時30分～12時、13時30分～16時30分",
     "price": "2名　70,000円～※要事前予約"
   },
@@ -16333,11 +17174,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1427",
     "name": "鳥せい本店",
     "description": "伏見の名水が育んだ銘酒、「神聖」の蔵元。酒蔵を改造した趣深い店内で洗練された鳥料理が味わえる。蔵元ならではの原酒、秘伝のタレで焼き上げた焼き鳥の味は格別。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.931095,
       "longitude": 135.761989
     },
+    "url": "http://www.torisei.com/",
     "openingHours": "11時30分～23時（ラストオーダー22時30分）土曜日、日曜日、祝日は11時～23時",
     "price": "原酒　430円やきとり　140円～おきまりコース　2,400円～鶏水炊き・すきやき　3,400円"
   },
@@ -16345,7 +17187,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1428",
     "name": "JR稲荷駅ランプ小屋",
     "description": "明治12年（1879）の稲荷駅開設当時、機関車の前照灯として使われていたランプや合図灯、明治時代の時刻表など鉄道の歴史を物語る品々が展示されている。ランプ小屋自体、現存する国鉄最古の建物と言われており、一見の価値あり。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.966597,
       "longitude": 135.770851
@@ -16357,7 +17199,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1429",
     "name": "横大路運動公園",
     "description": "体育館、硬式野球場、野球場兼運動場、洋弓場、トレーニングルームを備えた運動公園として多くの競技に利用されている。園内には芝生広場、ジョギングコースなどもあり、気軽にスポーツを楽しむことができる。",
-    "congestionLevel": 2,
+    "congestionLevel": 3,
     "location": {
       "latitude": 34.914746,
       "longitude": 135.732751
@@ -16372,6 +17214,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.957206,
       "longitude": 135.751276
     },
+    "url": "https://www.chikara-u.com/",
     "openingHours": "月曜日～木曜日、日曜日、祝日　10時～23時金曜日、土曜日　10時～24時（最終受付は閉店の30分前まで）",
     "price": "平日　大人　700円　小学生　350円　幼児　200円土曜日、日曜日、祝日　大人　800円　小学生　400円　幼児　250円"
   },
@@ -16384,6 +17227,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.942085,
       "longitude": 135.806154
     },
+    "url": "http://yutopia-daigo.jp",
     "openingHours": "平日　14時～24時日曜日、祝日　10時～24時",
     "price": "大人　450円小人　150円乳幼児　60円"
   },
@@ -16391,7 +17235,7 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1432",
     "name": "寺田屋",
     "description": "明治維新の立役者、坂本龍馬が身を寄せた船宿。文久2年（1862）4月23日討幕急進派がこの寺田屋に結集し決起を企てた「寺田屋騒動」は有名。鳥羽伏見の戦いで罹災しており、現在の建物はその後再建されたものである。",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.930412,
       "longitude": 135.759577
@@ -16420,6 +17264,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.933168,
       "longitude": 135.776372
     },
+    "url": "http://nogi-jinja.jp/web/",
     "openingHours": "9時～16時",
     "price": "一般・中学・高校・大学生　100円小学生　50円"
   },
@@ -16444,6 +17289,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.951033,
       "longitude": 135.819564
     },
+    "url": "https://www.daigoji.or.jp/",
     "openingHours": "3月～12月第1日曜日　9時～17時12月第1日曜日の翌日～2月末日　9時～16時30分※拝観受付は閉門30分前まで",
     "price": "拝観券【通常期】三宝院庭園、伽藍の2箇所　大人　1,000円　中学・高校生　700円　小学生以下無料【春期（3/20～5月G.W.最終日まで）】三宝院庭園、伽藍、霊宝館の3箇所　大人　1,500円　中学・高校生　1,000円　小学生以下無料"
   },
@@ -16456,6 +17302,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.950523,
       "longitude": 135.771819
     },
+    "url": "http://www.fujinomorijinjya.or.jp/",
     "openingHours": "9時～17時※新型コロナウイルスの状況により、開館時間が短縮することがあります。（9時～16時）",
     "price": "志納金"
   },
@@ -16463,11 +17310,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1438",
     "name": "キザクラカッパカントリー",
     "description": "〈地ビール〉名水で知られる酒処伏見の地下水「伏水」を使った地ビールはアルト、ケルシュ（約5％）、蔵のかほり（約4％）ほか定番が六種ある。上面発酵。特に蔵のかほりは黄桜の清酒酵母で仕込み、清酒のような香りが楽しめる。季節により限定品も有り。清酒でおなじみの黄桜の酒蔵を改装した館内には麦酒工房やレストラ",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.930861,
       "longitude": 135.76029
     },
+    "url": "http://www.kizakura.co.jp/",
     "openingHours": "11時30分～14時30分（ラストオーダー14時）、17時～21時30分（ラストオーダー20時50分）土曜日、日曜日、祝日は11時～14時30分（ラストオーダー14時）、17時～21時30分（ラストオーダー20時50分）",
     "price": "グラス（275ml）500円（税込）ジョッキ（425ml）690円（税込）"
   },
@@ -16475,11 +17323,12 @@ const KYOTO_SPOTS: Spot[] = [
     "id": "spot-1439",
     "name": "株式会社京姫酒造",
     "description": "創業大正7年（1918）。平成9年（1997）に現在の株式会社京姫酒造に社名変更。主に大吟醸や純米吟醸の製造販売を行っている。お土産物にも大変喜ばれている。代表銘柄「大吟醸 匠」〈精米歩合〉50％〈主な使用米〉山田錦 〈日本酒度〉+2〈酸度〉1.4〈アルコール度数〉15～16度〈特徴〉馥郁とした香り",
-    "congestionLevel": 5,
+    "congestionLevel": 4,
     "location": {
       "latitude": 34.930308,
       "longitude": 135.757702
-    }
+    },
+    "url": "http://www.kyohime.co.jp/"
   },
   {
     "id": "spot-1440",
@@ -16501,6 +17350,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.070473,
       "longitude": 135.841127
     },
+    "url": "https://www.hieizan.or.jp/",
     "openingHours": "各諸堂・国宝殿　3月～11月　8時30分～16時30分　12月　9時～16時　1月～2月　9時～16時30分西塔・横川地区　3月～11月　9時～16時　12月　9時30分～15時30分　1月～2月　9時30分～16時",
     "price": "諸堂巡拝料　大人　1,000円　中学・高校生　600円　小学生　300円国宝殿拝観料　大人　500円　中学・高校生　300円　小学生　100円"
   },
@@ -16512,7 +17362,8 @@ const KYOTO_SPOTS: Spot[] = [
     "location": {
       "latitude": 34.892364,
       "longitude": 135.674417
-    }
+    },
+    "url": "http://suntory.jp/YAMAZAKI_D"
   },
   {
     "id": "spot-1443",
@@ -16523,6 +17374,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 34.99171,
       "longitude": 135.833875
     },
+    "url": "https://www.yatsuhashi.co.jp/",
     "openingHours": "10時30分～16時30分"
   },
   {
@@ -16534,6 +17386,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.047591,
       "longitude": 135.83922
     },
+    "url": "http://www.hieizan-way.com",
     "openingHours": "3月～6月、9月～11月　7時～23時7月、8月　7時～24時12月～1月15日　9時～22時※大晦日は終夜営業（ただし、天候不良時は通行止めになります。）1月16日～2月　9時～20時※入場は各終了時間の1時間前まで",
     "price": "田の谷峠料金所～延暦寺、または山頂（片道）　二輪車　580円　軽～普通自動車　860円　マイクロバス　2,100円　大型バス　3,400円田の谷峠料金所～延暦寺・山頂（往復）　二輪車　1,160円　軽～普通自動車　1,700円　マイクロバス　4,200円　大型バス　6,800円ガーデンミュージアム比叡（冬期休園）　大人　1,200円　小人（小学生）　600円"
   },
@@ -16546,6 +17399,7 @@ const KYOTO_SPOTS: Spot[] = [
       "latitude": 35.683164,
       "longitude": 139.769593
     },
+    "url": "https://www.tictokyo.jp/",
     "openingHours": "10時～19時※営業時間短縮時は10時～18時となります。"
   }
 ];

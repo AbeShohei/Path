@@ -67,40 +67,38 @@ function analyze() {
 
     console.log('\n=== Analyzing Human Flow Data ===\n');
 
-    // Read data from each year for the current month
+    // Iterate years and ALL months
+    const MONTHS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+
     for (const year of YEARS) {
-        const csvPath = path.join(
-            OPENDATA_PATH,
-            year,
-            CURRENT_MONTH,
-            'monthly_mdp_mesh1km.csv',
-            'monthly_mdp_mesh1km.csv'
-        );
+        for (const month of MONTHS) {
+            const csvPath = path.join(
+                OPENDATA_PATH,
+                year,
+                month,
+                'monthly_mdp_mesh1km.csv',
+                'monthly_mdp_mesh1km.csv' // The structure seems to have double nesting based on file view
+            );
 
-        console.log(`\nProcessing: ${year}/${CURRENT_MONTH}`);
+            // console.log(`Processing: ${year}/${month}`); // Reduce log noise
 
-        if (!fs.existsSync(csvPath)) {
-            console.log(`  File not found: ${csvPath}`);
-            continue;
-        }
-
-        const data = parseCSV(csvPath);
-        const meshCodes = Object.keys(data);
-        const populations = Object.values(data);
-
-        console.log(`  Mesh codes: ${meshCodes.length}`);
-        console.log(`  Min population: ${Math.min(...populations.filter(p => p > 0))}`);
-        console.log(`  Max population: ${Math.max(...populations)}`);
-        console.log(`  Avg population: ${Math.round(populations.reduce((a, b) => a + b, 0) / populations.length)}`);
-
-        // Accumulate for 3-year average
-        for (const [mesh, pop] of Object.entries(data)) {
-            if (!meshAverages[mesh]) {
-                meshAverages[mesh] = { total: 0, count: 0 };
+            if (!fs.existsSync(csvPath)) {
+                // console.log(`  File not found: ${csvPath}`);
+                continue;
             }
-            meshAverages[mesh].total += pop;
-            meshAverages[mesh].count += 1;
+
+            const data = parseCSV(csvPath);
+
+            // Accumulate
+            for (const [mesh, pop] of Object.entries(data)) {
+                if (!meshAverages[mesh]) {
+                    meshAverages[mesh] = { total: 0, count: 0 };
+                }
+                meshAverages[mesh].total += pop;
+                meshAverages[mesh].count += 1;
+            }
         }
+        console.log(`Processed Year: ${year}`);
     }
 
     // Calculate averages
@@ -162,7 +160,7 @@ const result = analyze();
 
 // Save analysis results to JSON file
 const outputData = {
-    month: CURRENT_MONTH,
+    month: 'ALL (01-12)',
     years: YEARS,
     totalMeshCodes: Object.keys(result.meshAverages).length,
     thresholds: {

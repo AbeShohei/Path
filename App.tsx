@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Coordinates, AppMode, Spot, TransportMode, GroundingChunk, RouteOption, RouteSegment, TransitUpdate } from './types';
 import { getTransitInfo, generateGuideContent, playTextToSpeech, getRouteOptions } from './services/geminiService';
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
+import { getCongestionLevel, getCurrentTimeOfDay, TimeOfDay, getTimeOfDayLabel } from './services/humanFlowService';
+import { useSpotPhotos } from './hooks/useSpotPhotos';
 import Map from './components/Map';
 import LyricsReader from './components/LyricsReader';
 
@@ -48,16 +50,19 @@ function App() {
     const [coords, setCoords] = useState<Coordinates | null>(null);
     const [spots, setSpots] = useState<Spot[]>([]);
     const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
+    const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
     const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
     const [focusedSpotId, setFocusedSpotId] = useState<string | null>(null);  // For list click pan+popup
     const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
     const [selectedRoute, setSelectedRoute] = useState<RouteOption | null>(null);
     const [showRouteDetail, setShowRouteDetail] = useState(false); // Separate state for showing detail view
     const [showAudioPrompt, setShowAudioPrompt] = useState(false);
-    const [isSheetMinimized, setIsSheetMinimized] = useState(false);
+    // Sheet height in pixels (for free-form dragging)
+    const [sheetHeight, setSheetHeight] = useState(Math.floor(window.innerHeight * 0.45));
     const [routeSheetState, setRouteSheetState] = useState<'minimized' | 'default' | 'full'>('default');
     const [routeTab, setRouteTab] = useState<'RECOMMENDED' | 'TRANSIT' | 'WALKING'>('RECOMMENDED');
     const [showNavRouteDetail, setShowNavRouteDetail] = useState(false); // Route detail during navigation
+    const [isNavWidgetMinimized, setIsNavWidgetMinimized] = useState(false); // Minimize AI guide widget in nav mode
     const [lyricsHeight, setLyricsHeight] = useState(100); // Lyrics area height in pixels
 
     // Sheet Drag State
@@ -80,6 +85,9 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [guideText, setGuideText] = useState("");
     const [transitInfo, setTransitInfo] = useState<TransitUpdate | null>(null);
+
+    // Spot Photos from Google Places API
+    const { spotPhotos, fetchPhotosForSpots } = useSpotPhotos();
 
     // Audio Player State
     const [isPlaying, setIsPlaying] = useState(false);
@@ -119,7 +127,7 @@ function App() {
             const nearbySpots = findNearbySpots(pos, 9999);
             setSpots(nearbySpots);
             setMode(AppMode.PLANNING);
-            setIsSheetMinimized(false);
+            setSheetHeight(Math.floor(window.innerHeight * 0.45));
             setLoading(false);
         }, 600);
     };
@@ -137,7 +145,7 @@ function App() {
 
     const handleSpotSelect = async (spot: Spot) => {
         setSelectedSpot(spot);
-        setIsSheetMinimized(true); // Minimize sheet to show popup/pin clearly
+        setSheetHeight(88); // Minimize sheet to show popup/pin clearly
         // Use timestamp to ensure re-trigger even for same spot
         setFocusedSpotId(`${spot.id}-${Date.now()}`);
     };
@@ -145,12 +153,18 @@ function App() {
     // Force sheet open when navigation starts
     useEffect(() => {
         if (mode === AppMode.NAVIGATING) {
-            setIsSheetMinimized(false);
+            setSheetHeight(Math.floor(window.innerHeight * 0.45));
         }
     }, [mode]);
 
-    // Calculate derived state for visible spots based on selected route
-    // Calculate derived state for visible spots based on selected route
+    // Fetch photos for spots when they load (only when sheet is large enough to show images)
+    useEffect(() => {
+        if (spots.length > 0 && sheetHeight > 400) {
+            fetchPhotosForSpots(spots);
+        }
+    }, [spots, sheetHeight > 400, fetchPhotosForSpots]);
+
+    // Calculate derived state for visible spots based on selected route AND selected time
     const visibleSpots = React.useMemo(() => {
         // Helper to calculate distance from current location
         const getDistance = (spot: Spot) => {
@@ -164,17 +178,25 @@ function App() {
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         };
 
+        // Recalculate Congestion based on Selected Time
+        const currentSpots = spots.map(s => ({
+            ...s,
+            congestionLevel: getCongestionLevel(s.location.latitude, s.location.longitude, selectedTime)
+        }));
+
         if ((mode === AppMode.ROUTE_SELECT || mode === AppMode.NAVIGATING) && selectedRoute?.path) {
             // Filter spots near the selected route
-            const nearbySpots = filterSpotsNearRoute(spots, selectedRoute.path, 0.05); // 50m radius
+            const nearbySpots = filterSpotsNearRoute(currentSpots, selectedRoute.path, 0.05); // 50m radius
             // Always include destination spot if it exists
             if (selectedSpot && !nearbySpots.find(s => s.id === selectedSpot.id)) {
-                nearbySpots.push(selectedSpot);
+                nearbySpots.push(selectedSpot); // Use original selected spot? or updated? Updated is better
+                // But selectedSpot in state is not updated automatically. 
+                // We should probably update it, but for list view, nearbySpots is what matters.
             }
             return nearbySpots;
         }
         // Filter by congestion level, then sort by congestion (ascending) and distance (ascending)
-        return spots
+        return currentSpots
             .filter(s => selectedCongestion.includes(s.congestionLevel))
             .sort((a, b) => {
                 // Primary: congestion level (lower is better)
@@ -184,7 +206,7 @@ function App() {
                 // Secondary: distance (closer is better)
                 return getDistance(a) - getDistance(b);
             });
-    }, [mode, selectedRoute, spots, selectedSpot, selectedCongestion, coords]);
+    }, [mode, selectedRoute, spots, selectedSpot, selectedCongestion, coords, selectedTime]);
 
     // ルート検索を開始（InfoWindowの「ルートを見る」ボタンから呼ばれる）
     // ルート検索を開始（InfoWindowの「ルートを見る」ボタンから呼ばれる）
@@ -248,7 +270,7 @@ function App() {
         setRemainingSeconds(initialSeconds);
         // Reset lyrics widget to readable size
         setLyricsHeight(180);
-        setIsSheetMinimized(false); // Ensure sheet is open
+        setSheetHeight(Math.floor(window.innerHeight * 0.45)); // Ensure sheet is open
         showToast("ナビゲーションを開始します");
     };
 
@@ -503,13 +525,47 @@ function App() {
     const goBackToPlanning = () => {
         stopCurrentAudio();
         setMode(AppMode.PLANNING);
-        setIsSheetMinimized(false);
+        setSheetHeight(Math.floor(window.innerHeight * 0.45));
         setSelectedSpot(null);
         setRouteOptions([]);
         setSelectedRoute(null);
         setShowRouteDetail(false);
         setGuideText("");
         setIsPlaying(false);
+    };
+
+    // Sheet Drag Handlers for Nearby Spots - Free-form dragging
+    const handlePointerDown = (e: React.PointerEvent) => {
+        setIsDragging(true);
+        dragStartY.current = e.clientY;
+        sheetStartHeight.current = sheetHeight;
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    };
+
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!isDragging) return;
+        const deltaY = dragStartY.current - e.clientY; // positive = dragging up
+        const newHeight = sheetStartHeight.current + deltaY;
+
+        // Constraints: minimum 88px, maximum 90% of screen
+        const minHeight = 88;
+        const maxHeight = Math.floor(window.innerHeight * 0.9);
+
+        setSheetHeight(Math.max(minHeight, Math.min(maxHeight, newHeight)));
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+        if (!isDragging) return;
+        setIsDragging(false);
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+
+        // Optional: snap to closest preset if near threshold
+        const screenHeight = window.innerHeight;
+        if (sheetHeight < 100) {
+            setSheetHeight(88); // Snap to minimized
+        } else if (sheetHeight > screenHeight * 0.85) {
+            setSheetHeight(Math.floor(screenHeight * 0.9)); // Snap to full
+        }
     };
 
     // Helper to calculate arrival time dynamically
@@ -548,65 +604,6 @@ function App() {
             return `目的地へ移動中 (あと ${timeStr}) - ${arrivalTime}着`;
         }
         return null;
-    };
-
-    // DRAG HANDLERS
-    const handlePointerDown = (e: React.PointerEvent) => {
-        setIsDragging(true);
-        dragStartY.current = e.clientY;
-        if (sheetRef.current) {
-            const rect = sheetRef.current.getBoundingClientRect();
-            sheetStartHeight.current = rect.height;
-            // Capture pointer to track dragging even if mouse leaves element
-            (e.target as Element).setPointerCapture(e.pointerId);
-        }
-    };
-
-    const handlePointerMove = (e: React.PointerEvent) => {
-        if (!isDragging || !sheetRef.current) return;
-
-        const deltaY = dragStartY.current - e.clientY; // positive = up, negative = down
-        const newHeight = sheetStartHeight.current + deltaY;
-
-        // Apply constraints roughly
-        const minHeight = 88;
-        const maxHeight = window.innerHeight * 0.6;
-
-        if (newHeight >= minHeight && newHeight <= maxHeight) {
-            sheetRef.current.style.height = `${newHeight}px`;
-            // Disable transition during drag for responsiveness
-            sheetRef.current.style.transition = 'none';
-        }
-    };
-
-    const handlePointerUp = (e: React.PointerEvent) => {
-        if (!isDragging) return;
-        setIsDragging(false);
-        (e.target as Element).releasePointerCapture(e.pointerId);
-
-        if (sheetRef.current) {
-            // Restore transition
-            sheetRef.current.style.transition = '';
-            sheetRef.current.style.height = ''; // Let class control height again
-
-            const deltaY = dragStartY.current - e.clientY;
-
-            // Snap logic
-            if (deltaY < -50) {
-                // Dragged down significantly -> Minimize
-                setIsSheetMinimized(true);
-            } else if (deltaY > 50) {
-                // Dragged up significantly -> Expand
-                setIsSheetMinimized(false);
-            } else {
-                // Small drag/Tap -> Toggle
-                if (Math.abs(deltaY) < 10) {
-                    setIsSheetMinimized(prev => !prev);
-                } else {
-                    // Revert to current state logic (re-render will fix height via class)
-                }
-            }
-        }
     };
 
     // Lyrics Drag Handlers
@@ -712,11 +709,12 @@ function App() {
                         center={coords || { latitude: 34.9858, longitude: 135.7588 }}
                         spots={visibleSpots}
                         onSelectSpot={handleRouteSearch}
-                        onPinClick={() => setIsSheetMinimized(true)}
+                        onPinClick={() => setSheetHeight(88)}
                         selectedSpotId={selectedSpot?.id}
                         focusedSpotId={focusedSpotId || undefined}
                         selectedRoute={selectedRoute}
-                        routeOptions={routeOptions} // Pass all routes
+                        routeOptions={routeOptions}
+                        spotPhotos={spotPhotos}
                     />
                 </div>
 
@@ -796,7 +794,8 @@ function App() {
                         {/* List Sheet - Now Draggable */}
                         <div
                             ref={sheetRef}
-                            className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-[32px] z-10 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] pointer-events-auto ${isSheetMinimized ? 'h-[88px]' : 'h-[45%] max-h-[500px]'}`}
+                            className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-[32px] z-10 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col pointer-events-auto ${isDragging ? '' : 'transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)]'}`}
+                            style={{ height: `${sheetHeight}px` }}
                         >
                             {/* Drag Handle Area */}
                             <div
@@ -814,12 +813,26 @@ function App() {
                                 <div className="flex items-center justify-between pointer-events-auto">
                                     <div>
                                         <h2 className="text-xl font-bold text-gray-800">近くの観光スポット</h2>
-                                        <p className={`text-sm text-gray-400 transition-opacity duration-200 ${isSheetMinimized ? 'opacity-0 h-0' : 'opacity-100'}`}>{visibleSpots.length}件のスポットが見つかりました</p>
+                                        <p className={`text-sm text-gray-400 transition-opacity duration-200 ${sheetHeight < 120 ? 'opacity-0 h-0' : 'opacity-100'}`}>{visibleSpots.length}件のスポットが見つかりました</p>
+                                    </div>
+                                    <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
+                                        {(['morning', 'noon', 'evening'] as TimeOfDay[]).map((t) => (
+                                            <button
+                                                key={t}
+                                                onClick={() => setSelectedTime(t)}
+                                                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedTime === t
+                                                    ? 'bg-white text-indigo-600 shadow-sm'
+                                                    : 'text-gray-400 hover:text-gray-600'
+                                                    }`}
+                                            >
+                                                {t === 'morning' ? '朝' : t === 'noon' ? '昼' : '夕'}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 
                                 {/* Congestion Filter */}
-                                <div className={`flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 -mx-2 px-2 transition-all duration-300 pointer-events-auto ${isSheetMinimized ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
+                                <div className={`flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 -mx-2 px-2 transition-all duration-300 pointer-events-auto ${sheetHeight < 120 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
                                     <span className="text-[10px] font-bold text-gray-400 uppercase shrink-0">混雑度:</span>
                                     {congestionOptions.map(opt => (
                                         <button
@@ -837,7 +850,7 @@ function App() {
                                 </div>
                             </div>
 
-                            <div className={`flex-1 overflow-y-auto p-4 pt-0 space-y-4 custom-scrollbar transition-opacity duration-300 ${isSheetMinimized ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                            <div className={`flex-1 overflow-y-auto p-4 pt-0 space-y-4 custom-scrollbar transition-opacity duration-300 ${sheetHeight < 120 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                                 {loading ? (
                                     <div className="flex items-center justify-center h-32 text-gray-400 gap-2">
                                         <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -845,43 +858,97 @@ function App() {
                                     </div>
                                 ) : visibleSpots.length > 0 ? (
                                     visibleSpots.map((spot, index) => (
-                                        <div key={index} className="group bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer" onClick={() => handleSpotSelect(spot)}>
-                                            <div className="flex items-start justify-between mb-2">
-                                                <h3 className="font-bold text-gray-800 text-base group-hover:text-indigo-600 transition-colors flex-1">{spot.name}</h3>
-                                                <div className={`px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm ml-2 shrink-0 ${spot.congestionLevel === 5 ? 'bg-red-500' :
-                                                    spot.congestionLevel === 4 ? 'bg-yellow-500' :
-                                                        spot.congestionLevel === 3 ? 'bg-green-500' :
-                                                            spot.congestionLevel === 2 ? 'bg-cyan-500' :
-                                                                'bg-blue-500'
-                                                    }`}>
-                                                    {spot.congestionLevel === 5 ? '混雑' :
-                                                        spot.congestionLevel === 4 ? 'やや混雑' :
-                                                            spot.congestionLevel === 3 ? '通常' :
-                                                                spot.congestionLevel === 2 ? 'やや快適' : '快適'}
+                                        <div key={index} className="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer overflow-hidden" onClick={() => handleSpotSelect(spot)}>
+                                            {/* Image - only shows when sheet is large */}
+                                            {sheetHeight > 400 && (() => {
+                                                const photoUrl = spot.imageUrl || spotPhotos.get(spot.name);
+                                                return (
+                                                    <div className="relative w-full h-32 overflow-hidden">
+                                                        {photoUrl ? (
+                                                            <img
+                                                                src={photoUrl}
+                                                                alt={spot.name}
+                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                                loading="lazy"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                                                <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
+                                                        {/* Congestion badge - top right */}
+                                                        <div className={`absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm ${spot.congestionLevel === 5 ? 'bg-red-500' :
+                                                            spot.congestionLevel === 4 ? 'bg-yellow-500' :
+                                                                spot.congestionLevel === 3 ? 'bg-green-500' :
+                                                                    spot.congestionLevel === 2 ? 'bg-cyan-500' :
+                                                                        'bg-blue-500'
+                                                            }`}>
+                                                            {spot.congestionLevel === 5 ? '混雑' :
+                                                                spot.congestionLevel === 4 ? 'やや混雑' :
+                                                                    spot.congestionLevel === 3 ? '通常' :
+                                                                        spot.congestionLevel === 2 ? 'やや快適' : '快適'}
+                                                        </div>
+                                                        {/* URL link button - bottom right, only if url exists */}
+                                                        {spot.url && (
+                                                            <a
+                                                                href={spot.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="absolute bottom-2 right-2 bg-white/90 hover:bg-white p-1.5 rounded-full shadow-md transition-all hover:scale-110"
+                                                                title="公式サイトを開く"
+                                                            >
+                                                                <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                </svg>
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+                                            <div className="p-4">
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <h3 className="font-bold text-gray-800 text-base group-hover:text-indigo-600 transition-colors flex-1">{spot.name}</h3>
+                                                    {/* Congestion badge - only show here when no image */}
+                                                    {sheetHeight <= 400 && (
+                                                        <div className={`px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm ml-2 shrink-0 ${spot.congestionLevel === 5 ? 'bg-red-500' :
+                                                            spot.congestionLevel === 4 ? 'bg-yellow-500' :
+                                                                spot.congestionLevel === 3 ? 'bg-green-500' :
+                                                                    spot.congestionLevel === 2 ? 'bg-cyan-500' :
+                                                                        'bg-blue-500'
+                                                            }`}>
+                                                            {spot.congestionLevel === 5 ? '混雑' :
+                                                                spot.congestionLevel === 4 ? 'やや混雑' :
+                                                                    spot.congestionLevel === 3 ? '通常' :
+                                                                        spot.congestionLevel === 2 ? 'やや快適' : '快適'}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
 
-                                            <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed mb-3">{spot.description}</p>
+                                                <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed mb-3">{spot.description}</p>
 
-                                            <div className="space-y-1.5">
-                                                {spot.openingHours && (
-                                                    <div className="flex items-center gap-2 text-xs text-gray-600">
-                                                        <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                                                            <polyline points="12 6 12 12 16 14" strokeWidth="2" />
-                                                        </svg>
-                                                        <span className="truncate">{spot.openingHours}</span>
-                                                    </div>
-                                                )}
-                                                {spot.price && (
-                                                    <div className="flex items-center gap-2 text-xs text-gray-600">
-                                                        <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <line x1="12" y1="1" x2="12" y2="23" strokeWidth="2" />
-                                                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" strokeWidth="2" />
-                                                        </svg>
-                                                        <span className="truncate">{spot.price}</span>
-                                                    </div>
-                                                )}
+                                                <div className="space-y-1.5">
+                                                    {spot.openingHours && (
+                                                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                                                            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                                                                <polyline points="12 6 12 12 16 14" strokeWidth="2" />
+                                                            </svg>
+                                                            <span className="truncate">{spot.openingHours}</span>
+                                                        </div>
+                                                    )}
+                                                    {spot.price && (
+                                                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                                                            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <line x1="12" y1="1" x2="12" y2="23" strokeWidth="2" />
+                                                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" strokeWidth="2" />
+                                                            </svg>
+                                                            <span className="truncate">{spot.price}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     ))) : (
@@ -1159,9 +1226,9 @@ function App() {
                     mode === AppMode.NAVIGATING && selectedRoute && selectedSpot && (
                         <>
                             {/* Minimized Floating Icon (Top Right) */}
-                            {isSheetMinimized && (
+                            {isNavWidgetMinimized && (
                                 <button
-                                    onClick={() => setIsSheetMinimized(false)}
+                                    onClick={() => setIsNavWidgetMinimized(false)}
                                     className="absolute top-20 right-4 z-50 w-14 h-14 bg-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white animate-bounce-in border-4 border-white/30 backdrop-blur-md hover:scale-105 transition-transform"
                                 >
                                     <SpeakerIcon className="w-6 h-6" />
@@ -1175,7 +1242,7 @@ function App() {
                             )}
 
                             {/* Expanded AI Guide Widget - Compact Version */}
-                            {!isSheetMinimized && (
+                            {!isNavWidgetMinimized && (
                                 <div className={`absolute bottom-0 left-0 right-0 z-10 p-3 pointer-events-none transition-all duration-300 ${showNavRouteDetail ? 'max-h-[70vh]' : 'max-h-[50vh]'}`}>
                                     <div className="pointer-events-auto w-full max-w-md mx-auto">
                                         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden relative flex flex-col animate-fade-in-up">
@@ -1208,7 +1275,7 @@ function App() {
                                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                                                     </button>
                                                     <button
-                                                        onClick={() => setIsSheetMinimized(true)}
+                                                        onClick={() => setIsNavWidgetMinimized(true)}
                                                         className="p-1 hover:bg-gray-200 rounded text-gray-400 transition-colors"
                                                     >
                                                         <ChevronDownIcon className="w-3.5 h-3.5" />

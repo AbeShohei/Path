@@ -12,6 +12,7 @@ interface MapProps {
     selectedRoute?: RouteOption | null;
     isNavigating?: boolean;
     routeOptions?: RouteOption[];
+    spotPhotos?: Map<string, string>; // Google Places API photos
 }
 
 // Map container style
@@ -43,7 +44,7 @@ const mapOptions = {
     ]
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [] }) => {
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], spotPhotos }) => {
     // Determine API Key from environment
     const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
         (import.meta as any).env?.GOOGLE_MAPS_API_KEY ||
@@ -60,6 +61,8 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+    // State-controlled map center (to avoid GoogleMap center prop resetting setCenter)
+    const [mapCenter, setMapCenter] = useState<{ lat: number, lng: number }>({ lat: center.latitude, lng: center.longitude });
 
     // Ref to track if initial pan to center has been performed
     const hasPannedToInitialCenter = useRef(false);
@@ -67,7 +70,8 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
     // Initial Pan Logic: Pan to center ONLY once when map is loaded and center is available
     useEffect(() => {
         if (map && center && !hasPannedToInitialCenter.current) {
-            map.panTo({ lat: center.latitude, lng: center.longitude });
+            setMapCenter({ lat: center.latitude, lng: center.longitude });
+            map.setCenter({ lat: center.latitude, lng: center.longitude });
             hasPannedToInitialCenter.current = true;
         }
     }, [center, map]);
@@ -78,24 +82,46 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
     // 2. User clicks "Recenter" button
     // 3. User selects a spot (focusedSpotId changes)
 
-    // Handle focused spot (panning and opening popup)
+    // Helper for Smart Panning (Instant Jump with Offset)
+    // Places the pin at center-bottom of the screen (so popup is visible above)
+    // Uses zoom-level based calculation (doesn't depend on getBounds which can be null)
+    const handleSmartPan = useCallback((location: Coordinates) => {
+        if (!map) return;
+
+        const zoom = map.getZoom() || 15;
+
+        // Calculate latitude offset based on zoom level
+        // Formula: At zoom Z, 1 pixel ≈ 360 / (256 * 2^Z) degrees at equator
+        // Adjusted for latitude using cosine correction
+        const pixelOffset = 120; // pixels to offset (move pin toward bottom)
+        const worldPxPerDegree = (256 * Math.pow(2, zoom)) / 360;
+        const latRadians = location.latitude * Math.PI / 180;
+        const latOffsetDegrees = pixelOffset / worldPxPerDegree / Math.cos(latRadians);
+
+        // Shift center north to move spot south (toward bottom of screen)
+        const newCenterLat = location.latitude + latOffsetDegrees;
+        const newCenter = { lat: newCenterLat, lng: location.longitude };
+
+        // Update both the state (for GoogleMap prop) and direct API call
+        setMapCenter(newCenter);
+        map.setCenter(newCenter);
+    }, [map]);
+
+    // Handle focused spot (panning and opening popup) - from list selection
     useEffect(() => {
         if (map && focusedSpotId) {
-            // Extract actual ID
+            // Extract actual ID (format: "spotId-timestamp")
             const lastHyphenIndex = focusedSpotId.lastIndexOf('-');
             const actualId = lastHyphenIndex > 0 ? focusedSpotId.substring(0, lastHyphenIndex) : focusedSpotId;
 
             const spot = spots.find(s => s.id === actualId);
             if (spot) {
-                // Pan with offset (similar to Leaflet implementation)
-                // In Google Maps, we can just panTo center for now, or calculate projection
-                // For simplicity, let's just pan to spot
-                map.panTo({ lat: spot.location.latitude, lng: spot.location.longitude });
-                map.setZoom(16);
+                // Pan with offset (instant jump) using smart logic
+                handleSmartPan(spot.location);
                 setActiveMarkerId(actualId);
             }
         }
-    }, [focusedSpotId, map, spots]);
+    }, [focusedSpotId, map, spots, handleSmartPan]);
 
     const onLoad = useCallback((mapInstance: google.maps.Map) => {
         setMap(mapInstance);
@@ -144,19 +170,20 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
     return (
         <GoogleMap
             mapContainerStyle={containerStyle}
-            center={{ lat: center.latitude, lng: center.longitude }}
+            center={mapCenter}
             zoom={15}
             onLoad={onLoad}
             onUnmount={onUnmount}
             options={mapOptions}
             onClick={() => setActiveMarkerId(null)} // Close info window when clicking map
         >
-            {/* Recenter Button - Visible when auto-pan is disabled */}
             {/* Recenter Button - Always visible */}
             <button
                 onClick={() => {
-                    // Just pan once, do not enable auto-pan to allow free movement
-                    map?.panTo({ lat: center.latitude, lng: center.longitude });
+                    // Pan to current location
+                    const newCenter = { lat: center.latitude, lng: center.longitude };
+                    setMapCenter(newCenter);
+                    map?.setCenter(newCenter);
                 }}
                 className="absolute top-20 left-4 z-40 bg-white p-3 rounded-full shadow-lg text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
                 title="現在地に戻る"
@@ -182,15 +209,79 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                     onClick={() => {
                         setActiveMarkerId(spot.id);
                         if (onPinClick) onPinClick();
+                        handleSmartPan(spot.location);
                     }}
-                >
-                    {activeMarkerId === spot.id && (
-                        <InfoWindowF
-                            position={{ lat: spot.location.latitude, lng: spot.location.longitude }}
-                            onCloseClick={() => setActiveMarkerId(null)}
-                            options={{ pixelOffset: new google.maps.Size(0, -40) }}
-                        >
-                            <div style={{ minWidth: '220px', maxWidth: '250px', fontFamily: 'sans-serif' }}>
+                />
+            ))}
+
+            {/* Single InfoWindow - Rendered OUTSIDE of MarkerF to prevent duplicates */}
+            {activeMarkerId && (() => {
+                const spot = spots.find(s => s.id === activeMarkerId);
+                if (!spot) return null;
+                return (
+                    <InfoWindowF
+                        position={{ lat: spot.location.latitude, lng: spot.location.longitude }}
+                        onCloseClick={() => setActiveMarkerId(null)}
+                        options={{
+                            pixelOffset: new google.maps.Size(0, -40),
+                            disableAutoPan: true,
+                            maxWidth: 300
+                        }}
+                    >
+                        <div style={{
+                            width: '280px',
+                            fontFamily: 'sans-serif',
+                            overflow: 'hidden',
+                            borderRadius: '12px',
+                            background: 'white'
+                        }}>
+                            {/* Image with close button overlay */}
+                            {(() => {
+                                const photoUrl = spot.imageUrl || spotPhotos?.get(spot.name);
+                                return (
+                                    <div style={{ position: 'relative', width: '100%', height: photoUrl ? '140px' : '0px', overflow: 'hidden' }}>
+                                        {photoUrl && (
+                                            <img
+                                                src={photoUrl}
+                                                alt={spot.name}
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                        )}
+                                        {/* Close button - positioned with padding from edge */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveMarkerId(null);
+                                            }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: '10px',
+                                                right: '10px',
+                                                width: '30px',
+                                                height: '30px',
+                                                borderRadius: '50%',
+                                                background: 'rgba(255,255,255,0.95)',
+                                                backdropFilter: 'blur(8px)',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                boxShadow: '0 2px 10px rgba(0,0,0,0.25)',
+                                                zIndex: 10
+                                            }}
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5" strokeLinecap="round">
+                                                <line x1="18" y1="6" x2="6" y2="18" />
+                                                <line x1="6" y1="6" x2="18" y2="18" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Content */}
+                            <div style={{ padding: '12px' }}>
                                 <div className="font-bold text-base mb-1 text-gray-800">{spot.name}</div>
                                 <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white mb-2`}
                                     style={{
@@ -201,18 +292,38 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                                     }}>
                                     {['快適', 'やや快適', '通常', 'やや混雑', '混雑'][spot.congestionLevel - 1]}
                                 </div>
-                                {spot.description && <div className="text-xs text-gray-600 mb-2 leading-snug">{spot.description}</div>}
+                                {spot.description && <div className="text-xs text-gray-600 mb-2 leading-snug line-clamp-2">{spot.description}</div>}
+
+                                {spot.openingHours && (
+                                    <div className="flex items-start gap-1.5 text-xs text-gray-500 mb-1">
+                                        <svg className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                                            <polyline points="12 6 12 12 16 14" strokeWidth="2" />
+                                        </svg>
+                                        <span className="leading-snug line-clamp-1">{spot.openingHours}</span>
+                                    </div>
+                                )}
+
+                                {spot.price && (
+                                    <div className="flex items-start gap-1.5 text-xs text-gray-500 mb-2">
+                                        <svg className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <line x1="12" y1="1" x2="12" y2="23" strokeWidth="2" />
+                                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" strokeWidth="2" />
+                                        </svg>
+                                        <span className="leading-snug line-clamp-1">{spot.price}</span>
+                                    </div>
+                                )}
                                 <button
                                     onClick={() => onSelectSpot(spot)}
-                                    className="w-full mt-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 py-2 rounded shadow text-xs font-bold cursor-pointer"
+                                    className="w-full mt-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 py-2 rounded shadow text-xs font-bold cursor-pointer transition-transform active:scale-95"
                                 >
                                     ルートを見る
                                 </button>
                             </div>
-                        </InfoWindowF>
-                    )}
-                </MarkerF>
-            ))}
+                        </div>
+                    </InfoWindowF>
+                );
+            })()}
 
             {/* Route Polylines */}
             {selectedRoute && (selectedRoute.segments ? (
