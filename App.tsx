@@ -622,9 +622,10 @@ function App() {
         const deltaY = lyricsDragStartY.current - e.clientY;
         const newHeight = lyricsStartHeight.current + deltaY;
 
-        // Constrain between 60px and 70% of screen height to allow larger view
-        const maxHeight = Math.floor(window.innerHeight * 0.7);
-        const clampedHeight = Math.max(60, Math.min(maxHeight, newHeight));
+        // Constrain height to keep widget on screen
+        // Calculate safe max height: Window Height - Header/Controls (~220px) - Safety Margin
+        const safeMaxHeight = window.innerHeight - 240;
+        const clampedHeight = Math.max(60, Math.min(safeMaxHeight, newHeight));
         setLyricsHeight(clampedHeight);
     };
 
