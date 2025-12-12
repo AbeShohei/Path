@@ -260,6 +260,7 @@ function App() {
 
         setMode(AppMode.NAVIGATING);
         setNavStage('TO_STOP');
+        setFocusedSpotId(null); // Clear focus to help close InfoWindow
         setStopsAway(5);
         setGuideText("");
         setTransitInfo(null);
@@ -621,8 +622,9 @@ function App() {
         const deltaY = lyricsDragStartY.current - e.clientY;
         const newHeight = lyricsStartHeight.current + deltaY;
 
-        // Constrain between 60px and 180px to keep widget on screen
-        const clampedHeight = Math.max(60, Math.min(180, newHeight));
+        // Constrain between 60px and 70% of screen height to allow larger view
+        const maxHeight = Math.floor(window.innerHeight * 0.7);
+        const clampedHeight = Math.max(60, Math.min(maxHeight, newHeight));
         setLyricsHeight(clampedHeight);
     };
 
@@ -715,6 +717,7 @@ function App() {
                         selectedRoute={selectedRoute}
                         routeOptions={routeOptions}
                         spotPhotos={spotPhotos}
+                        isNavigating={mode === AppMode.NAVIGATING}
                     />
                 </div>
 

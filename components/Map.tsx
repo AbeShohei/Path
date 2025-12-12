@@ -44,7 +44,7 @@ const mapOptions = {
     ]
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], spotPhotos }) => {
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], spotPhotos, isNavigating }) => {
     // Determine API Key from environment
     const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
         (import.meta as any).env?.GOOGLE_MAPS_API_KEY ||
@@ -63,6 +63,13 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
     const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
     // State-controlled map center (to avoid GoogleMap center prop resetting setCenter)
     const [mapCenter, setMapCenter] = useState<{ lat: number, lng: number }>({ lat: center.latitude, lng: center.longitude });
+
+    // Close InfoWindow when navigation starts
+    useEffect(() => {
+        if (isNavigating) {
+            setActiveMarkerId(null);
+        }
+    }, [isNavigating]);
 
     // Ref to track if initial pan to center has been performed
     const hasPannedToInitialCenter = useRef(false);
