@@ -7,8 +7,8 @@
 const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 const API_BASE_URL = isDev ? 'http://localhost:3001' : '';
 
-// キャッシュ用のMap
-const photoCache = new Map<string, string>();
+// キャッシュ用のMap (URLとタイプ)
+const photoCache = new Map<string, { url: string; types: string[] }>();
 
 /**
  * 場所の名前から写真URLを取得
@@ -25,7 +25,7 @@ export async function getPlacePhotoUrl(
     // キャッシュをチェック
     const cacheKey = `${placeName}-${lat}-${lng}`;
     if (photoCache.has(cacheKey)) {
-        return photoCache.get(cacheKey) || null;
+        return photoCache.get(cacheKey)?.url || null;
     }
 
     try {
@@ -37,7 +37,7 @@ export async function getPlacePhotoUrl(
         const data = await response.json();
 
         if (data.photoUrl) {
-            photoCache.set(cacheKey, data.photoUrl);
+            photoCache.set(cacheKey, { url: data.photoUrl, types: [] });
             return data.photoUrl;
         }
 
@@ -52,13 +52,13 @@ export async function getPlacePhotoUrl(
  * 複数の場所の写真URLを一括取得
  * @param places 場所の配列 [{name, lat, lng}]
  * @param onProgress 進捗通知用コールバック (部分的に取得できた結果を返す)
- * @returns 名前からURLへのMap
+ * @returns 名前からデータへのMap
  */
 export async function getPlacePhotosInBatch(
     places: Array<{ name: string; lat?: number; lng?: number }>,
-    onProgress?: (newPhotos: Map<string, string>) => void
-): Promise<Map<string, string>> {
-    const results = new Map<string, string>();
+    onProgress?: (newPhotos: Map<string, { url: string; types: string[] }>) => void
+): Promise<Map<string, { url: string; types: string[] }>> {
+    const results = new Map<string, { url: string; types: string[] }>();
 
     // キャッシュ済みのものを先にチェック
     const uncached = places.filter(place => {
@@ -105,20 +105,30 @@ export async function getPlacePhotosInBatch(
                     });
 
                     const data = await response.json();
+                    console.log('API Batch Response:', data); // Debug log
 
                     if (data.photos) {
-                        const batchResults = new Map<string, string>();
+                        const batchResults = new Map<string, { url: string; types: string[] }>();
 
-                        for (const [name, url] of Object.entries(data.photos)) {
-                            if (typeof url === 'string') {
-                                results.set(name, url);
-                                batchResults.set(name, url);
+                        for (const [name, result] of Object.entries(data.photos)) {
+                            // 結果がオブジェクトでurlを含むか確認
+                            // @ts-ignore
+                            if (result && (typeof result === 'string' || (typeof result === 'object' && result.url))) {
+                                // 以前の文字列のみのレスポンスとの互換性
+                                // @ts-ignore
+                                const entry = typeof result === 'string'
+                                    ? { url: result, types: [] }
+                                    // @ts-ignore
+                                    : result as { url: string; types: string[] };
+
+                                results.set(name, entry);
+                                batchResults.set(name, entry);
 
                                 // キャッシュに保存
                                 const place = uncached.find(p => p.name === name);
                                 if (place) {
                                     const cacheKey = `${place.name}-${place.lat}-${place.lng}`;
-                                    photoCache.set(cacheKey, url);
+                                    photoCache.set(cacheKey, entry);
                                 }
                             }
                         }

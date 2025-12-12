@@ -58,14 +58,14 @@ app.get('/api/places/photo', async (req, res) => {
         }
 
         // キャッシュをチェック
-        const cacheKey = `${name}-${lat || ''}-${lng || ''}`;
+        const cacheKey = `v2-${name}-${lat || ''}-${lng || ''}`;
         const cached = photoCache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-            return res.json({ photoUrl: cached.url, cached: true });
+            return res.json({ photoUrl: cached.url, types: cached.types || [], cached: true });
         }
 
         // Place Search APIで場所を検索
-        let searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name)}&inputtype=textquery&fields=place_id,photos,name&key=${GOOGLE_API_KEY}`;
+        let searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name)}&inputtype=textquery&fields=place_id,photos,name,types&key=${GOOGLE_API_KEY}`;
 
         if (lat && lng) {
             searchUrl += `&locationbias=point:${lat},${lng}`;
@@ -88,10 +88,11 @@ app.get('/api/places/photo', async (req, res) => {
         const photoRef = place.photos[0].photo_reference;
         const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${GOOGLE_API_KEY}`;
 
-        // キャッシュに保存
-        photoCache.set(cacheKey, { url: photoUrl, timestamp: Date.now() });
+        // キャッシュに保存 (typesはsingle endpointでは取ってないが、整合性のため形式合わせるなら本当は取るべきだが、今回はlistの方が重要)
+        // Note: Single fetch endpoint logic remains mostly for backward compat or direct calls.
+        photoCache.set(cacheKey, { url: photoUrl, types: place.types || [], timestamp: Date.now() });
 
-        res.json({ photoUrl, placeId: place.place_id });
+        res.json({ photoUrl, types: place.types || [], placeId: place.place_id });
     } catch (error) {
         console.error('Error fetching place photo:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -124,17 +125,18 @@ app.post('/api/places/photos', async (req, res) => {
 
             await Promise.all(batch.map(async (place) => {
                 const { name, lat, lng } = place;
-                const cacheKey = `${name}-${lat || ''}-${lng || ''}`;
+                // Cache key version 2 (v2-) to force refresh
+                const cacheKey = `v2-${name}-${lat || ''}-${lng || ''}`;
 
                 // キャッシュチェック
                 const cached = photoCache.get(cacheKey);
                 if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-                    results[name] = cached.url;
+                    results[name] = { url: cached.url, types: cached.types || [] };
                     return;
                 }
 
                 try {
-                    let searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name)}&inputtype=textquery&fields=place_id,photos&key=${GOOGLE_API_KEY}`;
+                    let searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name)}&inputtype=textquery&fields=place_id,photos,types&key=${GOOGLE_API_KEY}`;
 
                     if (lat && lng) {
                         searchUrl += `&locationbias=point:${lat},${lng}`;
@@ -143,12 +145,17 @@ app.post('/api/places/photos', async (req, res) => {
                     const searchResponse = await fetch(searchUrl);
                     const searchData = await searchResponse.json();
 
-                    if (searchData.status === 'OK' && searchData.candidates?.[0]?.photos?.[0]) {
-                        const photoRef = searchData.candidates[0].photos[0].photo_reference;
-                        const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${GOOGLE_API_KEY}`;
+                    if (searchData.status === 'OK' && searchData.candidates?.[0]) {
+                        const candidate = searchData.candidates[0];
+                        const photoResult = { url: '', types: candidate.types || [] };
 
-                        photoCache.set(cacheKey, { url: photoUrl, timestamp: Date.now() });
-                        results[name] = photoUrl;
+                        if (candidate.photos?.[0]) {
+                            const photoRef = candidate.photos[0].photo_reference;
+                            photoResult.url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${GOOGLE_API_KEY}`;
+                        }
+
+                        photoCache.set(cacheKey, { ...photoResult, timestamp: Date.now() });
+                        results[name] = photoResult;
                     }
                 } catch (err) {
                     console.error(`Error fetching photo for ${name}:`, err.message);

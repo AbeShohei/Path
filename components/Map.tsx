@@ -13,6 +13,7 @@ interface MapProps {
     isNavigating?: boolean;
     routeOptions?: RouteOption[];
     spotPhotos?: Map<string, string>; // Google Places API photos
+    spotDetails?: Map<string, { types?: string[] }>;
 }
 
 // Map container style
@@ -44,7 +45,7 @@ const mapOptions = {
     ]
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], spotPhotos, isNavigating }) => {
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], spotPhotos, spotDetails, isNavigating }) => {
     // Determine API Key from environment
     const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
         (import.meta as any).env?.GOOGLE_MAPS_API_KEY ||
@@ -139,24 +140,53 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
     }, []);
 
     // Helper to create SVG icon
-    const getMarkerIcon = (spot: Spot) => {
-        let color = '#3b82f6';
-        if (spot.congestionLevel === 5) color = '#ef4444';
-        else if (spot.congestionLevel === 4) color = '#eab308';
-        else if (spot.congestionLevel === 3) color = '#22c55e';
-        else if (spot.congestionLevel === 2) color = '#06b6d4';
+    const getMarkerIcon = (spot: Spot, isSelected: boolean) => {
+        const congestionColors = ['#3b82f6', '#06b6d4', '#22c55e', '#eab308', '#ef4444'];
+        const baseColor = congestionColors[spot.congestionLevel - 1] || '#3b82f6';
+        const color = isSelected ? '#4f46e5' : baseColor;
+        const scale = isSelected ? 1.4 : 1.0;
 
+        // Determine icon path based on genre
+        let iconPath = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"; // Default Pin
+        let innerIcon = ""; // Optional inner symbol
+
+        if (spotDetails && spotDetails.get(spot.name)?.types) {
+            const types = spotDetails.get(spot.name)!.types!;
+
+            if (types.includes('place_of_worship') || types.includes('shrine') || types.includes('hindu_temple') || types.includes('church')) {
+                // Torii-like or Temple capability (using a simplified building icon here as placeholder for Shrine)
+                // Using a generic "Temple/Shrine" icon
+                innerIcon = "M12 7l-5 3v6h3v-4h4v4h3v-6z"; // Simple House/Temple shape inside
+            } else if (types.includes('park') || types.includes('garden')) {
+                // Tree/Nature
+                innerIcon = "M12 6c-2.5 0-4.5 2-4.5 4.5S9.5 15 12 15s4.5-2 4.5-4.5S14.5 6 12 6z M12 15v5"; // Tree-ish
+            } else if (types.includes('museum') || types.includes('art_gallery')) {
+                // Museum/Bank style
+                innerIcon = "M4 8l8-5 8 5v11H4z";
+            } else if (types.includes('restaurant') || types.includes('cafe') || types.includes('food')) {
+                // Cutlery
+                innerIcon = "M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7z"; // Fork-ish
+            }
+        }
+
+        // Generate SVG string
+        // We use a pin shape with an optional inner icon or a simple circle
         const svg = `
-            <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
-                <path d="M16 0C7.163 0 0 7.163 0 16c0 8.837 16 24 16 24s16-15.163 16-24C32 7.163 24.837 0 16 0z" fill="${color}"/>
-                <circle cx="16" cy="16" r="5" fill="white"/>
-            </svg>
-        `.trim();
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${36 * scale}" height="${36 * scale}">
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.4)" />
+          </filter>
+          <g filter="url(#shadow)">
+            <path d="${iconPath}" fill="${color}" stroke="white" stroke-width="1.5" />
+            ${innerIcon ? `<path d="${innerIcon}" fill="white" transform="scale(0.8) translate(3,3)" />` : `<circle cx="12" cy="9" r="3" fill="white" />`}
+          </g>
+        </svg>
+        `;
 
         return {
             url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-            scaledSize: new google.maps.Size(32, 40),
-            anchor: new google.maps.Point(16, 40)
+            scaledSize: new google.maps.Size(36 * scale, 36 * scale),
+            anchor: new google.maps.Point(18 * scale, 36 * scale), // Bottom center
         };
     };
 
@@ -212,7 +242,7 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                 <MarkerF
                     key={spot.id}
                     position={{ lat: spot.location.latitude, lng: spot.location.longitude }}
-                    icon={getMarkerIcon(spot)}
+                    icon={getMarkerIcon(spot, activeMarkerId === spot.id)}
                     onClick={() => {
                         setActiveMarkerId(spot.id);
                         if (onPinClick) onPinClick();
@@ -231,12 +261,14 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                         onCloseClick={() => setActiveMarkerId(null)}
                         options={{
                             pixelOffset: new google.maps.Size(0, -40),
-                            disableAutoPan: true,
-                            maxWidth: 300
+                            disableAutoPan: false, // Auto-pan to keep window in view
+                            maxWidth: 340 // Allow slightly wider
                         }}
                     >
                         <div style={{
-                            width: '280px',
+                            width: 'auto',
+                            minWidth: '200px',
+                            maxWidth: '90vw', // Utilize viewport width to ensure margins
                             fontFamily: 'sans-serif',
                             overflow: 'hidden',
                             borderRadius: '12px',
@@ -299,6 +331,25 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                                     }}>
                                     {['快適', 'やや快適', '通常', 'やや混雑', '混雑'][spot.congestionLevel - 1]}
                                 </div>
+                                {spotDetails?.get(spot.name)?.types && spotDetails.get(spot.name)!.types!.length > 0 && (
+                                    <div className="flex gap-1 mb-2 flex-wrap">
+                                        {spotDetails.get(spot.name)!.types!.slice(0, 3).map((type, idx) => {
+                                            // 簡易的な翻訳マップ
+                                            const typeMap: Record<string, string> = {
+                                                'place_of_worship': '寺社仏閣', 'shrine': '神社', 'hindu_temple': '寺院', 'church': '教会',
+                                                'park': '公園', 'garden': '庭園', 'museum': '博物館', 'art_gallery': '美術館',
+                                                'restaurant': '飲食店', 'cafe': 'カフェ', 'food': '飲食店', 'store': 'お店',
+                                                'tourist_attraction': '観光名所', 'point_of_interest': 'スポット'
+                                            };
+                                            const label = typeMap[type] || null;
+                                            return label ? (
+                                                <span key={idx} className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                                    {label}
+                                                </span>
+                                            ) : null;
+                                        })}
+                                    </div>
+                                )}
                                 {spot.description && <div className="text-xs text-gray-600 mb-2 leading-snug line-clamp-2">{spot.description}</div>}
 
                                 {spot.openingHours && (

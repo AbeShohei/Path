@@ -87,7 +87,7 @@ function App() {
     const [transitInfo, setTransitInfo] = useState<TransitUpdate | null>(null);
 
     // Spot Photos from Google Places API
-    const { spotPhotos, fetchPhotosForSpots } = useSpotPhotos();
+    const { spotPhotos, spotDetails, fetchPhotosForSpots } = useSpotPhotos();
 
     // Audio Player State
     const [isPlaying, setIsPlaying] = useState(false);
@@ -163,6 +163,10 @@ function App() {
             fetchPhotosForSpots(spots);
         }
     }, [spots, fetchPhotosForSpots]);
+
+    useEffect(() => {
+        console.log('Current SpotDetails:', spotDetails);
+    }, [spotDetails]);
 
     // Calculate derived state for visible spots based on selected route AND selected time
     const visibleSpots = React.useMemo(() => {
@@ -718,6 +722,7 @@ function App() {
                         selectedRoute={selectedRoute}
                         routeOptions={routeOptions}
                         spotPhotos={spotPhotos}
+                        spotDetails={spotDetails}
                         isNavigating={mode === AppMode.NAVIGATING}
                     />
                 </div>
@@ -914,7 +919,28 @@ function App() {
                                             })()}
                                             <div className="p-4">
                                                 <div className="flex items-start justify-between mb-2">
-                                                    <h3 className="font-bold text-gray-800 text-base group-hover:text-indigo-600 transition-colors flex-1">{spot.name}</h3>
+                                                    <div className="flex-1">
+                                                        <h3 className="font-bold text-gray-800 text-base group-hover:text-indigo-600 transition-colors">{spot.name}</h3>
+                                                        {/* Genre Tags */}
+                                                        {spotDetails?.get(spot.name)?.types && spotDetails.get(spot.name)!.types!.length > 0 && (
+                                                            <div className="flex gap-1 mt-1 flex-wrap">
+                                                                {spotDetails.get(spot.name)!.types!.slice(0, 3).map((type, idx) => {
+                                                                    const typeMap: Record<string, string> = {
+                                                                        'place_of_worship': '寺社仏閣', 'shrine': '神社', 'hindu_temple': '寺院', 'church': '教会',
+                                                                        'park': '公園', 'garden': '庭園', 'museum': '博物館', 'art_gallery': '美術館',
+                                                                        'restaurant': '飲食店', 'cafe': 'カフェ', 'food': '飲食店', 'store': 'お店',
+                                                                        'tourist_attraction': '観光名所', 'point_of_interest': 'スポット'
+                                                                    };
+                                                                    const label = typeMap[type] || null;
+                                                                    return label ? (
+                                                                        <span key={idx} className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded border border-gray-100">
+                                                                            {label}
+                                                                        </span>
+                                                                    ) : null;
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     {/* Congestion badge - only show here when no image */}
                                                     {sheetHeight <= 400 && (
                                                         <div className={`px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm ml-2 shrink-0 ${spot.congestionLevel === 5 ? 'bg-red-500' :
