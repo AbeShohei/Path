@@ -1458,7 +1458,7 @@ function App() {
                             <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
                                 <div className="w-full h-full flex items-center justify-center px-8 py-32">
                                     {guideText ? (
-                                        <LyricsReader text={guideText} isPlaying={isPlaying} duration={audioDuration} />
+                                        <LyricsReader text={guideText} isPlaying={isPlaying} duration={audioDuration} theme="light" />
                                     ) : (
                                         <div className="flex items-center gap-2 text-white/60">
                                             <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white/80 animate-spin"></div>
