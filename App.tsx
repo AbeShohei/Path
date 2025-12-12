@@ -46,6 +46,11 @@ const parseDurationStr = (str: string | undefined): number => {
 };
 
 function App() {
+    // Debug: Check if Vercel deployment is updated
+    useEffect(() => {
+        console.log('App Version: v2.0 (Batch API)');
+    }, []);
+
     const [mode, setMode] = useState<AppMode>(AppMode.LANDING);
     const [coords, setCoords] = useState<Coordinates | null>(null);
     const [spots, setSpots] = useState<Spot[]>([]);
