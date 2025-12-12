@@ -1,10 +1,11 @@
 /**
  * Google Places API Service (Frontend)
- * バックエンドAPIを経由してスポットの写真を取得する
+ * Vercel Serverless Functions または開発用バックエンドAPI経由でスポットの写真を取得
  */
 
-// APIベースURL
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+// APIベースURL - 本番環境では相対URL、開発環境ではlocalhost
+const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+const API_BASE_URL = isDev ? 'http://localhost:3001' : '';
 
 // キャッシュ用のMap
 const photoCache = new Map<string, string>();
