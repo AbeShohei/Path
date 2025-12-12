@@ -929,7 +929,8 @@ function App() {
                                                                         'place_of_worship': '寺社仏閣', 'shrine': '神社', 'hindu_temple': '寺院', 'church': '教会',
                                                                         'park': '公園', 'garden': '庭園', 'museum': '博物館', 'art_gallery': '美術館',
                                                                         'restaurant': '飲食店', 'cafe': 'カフェ', 'food': '飲食店', 'store': 'お店',
-                                                                        'tourist_attraction': '観光名所', 'point_of_interest': 'スポット'
+                                                                        'tourist_attraction': '観光名所'
+                                                                        // 'point_of_interest': 'スポット' // Excluded
                                                                     };
                                                                     const label = typeMap[type] || null;
                                                                     return label ? (

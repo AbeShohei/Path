@@ -166,6 +166,9 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
             } else if (types.includes('restaurant') || types.includes('cafe') || types.includes('food')) {
                 // Cutlery
                 innerIcon = "M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7z"; // Fork-ish
+            } else if (types.includes('tourist_attraction') || types.includes('point_of_interest')) {
+                // Camera for generic tourist spots
+                innerIcon = "M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2-2-.9-2-2 2zm8-6h-2.17l-1-1.29C16.69 6.29 16.35 6 16 6h-8c-.35 0-.69.29-.83.71L6.17 8H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z";
             }
         }
 
@@ -178,7 +181,7 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
           </filter>
           <g filter="url(#shadow)">
             <path d="${iconPath}" fill="${color}" stroke="white" stroke-width="1.5" />
-            ${innerIcon ? `<path d="${innerIcon}" fill="white" transform="scale(0.8) translate(3,3)" />` : `<circle cx="12" cy="9" r="3" fill="white" />`}
+            ${innerIcon ? `<path d="${innerIcon}" fill="white" transform="scale(0.75) translate(4,4)" />` : `<circle cx="12" cy="9" r="3" fill="white" />`}
           </g>
         </svg>
         `;
@@ -339,7 +342,8 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                                                 'place_of_worship': '寺社仏閣', 'shrine': '神社', 'hindu_temple': '寺院', 'church': '教会',
                                                 'park': '公園', 'garden': '庭園', 'museum': '博物館', 'art_gallery': '美術館',
                                                 'restaurant': '飲食店', 'cafe': 'カフェ', 'food': '飲食店', 'store': 'お店',
-                                                'tourist_attraction': '観光名所', 'point_of_interest': 'スポット'
+                                                'tourist_attraction': '観光名所'
+                                                // 'point_of_interest': 'スポット' // Excluded
                                             };
                                             const label = typeMap[type] || null;
                                             return label ? (
