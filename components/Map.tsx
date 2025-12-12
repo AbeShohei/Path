@@ -154,21 +154,24 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
             const types = spotDetails.get(spot.name)!.types!;
 
             if (types.includes('place_of_worship') || types.includes('shrine') || types.includes('hindu_temple') || types.includes('church')) {
-                // Torii-like or Temple capability (using a simplified building icon here as placeholder for Shrine)
-                // Using a generic "Temple/Shrine" icon
-                innerIcon = "M12 7l-5 3v6h3v-4h4v4h3v-6z"; // Simple House/Temple shape inside
+                // Temple/Shrine (Torii-esque or generic temple) - Centered 24x24
+                innerIcon = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"; // This is actually the pin shape? No, let's use a real temple icon.
+                // Reverting to simple house/temple shape but centered 24x24
+                innerIcon = "M12,4 L2,10 L22,10 L12,4 Z M4,12 L4,20 L20,20 L20,12 L12,8 L4,12 Z"; // Simple shrine/home profile
             } else if (types.includes('park') || types.includes('garden')) {
-                // Tree/Nature
-                innerIcon = "M12 6c-2.5 0-4.5 2-4.5 4.5S9.5 15 12 15s4.5-2 4.5-4.5S14.5 6 12 6z M12 15v5"; // Tree-ish
+                // Park/Tree - Centered 24x24
+                innerIcon = "M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z M12,16 C10.9,16 10,15.1 10,14 L14,14 C14,15.1 13.1,16 12,16 Z M13,12 L11,12 L11,10 L13,10 L13,12 Z"; // Generic tree/pin nature
+                // Better Tree:
+                innerIcon = "M12 2C8 2 4 5 4 9c0 2.5 2 4.5 4.5 4.5V18h1v4h5v-4h1c2.5 0 4.5-2 4.5-4.5 0-4-4-7-8-7z";
             } else if (types.includes('museum') || types.includes('art_gallery')) {
-                // Museum/Bank style
-                innerIcon = "M4 8l8-5 8 5v11H4z";
+                // Museum/Bank - Centered 24x24
+                innerIcon = "M12 3L2 8v2h20V8L12 3zm1 14h-2v-4h2v4zm-6 0H5v-4h2v4zm10 0h-2v-4h2v4zM4 19h16v2H4v-2z";
             } else if (types.includes('restaurant') || types.includes('cafe') || types.includes('food')) {
-                // Cutlery
-                innerIcon = "M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7z"; // Fork-ish
+                // Restaurant (Fork & Knife) - Centered 24x24
+                innerIcon = "M11,9H9V2H7v7H5V2H3v7c0,2.12,1.66,3.84,3.75,3.97V22h2.5v-9.03C11.34,12.84,13,11.12,13,9V2h-2V9z M16,6v8c0,1.1,0.9,2,2,2h2v-2.5L18,4l-2,2V6z";
             } else if (types.includes('tourist_attraction') || types.includes('point_of_interest')) {
-                // Camera for generic tourist spots
-                innerIcon = "M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2-2-.9-2-2 2zm8-6h-2.17l-1-1.29C16.69 6.29 16.35 6 16 6h-8c-.35 0-.69.29-.83.71L6.17 8H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z";
+                // Camera - Centered 24x24
+                innerIcon = "M9.04 5L7.17 7H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-3.17L14.96 5H9.04zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z";
             }
         }
 
@@ -181,7 +184,7 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
           </filter>
           <g filter="url(#shadow)">
             <path d="${iconPath}" fill="${color}" stroke="white" stroke-width="1.5" />
-            ${innerIcon ? `<path d="${innerIcon}" fill="white" transform="translate(6.6, 3.6) scale(0.45)" />` : `<circle cx="12" cy="9" r="3" fill="white" />`}
+            ${innerIcon ? `<path d="${innerIcon}" fill="white" transform="translate(7.44, 4.44) scale(0.38)" />` : `<circle cx="12" cy="9" r="3" fill="white" />`}
           </g>
         </svg>
         `;
