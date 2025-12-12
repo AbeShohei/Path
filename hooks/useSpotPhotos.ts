@@ -21,10 +21,14 @@ export function useSpotPhotos(): UseSpotPhotosResult {
     const [loading, setLoading] = useState(false);
 
     const fetchPhotosForSpots = useCallback(async (spots: Spot[]) => {
+        console.log('[useSpotPhotos] fetchPhotosForSpots called with', spots.length, 'spots');
+
         // 既にimageUrlがあるスポットは除外
         const spotsNeedingPhotos = spots.filter(spot => !spot.imageUrl);
+        console.log('[useSpotPhotos] Spots needing photos:', spotsNeedingPhotos.length);
 
         if (spotsNeedingPhotos.length === 0) {
+            console.log('[useSpotPhotos] All spots have imageUrl, skipping API call');
             return;
         }
 
