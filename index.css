@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Scrollbar Styles (migrated from index.html if needed, but Tailwind handles most) */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-slate-400 rounded-full;
+}
+
+/* InfoWindow Overrides */
+.gm-ui-hover-effect {
+    display: none !important;
+}
+.gm-style-iw-d {
+    overflow: hidden !important;
+    padding: 0 !important;
+    max-height: none !important;
+}
+.gm-style-iw-c {
+    padding: 0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+}
+.gm-style-iw-tc {
+    display: none !important;
+}
+.gm-style-iw {
+    padding: 0 !important;
+}
+.gm-style-iw-chr {
+    display: none !important;
+}
+.gm-style .gm-style-iw-c>div:first-child {
+    padding: 0 !important;
+    margin: 0 !important;
+}

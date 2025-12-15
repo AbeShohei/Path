@@ -22,6 +22,55 @@ const ChevronLeftIcon = ({ className = "w-6 h-6" }: { className?: string }) => <
 const ChevronDownIcon = ({ className = "w-6 h-6" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>;
 const ChevronUpIcon = ({ className = "w-6 h-6" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
 const ClockIcon = ({ className = "w-4 h-4" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const CameraIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+
+const CongestionLevelIcon = ({ level, className = "" }: { level: number, className?: string }) => {
+    const commonClasses = `flex items-center justify-center text-white text-[10px] shadow-sm rounded ${className}`;
+    const PersonIcon = () => <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>;
+
+    if (level === 5) {
+        return (
+            <div className={`${commonClasses} bg-red-500 w-6 h-6`}>
+                <div className="flex -space-x-2">
+                    <PersonIcon /><PersonIcon /><PersonIcon /><PersonIcon />
+                </div>
+            </div>
+        );
+    }
+    if (level === 4) {
+        return (
+            <div className={`${commonClasses} bg-yellow-500 w-6 h-6`}>
+                <div className="flex -space-x-2">
+                    <PersonIcon /><PersonIcon /><PersonIcon />
+                </div>
+            </div>
+        );
+    }
+    if (level === 3) {
+        return (
+            <div className={`${commonClasses} bg-green-500 w-6 h-6`}>
+                <div className="flex -space-x-2">
+                    <PersonIcon /><PersonIcon />
+                </div>
+            </div>
+        );
+    }
+    if (level === 2) {
+        return (
+            <div className={`${commonClasses} bg-cyan-500 w-6 h-6`}>
+                <div className="flex -space-x-1">
+                    <PersonIcon />
+                </div>
+            </div>
+        );
+    }
+    // Level 1 (Default)
+    return (
+        <div className={`${commonClasses} bg-blue-500 w-6 h-6`}>
+            <PersonIcon />
+        </div>
+    );
+};
 
 // Navigation Stages
 type NavigationStage = 'TO_STOP' | 'ON_BUS' | 'ALIGHTING' | 'TO_DEST';
@@ -158,11 +207,16 @@ function App() {
     }, [mode]);
 
     // Fetch photos for spots when they load
+    // Memoize spot IDs to prevent unnecessary photo fetches
+    const spotIds = React.useMemo(() => spots.map(s => s.id).join(','), [spots]);
+
+    // Fetch photos for spots when they load (only when spot list changes)
     useEffect(() => {
         if (spots.length > 0) {
+            console.log('Fetching photos for', spots.length, 'spots');
             fetchPhotosForSpots(spots);
         }
-    }, [spots, fetchPhotosForSpots]);
+    }, [spotIds, fetchPhotosForSpots]); // Depend on ID string, not array reference
 
     useEffect(() => {
         console.log('Current SpotDetails:', spotDetails);
@@ -203,11 +257,17 @@ function App() {
         return currentSpots
             .filter(s => selectedCongestion.includes(s.congestionLevel))
             .sort((a, b) => {
-                // Primary: congestion level (lower is better)
+                // Primary: Has photo? (Photo first)
+                const aHasPhoto = !!(a.imageUrl || spotPhotos.get(a.name));
+                const bHasPhoto = !!(b.imageUrl || spotPhotos.get(b.name));
+                if (aHasPhoto !== bHasPhoto) {
+                    return aHasPhoto ? -1 : 1;
+                }
+                // Secondary: congestion level (lower is better)
                 if (a.congestionLevel !== b.congestionLevel) {
                     return a.congestionLevel - b.congestionLevel;
                 }
-                // Secondary: distance (closer is better)
+                // Tertiary: distance (closer is better)
                 return getDistance(a) - getDistance(b);
             });
     }, [mode, selectedRoute, spots, selectedSpot, selectedCongestion, coords, selectedTime]);
@@ -859,130 +919,77 @@ function App() {
                                 </div>
                             </div>
 
-                            <div className={`flex-1 overflow-y-auto p-4 pt-0 space-y-4 custom-scrollbar transition-opacity duration-300 ${sheetHeight < 120 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                            <div className={`flex-1 overflow-y-auto p-4 pt-0 custom-scrollbar transition-opacity duration-300 ${sheetHeight < 120 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                                 {loading ? (
                                     <div className="flex items-center justify-center h-32 text-gray-400 gap-2">
                                         <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
                                         <span className="text-sm">スポットを探しています...</span>
                                     </div>
                                 ) : visibleSpots.length > 0 ? (
-                                    visibleSpots.map((spot, index) => (
-                                        <div key={index} className="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer overflow-hidden" onClick={() => handleSpotSelect(spot)}>
-                                            {/* Image - only shows when sheet is large */}
-                                            {sheetHeight > 400 && (() => {
-                                                const photoUrl = spot.imageUrl || spotPhotos.get(spot.name);
-                                                return (
-                                                    <div className="relative w-full h-32 overflow-hidden">
-                                                        {photoUrl ? (
-                                                            <img
-                                                                src={photoUrl}
-                                                                alt={spot.name}
-                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                                loading="lazy"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                                                <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                                </svg>
-                                                            </div>
-                                                        )}
-                                                        {/* Congestion badge - top right */}
-                                                        <div className={`absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm ${spot.congestionLevel === 5 ? 'bg-red-500' :
-                                                            spot.congestionLevel === 4 ? 'bg-yellow-500' :
-                                                                spot.congestionLevel === 3 ? 'bg-green-500' :
-                                                                    spot.congestionLevel === 2 ? 'bg-cyan-500' :
-                                                                        'bg-blue-500'
-                                                            }`}>
-                                                            {spot.congestionLevel === 5 ? '混雑' :
-                                                                spot.congestionLevel === 4 ? 'やや混雑' :
-                                                                    spot.congestionLevel === 3 ? '通常' :
-                                                                        spot.congestionLevel === 2 ? 'やや快適' : '快適'}
-                                                        </div>
-                                                        {/* URL link button - bottom right, only if url exists */}
-                                                        {spot.url && (
-                                                            <a
-                                                                href={spot.url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="absolute bottom-2 right-2 bg-white/90 hover:bg-white p-1.5 rounded-full shadow-md transition-all hover:scale-110"
-                                                                title="公式サイトを開く"
-                                                            >
-                                                                <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                                </svg>
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })()}
-                                            <div className="p-4">
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <div className="flex-1">
-                                                        <h3 className="font-bold text-gray-800 text-base group-hover:text-indigo-600 transition-colors">{spot.name}</h3>
-                                                        {/* Genre Tags */}
-                                                        {spotDetails?.get(spot.name)?.types && spotDetails.get(spot.name)!.types!.length > 0 && (
-                                                            <div className="flex gap-1 mt-1 flex-wrap">
-                                                                {spotDetails.get(spot.name)!.types!.slice(0, 3).map((type, idx) => {
-                                                                    const typeMap: Record<string, string> = {
-                                                                        'place_of_worship': '寺社仏閣', 'shrine': '神社', 'hindu_temple': '寺院', 'church': '教会',
-                                                                        'park': '公園', 'garden': '庭園', 'museum': '博物館', 'art_gallery': '美術館',
-                                                                        'restaurant': '飲食店', 'cafe': 'カフェ', 'food': '飲食店', 'store': 'お店',
-                                                                        'tourist_attraction': '観光名所'
-                                                                        // 'point_of_interest': 'スポット' // Excluded
-                                                                    };
-                                                                    const label = typeMap[type] || null;
-                                                                    return label ? (
-                                                                        <span key={idx} className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded border border-gray-100">
-                                                                            {label}
-                                                                        </span>
-                                                                    ) : null;
-                                                                })}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {/* Congestion badge - only show here when no image */}
-                                                    {sheetHeight <= 400 && (
-                                                        <div className={`px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm ml-2 shrink-0 ${spot.congestionLevel === 5 ? 'bg-red-500' :
-                                                            spot.congestionLevel === 4 ? 'bg-yellow-500' :
-                                                                spot.congestionLevel === 3 ? 'bg-green-500' :
-                                                                    spot.congestionLevel === 2 ? 'bg-cyan-500' :
-                                                                        'bg-blue-500'
-                                                            }`}>
-                                                            {spot.congestionLevel === 5 ? '混雑' :
-                                                                spot.congestionLevel === 4 ? 'やや混雑' :
-                                                                    spot.congestionLevel === 3 ? '通常' :
-                                                                        spot.congestionLevel === 2 ? 'やや快適' : '快適'}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {visibleSpots.map((spot, index) => {
+                                            const photoUrl = spot.imageUrl || spotPhotos.get(spot.name);
+                                            const congestionColor = spot.congestionLevel === 5 ? 'bg-red-500' :
+                                                spot.congestionLevel === 4 ? 'bg-yellow-500' :
+                                                    spot.congestionLevel === 3 ? 'bg-green-500' :
+                                                        spot.congestionLevel === 2 ? 'bg-cyan-500' : 'bg-blue-500';
 
-                                                <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed mb-3">{spot.description}</p>
+                                            return (
+                                                <div key={index} className="relative aspect-square cursor-pointer rounded-lg overflow-hidden bg-gray-100 shadow-sm hover:shadow-md" onClick={() => handleSpotSelect(spot)}>
+                                                    {/* Background Image */}
+                                                    {photoUrl ? (
+                                                        <img
+                                                            src={photoUrl}
+                                                            alt={spot.name}
+                                                            className="w-full h-full object-cover"
+                                                            loading="lazy"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                                            <CameraIcon className="w-8 h-8 text-gray-400" />
+                                                        </div>
+                                                    )}
 
-                                                <div className="space-y-1.5">
-                                                    {spot.openingHours && (
-                                                        <div className="flex items-center gap-2 text-xs text-gray-600">
-                                                            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                                                                <polyline points="12 6 12 12 16 14" strokeWidth="2" />
-                                                            </svg>
-                                                            <span className="truncate">{spot.openingHours}</span>
-                                                        </div>
-                                                    )}
-                                                    {spot.price && (
-                                                        <div className="flex items-center gap-2 text-xs text-gray-600">
-                                                            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <line x1="12" y1="1" x2="12" y2="23" strokeWidth="2" />
-                                                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" strokeWidth="2" />
-                                                            </svg>
-                                                            <span className="truncate">{spot.price}</span>
-                                                        </div>
-                                                    )}
+                                                    {/* Top-Left: Congestion Icon */}
+                                                    <div className="absolute top-1 left-1" title={`混雑度: ${spot.congestionLevel}`}>
+                                                        <CongestionLevelIcon level={spot.congestionLevel} />
+                                                    </div>
+
+                                                    {/* Bottom-Right: Category Label */}
+                                                    {(() => {
+                                                        const types = spotDetails.get(spot.name)?.types;
+                                                        if (types && types.length > 0) {
+                                                            const typeMap: Record<string, string> = {
+                                                                'place_of_worship': '寺社', 'shrine': '神社', 'hindu_temple': '寺院', 'church': '教会',
+                                                                'park': '公園', 'garden': '庭園', 'museum': '鑑賞', 'art_gallery': '鑑賞',
+                                                                'restaurant': '食事', 'cafe': 'カフェ', 'food': '食事', 'store': '買物',
+                                                                'tourist_attraction': '名所',
+                                                                'point_of_interest': '観光スポット', 'gym': 'ジム', 'lodging': '宿泊', 'natural_feature': '自然'
+                                                            };
+                                                            // Find first valid label
+                                                            const label = types.map(t => typeMap[t]).find(l => l) || types[0];
+                                                            if (label) {
+                                                                return (
+                                                                    <div className="absolute bottom-1 right-1 text-white text-xs font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
+                                                                        {label}
+                                                                    </div>
+                                                                );
+                                                            }
+                                                        }
+                                                        return null;
+                                                    })()}
+
+                                                    {/* Gradient Overlay for Text Readability (Only if no image, or always?) 
+                                                        Actually user asked for "congestion top-left, category bottom-right". 
+                                                        If image fails, we show name. If image exists, name is NOT requested, but might be good? 
+                                                        User said: "congestion icon top-left, category bottom-right. No other info."
+                                                        So I will STRICTLY follow "No other info" and hide name if image exists.
+                                                    */}
                                                 </div>
-                                            </div>
-                                        </div>
-                                    ))) : (
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
                                     <div className="text-center text-gray-500 py-10">
                                         <p>この範囲に観光スポットが見つかりませんでした。</p>
                                     </div>

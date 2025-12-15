@@ -153,46 +153,34 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
         if (spotDetails && spotDetails.get(spot.name)?.types) {
             const types = spotDetails.get(spot.name)!.types!;
 
-            if (types.includes('place_of_worship') || types.includes('shrine') || types.includes('hindu_temple') || types.includes('church')) {
-                // Temple/Shrine (Torii-esque or generic temple) - Centered 24x24
-                innerIcon = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"; // This is actually the pin shape? No, let's use a real temple icon.
-                // Reverting to simple house/temple shape but centered 24x24
-                innerIcon = "M12,4 L2,10 L22,10 L12,4 Z M4,12 L4,20 L20,20 L20,12 L12,8 L4,12 Z"; // Simple shrine/home profile
-            } else if (types.includes('park') || types.includes('garden')) {
-                // Park/Tree - Centered 24x24
-                innerIcon = "M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z M12,16 C10.9,16 10,15.1 10,14 L14,14 C14,15.1 13.1,16 12,16 Z M13,12 L11,12 L11,10 L13,10 L13,12 Z"; // Generic tree/pin nature
-                // Better Tree:
-                innerIcon = "M12 2C8 2 4 5 4 9c0 2.5 2 4.5 4.5 4.5V18h1v4h5v-4h1c2.5 0 4.5-2 4.5-4.5 0-4-4-7-8-7z";
-            } else if (types.includes('museum') || types.includes('art_gallery')) {
-                // Museum/Bank - Centered 24x24
-                innerIcon = "M12 3L2 8v2h20V8L12 3zm1 14h-2v-4h2v4zm-6 0H5v-4h2v4zm10 0h-2v-4h2v4zM4 19h16v2H4v-2z";
-            } else if (types.includes('restaurant') || types.includes('cafe') || types.includes('food')) {
-                // Restaurant (Fork & Knife) - Centered 24x24
-                innerIcon = "M11,9H9V2H7v7H5V2H3v7c0,2.12,1.66,3.84,3.75,3.97V22h2.5v-9.03C11.34,12.84,13,11.12,13,9V2h-2V9z M16,6v8c0,1.1,0.9,2,2,2h2v-2.5L18,4l-2,2V6z";
-            } else if (types.includes('tourist_attraction') || types.includes('point_of_interest')) {
-                // Camera - Centered 24x24
-                innerIcon = "M9.04 5L7.17 7H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-3.17L14.96 5H9.04zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z";
+            if (types.includes('restaurant') || types.includes('cafe') || types.includes('food')) {
+                // Food: Knife & Fork (Restaurant)
+                innerIcon = "M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z";
+            } else if (types.includes('store') || types.includes('shopping_mall') || types.includes('clothing_store')) {
+                // Shopping: Bag
+                innerIcon = "M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z";
+            } else {
+                // All Others: Camera (Default for any spot with types)
+                innerIcon = "M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm8-9h-3.17L15 3H9L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 14H4V7h4.05l1.83-2h4.24l1.83 2H20v12z";
             }
         }
-
-        // Generate SVG string
         // We use a pin shape with an optional inner icon or a simple circle
         const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${36 * scale}" height="${36 * scale}">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${44 * scale}" height="${44 * scale}">
           <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
             <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.4)" />
           </filter>
           <g filter="url(#shadow)">
             <path d="${iconPath}" fill="${color}" stroke="white" stroke-width="1.5" />
-            ${innerIcon ? `<path d="${innerIcon}" fill="white" transform="translate(7.44, 4.44) scale(0.38)" />` : `<circle cx="12" cy="9" r="3" fill="white" />`}
+            ${innerIcon ? `<path d="${innerIcon}" fill="white" transform="translate(7.8, 4.8) scale(0.35)" />` : `<circle cx="12" cy="9" r="3" fill="white" />`}
           </g>
         </svg>
         `;
 
         return {
             url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-            scaledSize: new google.maps.Size(36 * scale, 36 * scale),
-            anchor: new google.maps.Point(18 * scale, 36 * scale), // Bottom center
+            scaledSize: new google.maps.Size(44 * scale, 44 * scale),
+            anchor: new google.maps.Point(22 * scale, 44 * scale), // Bottom center
         };
     };
 
