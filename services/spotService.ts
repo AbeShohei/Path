@@ -5,7 +5,8 @@ import { getCongestionLevel } from './humanFlowService';
 // 混雑度: 全エリアで偏差値(対数正規分布T-score)基準を採用
 // 基準: L1(T<35), L2(35≤T<45), L3(45≤T<55), L4(55≤T<65), L5(T≥65)
 // ※計算母集団は「市内観光地」と「市外観光地」で分離
-const KYOTO_SPOTS: Spot[] = [
+// RAW_SPOTSとして定義し、後で重複除去を行う
+const RAW_SPOTS: Spot[] = [
   {
     "id": "spot-1",
     "name": "縁城寺",
@@ -248,18 +249,6 @@ const KYOTO_SPOTS: Spot[] = [
     }
   },
   {
-    "id": "spot-23",
-    "name": "京丹後市観光公社",
-    "description": "京丹後市域の観光案内・PRを行ってる。",
-    "congestionLevel": 4,
-    "location": {
-      "latitude": 35.667262,
-      "longitude": 135.025083
-    },
-    "url": "http://www.kyotango.gr.jp/",
-    "openingHours": "8時30分～17時15分"
-  },
-  {
     "id": "spot-24",
     "name": "黒部銚子山古墳",
     "description": "古墳時代中期初めに築造された前方後円墳。全長約105m、後円部の直径70m、高さ15m、前方部幅45m、高さ10mの大規模なもの。京都府指定史跡。",
@@ -303,17 +292,6 @@ const KYOTO_SPOTS: Spot[] = [
     },
     "url": "http://www.k-kai.jp/",
     "openingHours": "チェックイン　15時チェックアウト　10時"
-  },
-  {
-    "id": "spot-28",
-    "name": "京丹後市観光公社　久美浜町支部",
-    "description": "明治の初め、久美浜県が置かれた時（1868～1871）の県庁舎の正面玄関棟をモデルに造られた京都丹後鉄道久美浜駅舎の中に、事務局及び久美浜町観光総合案内所がある。案内所では、観光案内のほか、季節によりフルーツ狩りの案内も行う。車椅子やレンタサイクルの貸出しも行っている。〈車椅子〉1台　無料（要予約）",
-    "congestionLevel": 4,
-    "location": {
-      "latitude": 35.602295,
-      "longitude": 134.895139
-    },
-    "openingHours": "9時～17時"
   },
   {
     "id": "spot-29",
@@ -600,17 +578,6 @@ const KYOTO_SPOTS: Spot[] = [
     "url": "http://www.shizukanosato.com",
     "openingHours": "10時～22時（入浴受付は21時30分まで）",
     "price": "大人600円小人（3歳以上中学生未満）400円"
-  },
-  {
-    "id": "spot-55",
-    "name": "久美浜朝市",
-    "description": "毎週日曜日、京都丹後鉄道宮豊線久美浜駅舎内の観光総合案内所で朝市を開催。久美浜産農産物、地元の方々のばら寿司など手作り惣菜や鯛せんべいなどの加工品を販売。春は、柔らかいわかめを板状に乾燥させた「板わかめ」など旬のおいしい特産物がある。",
-    "congestionLevel": 4,
-    "location": {
-      "latitude": 35.602296,
-      "longitude": 134.895138
-    },
-    "openingHours": "9時～11時※なくなり次第終了"
   },
   {
     "id": "spot-56",
@@ -1583,19 +1550,6 @@ const KYOTO_SPOTS: Spot[] = [
     "price": "大人　200円中学生以下　100円"
   },
   {
-    "id": "spot-140",
-    "name": "与謝野町観光協会",
-    "description": "ちりめん街道の起点となる旧加悦町役場庁舎内に観光案内所が設置され、手織体験やくみひも体験、休憩コーナーなどもある。〈手織り体験シルクコースターづくり〉卓上手織り機で、シルク糸を一本一本丁寧に織り上げ、オリジナルのコースターを作ります。旅の思い出やお土産に最適です。〈組みひも体験ミサンガづくり〉初めて",
-    "congestionLevel": 4,
-    "location": {
-      "latitude": 35.506618,
-      "longitude": 135.093098
-    },
-    "url": "http://yosano-kankou.net/",
-    "openingHours": "開館時間　9時～17時体験時間　10時～16時（シルクコースター約50分、ミサンガ約30分）予約不要（7名様以下）",
-    "price": "手織り体験　1回900円ミサンガづくり　1回600円"
-  },
-  {
     "id": "spot-141",
     "name": "大江山運動公園",
     "description": "町民の総合運動公園として、京都国体を記念して整備された。園内には、町民体育館・町民グラウンド・テニスコート場・若者センター（会議場）・多目的広場などがあり、昼夜ともにスポーツやレクリエーションを存分に楽しむことができる。",
@@ -2272,18 +2226,6 @@ const KYOTO_SPOTS: Spot[] = [
     "openingHours": "レストランピュール　ランチ　11時30分～14時30分　ディナー　18時～21時"
   },
   {
-    "id": "spot-199",
-    "name": "天橋立観光協会",
-    "description": "京都丹後鉄道宮豊線「天橋立駅」内に事務局及び観光案内所（丹後観光情報センター）がある。日本政府観光局（JNTO）の外国人観光案内所に認定されており、英語に対応。",
-    "congestionLevel": 4,
-    "location": {
-      "latitude": 35.557716,
-      "longitude": 135.182424
-    },
-    "url": "http://www.amanohashidate.jp/",
-    "openingHours": "9時～18時"
-  },
-  {
     "id": "spot-200",
     "name": "道の駅　海の京都宮津",
     "description": "2015年に宮津市街地に誕生した、天橋立に一番近い道の駅で、市街地散策や天橋立観光の起点として大変便利な場所です。道の駅施設として観光案内所、地元農水産物直売所、飲食店を備えるほか、駐車5時間無料の立体駐車場と土産物も充実のショッピングセンター（ミップル）、バス停が隣接しています。〈道の駅施設〉◇観",
@@ -2306,19 +2248,6 @@ const KYOTO_SPOTS: Spot[] = [
     "url": "http://www.taikyourou.com",
     "openingHours": "入場は宿の営業時間（不定休）",
     "price": "入場無料"
-  },
-  {
-    "id": "spot-202",
-    "name": "宮津まちなか地域振興拠点施設",
-    "description": "道の駅「海の京都宮津」内の案内所があり、観光インフォメーションや地域情報の発信・PR等を行います。※併設トイレは24時間利用可能",
-    "congestionLevel": 5,
-    "location": {
-      "latitude": 35.538196,
-      "longitude": 135.193969
-    },
-    "url": "http://www.michinoeki-miyazu.jp",
-    "openingHours": "9時～18時",
-    "price": "無料"
   },
   {
     "id": "spot-203",
@@ -3852,18 +3781,6 @@ const KYOTO_SPOTS: Spot[] = [
     "url": "http://www.city.ayabe.lg.jp/shakaikyoiku/tenmonkan/index.html",
     "openingHours": "9時～16時30分金曜日、土曜日、日曜日　9時～21時30分",
     "price": "一般　300円（240円）小・中学生　150円（120円）（ ）内は団体（30名以上）料金※障がい者手帳をお持ちの方は、本人と同伴者1名が半額になります。（入館時に受付で手帳をご掲示ください。）"
-  },
-  {
-    "id": "spot-332",
-    "name": "綾部市観光協会（あやべ観光案内所内）",
-    "description": "綾部市観光協会（あやべ観光案内所内）の観光スポット",
-    "congestionLevel": 5,
-    "location": {
-      "latitude": 35.301959,
-      "longitude": 135.252125
-    },
-    "openingHours": "8時30分～18時",
-    "price": "レンタサイクル普通自転車　4時間300円（1日500円）e-BIKE（電動アシスト）　4時間1,000円（1日1,500円）※身分証明（運転免許所など）の提示要"
   },
   {
     "id": "spot-333",
@@ -17376,33 +17293,34 @@ const KYOTO_SPOTS: Spot[] = [
     },
     "url": "https://www.yatsuhashi.co.jp/",
     "openingHours": "10時30分～16時30分"
-  },
-  {
-    "id": "spot-1444",
-    "name": "比叡山ドライブウェイ",
-    "description": "京都市街地や琵琶湖を眼前に眺めながら、沿線途中には、すばらしい眺望の「夢見が丘」、歴史と文化の香りに満ちた「延暦寺」、季節の花とフランス印象派画家の絵が楽しめる「ガーデンミュージアム比叡」があります。",
-    "congestionLevel": 1,
-    "location": {
-      "latitude": 35.047591,
-      "longitude": 135.83922
-    },
-    "url": "http://www.hieizan-way.com",
-    "openingHours": "3月～6月、9月～11月　7時～23時7月、8月　7時～24時12月～1月15日　9時～22時※大晦日は終夜営業（ただし、天候不良時は通行止めになります。）1月16日～2月　9時～20時※入場は各終了時間の1時間前まで",
-    "price": "田の谷峠料金所～延暦寺、または山頂（片道）　二輪車　580円　軽～普通自動車　860円　マイクロバス　2,100円　大型バス　3,400円田の谷峠料金所～延暦寺・山頂（往復）　二輪車　1,160円　軽～普通自動車　1,700円　マイクロバス　4,200円　大型バス　6,800円ガーデンミュージアム比叡（冬期休園）　大人　1,200円　小人（小学生）　600円"
-  },
-  {
-    "id": "spot-1445",
-    "name": "京都府観光案内所・東京",
-    "description": "東京駅日本橋口すぐの丸の内トラストタワーN館1階にある観光インフォメーションセンター「TIC TOKYO」内に設置された、京都府の観光案内所。京都府専用コンシェルジュを配置することで来館者に対し積極的に京都府内の観光案内・旅行提案を行う他、府内の観光案内所とテレビ通話による連携、パンフレット・チラシ",
-    "congestionLevel": 1,
-    "location": {
-      "latitude": 35.683164,
-      "longitude": 139.769593
-    },
-    "url": "https://www.tictokyo.jp/",
-    "openingHours": "10時～19時※営業時間短縮時は10時～18時となります。"
   }
 ];
+
+// Deduplicate spots by Name to prevent double-pins
+// (Some spots might be defined multiple times in the raw data)
+const uniqueSpotsMap = new Map<string, Spot>();
+RAW_SPOTS.forEach(spot => {
+  // Filter out unwanted categories
+  if (spot.name.includes('観光協会') || spot.name.includes('案内所') || spot.name.includes('体育館')) {
+    return;
+  }
+  // Keep the first one found, or maybe the one with more info?
+  // For now, just id uniqueness by name.
+  if (!uniqueSpotsMap.has(spot.name)) {
+    uniqueSpotsMap.set(spot.name, spot);
+  } else {
+    // If we already have one, check if the new one is "better" (has URL or longer description)
+    const existing = uniqueSpotsMap.get(spot.name)!;
+    const existingScore = (existing.url ? 10 : 0) + (existing.description?.length || 0);
+    const newScore = (spot.url ? 10 : 0) + (spot.description?.length || 0);
+
+    if (newScore > existingScore) {
+      uniqueSpotsMap.set(spot.name, spot);
+    }
+  }
+});
+
+const KYOTO_SPOTS = Array.from(uniqueSpotsMap.values());
 
 // Calculate distance using Haversine formula
 export function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number): number {

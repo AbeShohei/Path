@@ -105,7 +105,7 @@ export async function getPlacePhotosInBatch(
                     });
 
                     const data = await response.json();
-                    console.log('API Batch Response:', data); // Debug log
+                    // console.log('API Batch Response:', data); // Debug log
 
                     if (data.photos) {
                         const batchResults = new Map<string, { url: string; types: string[] }>();
