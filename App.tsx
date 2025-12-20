@@ -3,7 +3,11 @@ import { Coordinates, AppMode, Spot, TransportMode, GroundingChunk, RouteOption,
 import { getTransitInfo, generateGuideContent, playTextToSpeech, getRouteOptions } from './services/geminiService';
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
 import { getCongestionLevel, getCurrentTimeOfDay, TimeOfDay, getTimeOfDayLabel } from './services/humanFlowService';
+import { generateDifyContext, generatePromptContext } from './services/difyContextService';
 import { useSpotPhotos } from './hooks/useSpotPhotos';
+import { useLocationSimulator } from './hooks/useLocationSimulator';
+import { useGuideSystem } from './hooks/useGuideSystem';
+import { getDistance } from './services/guideService';
 import Map from './components/Map';
 import LyricsReader from './components/LyricsReader';
 
@@ -113,6 +117,7 @@ function App() {
     const [showNavRouteDetail, setShowNavRouteDetail] = useState(false); // Route detail during navigation
     const [isNavWidgetMinimized, setIsNavWidgetMinimized] = useState(false); // Minimize AI guide widget in nav mode
     const [lyricsHeight, setLyricsHeight] = useState(100); // Lyrics area height in pixels
+    const [hideOtherPins, setHideOtherPins] = useState(false); // Hide other pins when "View Route" is clicked
 
     // Sheet Drag State
     const [isDragging, setIsDragging] = useState(false);
@@ -137,6 +142,9 @@ function App() {
 
     // Spot Photos from Google Places API
     const { spotPhotos, spotDetails, fetchPhotosForSpots } = useSpotPhotos();
+
+    // Location Simulator for testing navigation
+    const locationSimulator = useLocationSimulator();
 
     // Audio Player State
     const [isPlaying, setIsPlaying] = useState(false);
@@ -197,6 +205,17 @@ function App() {
         setSheetHeight(88); // Minimize sheet to show popup/pin clearly
         // Use timestamp to ensure re-trigger even for same spot
         setFocusedSpotId(`${spot.id}-${Date.now()}`);
+        // List selection does NOT hide other pins
+        setHideOtherPins(false);
+    };
+
+    // "View Route" button click handler - hides other pins
+    const handleViewRouteClick = async (spot: Spot) => {
+        setSelectedSpot(spot);
+        setSheetHeight(88);
+        setFocusedSpotId(`${spot.id}-${Date.now()}`);
+        // "View Route" hides other pins
+        setHideOtherPins(true);
     };
 
     // Force sheet open when navigation starts
@@ -213,14 +232,61 @@ function App() {
     // Fetch photos for spots when they load (only when spot list changes)
     useEffect(() => {
         if (spots.length > 0) {
-            console.log('Fetching photos for', spots.length, 'spots');
+            // console.log('Fetching photos for', spots.length, 'spots');
             fetchPhotosForSpots(spots);
         }
     }, [spotIds, fetchPhotosForSpots]); // Depend on ID string, not array reference
 
+    // useEffect(() => {
+    //     console.log('Current SpotDetails:', spotDetails);
+    // }, [spotDetails]);
+
+    // Get simulated position for display (no useEffect needed, just read from state)
+    const simulatedPosition = locationSimulator.state.currentPosition;
+
+    // Start simulation when navigation begins
+    const startLocationSimulation = () => {
+        if (selectedRoute?.segments && selectedRoute.segments.length > 0) {
+            locationSimulator.start(selectedRoute.segments);
+        }
+    };
+
+    // --- Guide System Integration ---
+    const currentSegIndex = locationSimulator.state.currentSegmentIndex || 0;
+    const currentSegment = selectedRoute?.segments ? selectedRoute.segments[currentSegIndex] || null : null;
+    const nextSegment = selectedRoute?.segments ? selectedRoute.segments[currentSegIndex + 1] || null : null;
+
+    const { activeGuide } = useGuideSystem({
+        coords: simulatedPosition ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng } : coords,
+        currentSegment,
+        nextSegment,
+        routeSegments: selectedRoute?.segments || [],
+        spots: spots,
+        isNavigating: mode === AppMode.NAVIGATING,
+        onPlayGuide: (text) => {
+            setGuideText(text);
+            handlePlayAudio(text);
+        }
+    });
+    // -------------------------------
+
+    // Auto-start simulation when entering navigation mode
+    const simulationStartedRef = useRef(false);
     useEffect(() => {
-        console.log('Current SpotDetails:', spotDetails);
-    }, [spotDetails]);
+        if (mode === AppMode.NAVIGATING && selectedRoute?.segments && selectedRoute.segments.length > 0) {
+            // Only start once per navigation session
+            if (!simulationStartedRef.current) {
+                simulationStartedRef.current = true;
+                locationSimulator.start(selectedRoute.segments);
+            }
+        } else {
+            // Reset flag when leaving navigation mode
+            if (simulationStartedRef.current) {
+                simulationStartedRef.current = false;
+                locationSimulator.stop();
+            }
+        }
+    }, [mode, selectedRoute?.segments]);
 
     // Calculate derived state for visible spots based on selected route AND selected time
     const visibleSpots = React.useMemo(() => {
@@ -242,20 +308,36 @@ function App() {
             congestionLevel: getCongestionLevel(s.location.latitude, s.location.longitude, selectedTime)
         }));
 
-        if ((mode === AppMode.ROUTE_SELECT || mode === AppMode.NAVIGATING) && selectedRoute?.path) {
+        // Relaxed condition: If a route is selected, always filter pins (unless explicitly cleared)
+        if (selectedRoute) {
             // Filter spots near the selected route
-            const nearbySpots = filterSpotsNearRoute(currentSpots, selectedRoute.path, 0.05); // 50m radius
+            // Default to empty path if missing
+            const routePath = selectedRoute.path || [];
+            const nearbySpots = filterSpotsNearRoute(currentSpots, routePath, 0.1); // 100m radius (0.1km)
+
             // Always include destination spot if it exists
             if (selectedSpot && !nearbySpots.find(s => s.id === selectedSpot.id)) {
-                nearbySpots.push(selectedSpot); // Use original selected spot? or updated? Updated is better
-                // But selectedSpot in state is not updated automatically. 
-                // We should probably update it, but for list view, nearbySpots is what matters.
+                nearbySpots.push(selectedSpot);
             }
             return nearbySpots;
+        } else if (selectedSpot && hideOtherPins) {
+            // If "View Route" was clicked, hide other spots to focus on destination.
+            return [selectedSpot];
         }
+
         // Filter by congestion level, then sort by congestion (ascending) and distance (ascending)
+        // Also filter out spots without category data (types)
         return currentSpots
             .filter(s => selectedCongestion.includes(s.congestionLevel))
+            .filter(s => {
+                // Hide spots without category (types) data
+                const types = spotDetails.get(s.name)?.types;
+                return types && types.length > 0;
+            })
+            .filter(s => {
+                // Exclude spots with "案内" (information/guidance centers) in their name
+                return !s.name.includes('案内');
+            })
             .sort((a, b) => {
                 // Primary: Has photo? (Photo first)
                 const aHasPhoto = !!(a.imageUrl || spotPhotos.get(a.name));
@@ -270,12 +352,13 @@ function App() {
                 // Tertiary: distance (closer is better)
                 return getDistance(a) - getDistance(b);
             });
-    }, [mode, selectedRoute, spots, selectedSpot, selectedCongestion, coords, selectedTime]);
+    }, [mode, selectedRoute, spots, selectedSpot, selectedCongestion, coords, selectedTime, spotDetails, hideOtherPins]);
 
     // ルート検索を開始（InfoWindowの「ルートを見る」ボタンから呼ばれる）
     // ルート検索を開始（InfoWindowの「ルートを見る」ボタンから呼ばれる）
     const handleRouteSearch = async (spot: Spot) => {
         setSelectedSpot(spot);
+        setHideOtherPins(true); // "View Route" hides other pins
         setMode(AppMode.ROUTE_SELECT);
         setLoading(true);
         setRouteSheetState('default');
@@ -457,19 +540,74 @@ function App() {
             // Determine exact duration for the AI to speak based on Actual Route Segment
             let durationSec = STAGE_DURATIONS[navStage] / 1000; // Default fallback
 
+            // Get current location (Simulation or Real GPS)
+            const currentPos = simulatedPosition
+                ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
+                : (coords || { latitude: 34.9858, longitude: 135.7588 });
+
             if (selectedRoute.segments) {
                 if (navStage === 'TO_STOP') {
                     // First segment (Walking to start)
                     durationSec = parseDurationStr(selectedRoute.segments[0]?.duration);
+
+                    // Real-time update for Walking
+                    if (selectedRoute.segments[0]?.path && currentPos) {
+                        const path = selectedRoute.segments[0].path;
+                        const dest = path[path.length - 1];
+                        const destCoord = { latitude: dest.lat, longitude: dest.lng };
+                        const startCoord = { latitude: path[0].lat, longitude: path[0].lng };
+
+                        const remainingDist = getDistance(currentPos, destCoord);
+                        const totalDist = selectedRoute.segments[0].distance || getDistance(startCoord, destCoord);
+
+                        if (totalDist > 0) {
+                            const ratio = remainingDist / totalDist;
+                            durationSec = Math.max(30, Math.floor(durationSec * ratio));
+                        }
+                    }
+
                 } else if (navStage === 'ON_BUS') {
                     // Main Transit Segment
                     const transitSeg = selectedRoute.segments.find(s => ['BUS', 'SUBWAY', 'TRAIN'].includes(s.type));
                     durationSec = parseDurationStr(transitSeg?.duration);
+
+                    // Real-time update for Transit
+                    if (transitSeg?.path && currentPos) {
+                        const path = transitSeg.path;
+                        const dest = path[path.length - 1];
+                        const destCoord = { latitude: dest.lat, longitude: dest.lng };
+                        const startCoord = { latitude: path[0].lat, longitude: path[0].lng };
+
+                        const remainingDist = getDistance(currentPos, destCoord);
+                        const totalDist = transitSeg.distance || getDistance(startCoord, destCoord);
+
+                        if (totalDist > 0) {
+                            const ratio = remainingDist / totalDist;
+                            durationSec = Math.max(30, Math.floor(durationSec * ratio));
+                        }
+                    }
+
                 } else if (navStage === 'TO_DEST') {
                     // Last segment (Walking to destination)
-                    durationSec = parseDurationStr(selectedRoute.segments[selectedRoute.segments.length - 1]?.duration);
+                    const lastSeg = selectedRoute.segments[selectedRoute.segments.length - 1];
+                    durationSec = parseDurationStr(lastSeg?.duration);
+
+                    // Real-time update for Walking
+                    if (lastSeg?.path && currentPos) {
+                        const path = lastSeg.path;
+                        const dest = path[path.length - 1];
+                        const destCoord = { latitude: dest.lat, longitude: dest.lng };
+                        const startCoord = { latitude: path[0].lat, longitude: path[0].lng };
+
+                        const remainingDist = getDistance(currentPos, destCoord);
+                        const totalDist = lastSeg.distance || getDistance(startCoord, destCoord);
+
+                        if (totalDist > 0) {
+                            const ratio = remainingDist / totalDist;
+                            durationSec = Math.max(30, Math.floor(durationSec * ratio));
+                        }
+                    }
                 }
-                // ALIGHTING uses default short duration (20s)
             }
 
             // Play audio automatically
@@ -507,13 +645,33 @@ function App() {
 
         setLoading(true);
 
+        // Filter en-route spots (excluding current location < 50m)
+        const currentPos = simulatedPosition
+            ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
+            : (coords || { latitude: 34.9858, longitude: 135.7588 });
+
+        const enRouteSpots = visibleSpots.filter(s => {
+            const dist = getDistance(currentPos, s.location);
+            return dist > 50; // Exclude if <= 50m (User request)
+        });
+
+        console.log('[DEBUG] All Visible Spots:', visibleSpots);
+        console.log('[DEBUG] Filtered En-Route Spots (>50m):', enRouteSpots);
+
+        // Determine vehicle type from route segments
+        const transitSeg = route.segments.find(s => s.type === 'BUS' || s.type === 'TRAIN' || s.type === 'SUBWAY');
+        const vehicleName = transitSeg?.type === 'TRAIN' ? '電車'
+            : transitSeg?.type === 'SUBWAY' ? '地下鉄'
+                : 'バス';
+
         // Create detailed context
         let context = `目的地: ${selectedSpot.name}。ルート: ${route.title}。`;
         if (stage === 'ON_BUS') {
-            context += `現在、バスに乗車中です。目的地まであと${stopsAway}駅です。`;
+            context += `現在、${vehicleName}に乗車中です。目的地まであと${stopsAway}駅です。`;
         }
 
-        const text = await generateGuideContent(context, stage, durationSeconds);
+        // Pass enRouteSpots to API
+        const text = await generateGuideContent(context, stage, durationSeconds, enRouteSpots);
         setLoading(false);
         setGuideText(text);
 
@@ -657,7 +815,7 @@ function App() {
         const arrivalTime = getDynamicArrivalTime(remainingSeconds);
 
         if (navStage === 'TO_STOP') {
-            return `バス停へ移動中 (あと ${timeStr}) - ${arrivalTime}着`;
+            return `最寄りへ移動中 (あと ${timeStr}) - ${arrivalTime}着`;
         }
         if (navStage === 'ON_BUS') {
             return `乗車中 (あと ${timeStr}) - ${arrivalTime}着予定`;
@@ -773,8 +931,15 @@ function App() {
                 {/* Map Background */}
                 <div className="absolute inset-0 z-0">
                     <Map
-                        center={coords || { latitude: 34.9858, longitude: 135.7588 }}
-                        spots={visibleSpots}
+                        center={simulatedPosition
+                            ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
+                            : (coords || { latitude: 34.9858, longitude: 135.7588 })}
+                        spots={visibleSpots.filter(s => {
+                            const cur = simulatedPosition
+                                ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
+                                : (coords || { latitude: 34.9858, longitude: 135.7588 });
+                            return getDistance(cur, s.location) > 50;
+                        })}
                         onSelectSpot={handleRouteSearch}
                         onPinClick={() => setSheetHeight(88)}
                         selectedSpotId={selectedSpot?.id}
@@ -1279,6 +1444,70 @@ function App() {
                                 </button>
                             )}
 
+                            {/* Location Simulator Control Panel */}
+                            <div className="absolute top-20 left-4 z-50 bg-white/95 backdrop-blur-md rounded-xl shadow-lg px-3 py-2 border border-gray-200">
+                                <div className="text-[10px] font-bold text-gray-500 mb-1.5">位置シミュレーター</div>
+                                <div className="flex items-center gap-2">
+                                    {!locationSimulator.state.isRunning ? (
+                                        <button
+                                            onClick={startLocationSimulation}
+                                            className="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1"
+                                        >
+                                            <PlayIcon className="w-3 h-3" /> 開始
+                                        </button>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={locationSimulator.pause}
+                                                className="px-2 py-1.5 bg-yellow-500 text-white text-xs font-bold rounded-lg hover:bg-yellow-600 transition-colors"
+                                            >
+                                                ⏸
+                                            </button>
+                                            <button
+                                                onClick={locationSimulator.stop}
+                                                className="px-2 py-1.5 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors"
+                                            >
+                                                ⏹
+                                            </button>
+                                        </>
+                                    )}
+                                    <div className="flex items-center gap-1 ml-1">
+                                        <button
+                                            onClick={() => locationSimulator.setSpeed(locationSimulator.state.speed / 2)}
+                                            className="w-6 h-6 bg-gray-200 text-gray-700 text-xs font-bold rounded hover:bg-gray-300"
+                                        >−</button>
+                                        <span className="text-[10px] font-mono w-8 text-center">{locationSimulator.state.speed}x</span>
+                                        <button
+                                            onClick={() => locationSimulator.setSpeed(locationSimulator.state.speed * 2)}
+                                            className="w-6 h-6 bg-gray-200 text-gray-700 text-xs font-bold rounded hover:bg-gray-300"
+                                        >+</button>
+                                    </div>
+                                </div>
+                                {locationSimulator.state.isRunning && (
+                                    <div className="mt-1.5">
+                                        <div className="w-full bg-gray-200 rounded-full h-1">
+                                            <div
+                                                className="bg-indigo-500 h-1 rounded-full transition-all duration-100"
+                                                style={{ width: `${locationSimulator.state.progress}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="text-[9px] text-gray-500 mt-0.5 flex justify-between items-center">
+                                            <span className={`px-1.5 py-0.5 rounded text-white font-bold ${locationSimulator.state.currentTransportMode === 'TRAIN' ? 'bg-blue-500' :
+                                                locationSimulator.state.currentTransportMode === 'SUBWAY' ? 'bg-purple-500' :
+                                                    locationSimulator.state.currentTransportMode === 'BUS' ? 'bg-green-500' :
+                                                        'bg-gray-500'
+                                                }`}>
+                                                {locationSimulator.state.currentTransportMode === 'TRAIN' ? '🚃 電車' :
+                                                    locationSimulator.state.currentTransportMode === 'SUBWAY' ? '🚇 地下鉄' :
+                                                        locationSimulator.state.currentTransportMode === 'BUS' ? '🚌 バス' :
+                                                            '🚶 徒歩'}
+                                            </span>
+                                            <span>{Math.round(locationSimulator.state.progress)}%</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Expanded AI Guide Widget - Compact Version */}
                             {!isNavWidgetMinimized && (
                                 <div className={`absolute bottom-0 left-0 right-0 z-10 p-3 pointer-events-none transition-all duration-300 max-h-[85vh]`}>
@@ -1560,6 +1789,9 @@ function App() {
                                                             stopCurrentAudio();
                                                             setMode(AppMode.PLANNING);
                                                             setSelectedSpot(spot);
+                                                            setSelectedRoute(null);
+                                                            setRouteOptions([]);
+                                                            setHideOtherPins(false);
                                                             setFocusedSpotId(`${spot.id}-${Date.now()}`);
                                                             setGuideText("");
                                                         }}

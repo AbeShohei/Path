@@ -1,0 +1,2571 @@
+{
+  "items": [
+    {
+      "summary": {
+        "no": "1",
+        "start": {
+          "type": "point",
+          "coord": {
+            "lat": 34.9858,
+            "lon": 135.7588
+          },
+          "name": "start"
+        },
+        "goal": {
+          "type": "point",
+          "coord": {
+            "lat": 35.001311,
+            "lon": 135.818806
+          },
+          "name": "goal"
+        },
+        "move": {
+          "transit_count": 0,
+          "walk_distance": 1486,
+          "fare": {
+            "unit_0": 180,
+            "unit_128_train": 5320,
+            "unit_130_train": 15190,
+            "unit_133_train": 25870
+          },
+          "type": "move",
+          "from_time": "2025-12-16T20:34:00+09:00",
+          "to_time": "2025-12-16T21:14:00+09:00",
+          "time": 40,
+          "distance": 6986,
+          "move_type": [
+            "local_train",
+            "walk"
+          ]
+        }
+      },
+      "sections": [
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.9858,
+            "lon": 135.7588
+          },
+          "name": "start"
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T20:34:00+09:00",
+          "to_time": "2025-12-16T20:38:00+09:00",
+          "time": 4,
+          "distance": 296,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.986191,
+            "lon": 135.759051
+          },
+          "name": "京都",
+          "node_id": "00001756",
+          "node_types": [
+            "station",
+            "shuttle_busstop"
+          ],
+          "gateway": "中央口",
+          "numbering": {
+            "departure": [
+              {
+                "symbol": "A",
+                "number": "31"
+              },
+              {
+                "symbol": "B",
+                "number": "31"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "transport": {
+            "fare": {
+              "unit_0": 180,
+              "unit_128": 5320,
+              "unit_130": 15190,
+              "unit_133": 25870,
+              "unit_136": 3240,
+              "unit_138": 9230,
+              "unit_141": 17440,
+              "unit_144": 2910,
+              "unit_146": 8300,
+              "unit_149": 15690,
+              "unit_152": 2260,
+              "unit_154": 6460,
+              "unit_157": 12200
+            },
+            "getoff": "前",
+            "color": "#0072BC",
+            "name": "ＪＲ琵琶湖線",
+            "fare_season": "slack",
+            "company": {
+              "id": "00000002",
+              "name": "ＪＲ西日本"
+            },
+            "links": [
+              {
+                "id": "00000085",
+                "name": "ＪＲ東海道本線（米原-神戸）",
+                "direction": "up",
+                "destination": {
+                  "id": "00008117",
+                  "name": "米原"
+                },
+                "from": {
+                  "id": "00001756",
+                  "name": "京都"
+                },
+                "to": {
+                  "id": "00003102",
+                  "name": "山科"
+                },
+                "is_timetable": "false"
+              }
+            ],
+            "id": "00000050",
+            "type": "普通",
+            "fare_break": {
+              "unit_0": true,
+              "unit_128": true,
+              "unit_130": true,
+              "unit_133": true,
+              "unit_136": true,
+              "unit_138": true,
+              "unit_141": true,
+              "unit_144": true,
+              "unit_146": true,
+              "unit_149": true,
+              "unit_152": true,
+              "unit_154": true,
+              "unit_157": true
+            },
+            "fare_detail": [
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "0",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 180
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "128",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 5320
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "130",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 15190
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "133",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 25870
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "136",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 3240
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "138",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 9230
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "141",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 17440
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "144",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 2910
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "146",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 8300
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "149",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 15690
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "152",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 2260
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "154",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 6460
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "157",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 12200
+              }
+            ]
+          },
+          "move": "local_train",
+          "from_time": "2025-12-16T20:50:00+09:00",
+          "to_time": "2025-12-16T20:55:00+09:00",
+          "time": 5,
+          "distance": 5500,
+          "line_name": "ＪＲ琵琶湖線"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.992281,
+            "lon": 135.817108
+          },
+          "name": "山科",
+          "node_id": "00003102",
+          "node_types": [
+            "station"
+          ],
+          "numbering": {
+            "arrival": [
+              {
+                "symbol": "A",
+                "number": "30"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T20:55:00+09:00",
+          "to_time": "2025-12-16T21:14:00+09:00",
+          "time": 19,
+          "distance": 1190,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.001311,
+            "lon": 135.818806
+          },
+          "name": "goal"
+        }
+      ]
+    },
+    {
+      "summary": {
+        "no": "2",
+        "start": {
+          "type": "point",
+          "coord": {
+            "lat": 34.9858,
+            "lon": 135.7588
+          },
+          "name": "start"
+        },
+        "goal": {
+          "type": "point",
+          "coord": {
+            "lat": 35.001311,
+            "lon": 135.818806
+          },
+          "name": "goal"
+        },
+        "move": {
+          "transit_count": 1,
+          "walk_distance": 1614,
+          "fare": {
+            "unit_0": 290,
+            "unit_128_train": 12330,
+            "unit_130_train": 35150,
+            "unit_133_train": 66590
+          },
+          "type": "move",
+          "from_time": "2025-12-16T20:34:00+09:00",
+          "to_time": "2025-12-16T21:27:00+09:00",
+          "time": 53,
+          "distance": 10814,
+          "move_type": [
+            "local_train",
+            "walk"
+          ]
+        }
+      },
+      "sections": [
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.9858,
+            "lon": 135.7588
+          },
+          "name": "start"
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T20:34:00+09:00",
+          "to_time": "2025-12-16T20:39:00+09:00",
+          "time": 5,
+          "distance": 305,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.986399,
+            "lon": 135.759602
+          },
+          "name": "京都",
+          "node_id": "00001756",
+          "node_types": [
+            "station",
+            "shuttle_busstop"
+          ],
+          "gateway": "6番口",
+          "numbering": {
+            "departure": [
+              {
+                "symbol": "K",
+                "number": "11"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "next_transit": true,
+          "transport": {
+            "getoff": "1",
+            "color": "#3CB371",
+            "name": "京都市営烏丸線",
+            "company": {
+              "id": "00000038",
+              "name": "京都市交通局"
+            },
+            "links": [
+              {
+                "id": "00000292",
+                "name": "京都市営烏丸線",
+                "direction": "up",
+                "destination": {
+                  "id": "00002664",
+                  "name": "国際会館"
+                },
+                "from": {
+                  "id": "00001756",
+                  "name": "京都"
+                },
+                "to": {
+                  "id": "00000542",
+                  "name": "烏丸御池"
+                },
+                "is_timetable": "false"
+              }
+            ],
+            "id": "00000685",
+            "type": "普通",
+            "fare_break": {
+              "unit_0": false,
+              "unit_128": false,
+              "unit_130": false,
+              "unit_133": false,
+              "unit_136": false,
+              "unit_138": false,
+              "unit_141": false,
+              "unit_144": false,
+              "unit_146": false,
+              "unit_149": false
+            }
+          },
+          "move": "local_train",
+          "from_time": "2025-12-16T20:42:00+09:00",
+          "to_time": "2025-12-16T20:47:00+09:00",
+          "time": 5,
+          "distance": 2700,
+          "line_name": "京都市営烏丸線",
+          "transfer_seconds": 180
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.010756,
+            "lon": 135.759628
+          },
+          "name": "烏丸御池",
+          "node_id": "00000542",
+          "node_types": [
+            "station"
+          ],
+          "numbering": {
+            "arrival": [
+              {
+                "symbol": "K",
+                "number": "08"
+              }
+            ],
+            "departure": [
+              {
+                "symbol": "T",
+                "number": "13"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "transport": {
+            "fare": {
+              "unit_0": 290,
+              "unit_128": 12330,
+              "unit_130": 35150,
+              "unit_133": 66590,
+              "unit_136": 8800,
+              "unit_138": 25080,
+              "unit_141": 47520,
+              "unit_144": 7040,
+              "unit_146": 20070,
+              "unit_149": 38020
+            },
+            "getoff": "前",
+            "color": "#FF4500",
+            "name": "京都市営東西線",
+            "fare_season": "normal",
+            "company": {
+              "id": "00000038",
+              "name": "京都市交通局"
+            },
+            "links": [
+              {
+                "id": "00000293",
+                "name": "京都市営東西線",
+                "direction": "up",
+                "destination": {
+                  "id": "00009091",
+                  "name": "六地蔵（奈良線・京都市営）"
+                },
+                "from": {
+                  "id": "00000542",
+                  "name": "烏丸御池"
+                },
+                "to": {
+                  "id": "00003102",
+                  "name": "山科"
+                },
+                "is_timetable": "false"
+              }
+            ],
+            "id": "00000684",
+            "type": "普通",
+            "fare_break": {
+              "unit_0": true,
+              "unit_128": true,
+              "unit_130": true,
+              "unit_133": true,
+              "unit_136": true,
+              "unit_138": true,
+              "unit_141": true,
+              "unit_144": true,
+              "unit_146": true,
+              "unit_149": true
+            },
+            "fare_detail": [
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "0",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 290
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "128",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 12330
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "130",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 35150
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "133",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 66590
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "136",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 8800
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "138",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 25080
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "141",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 47520
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "144",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 7040
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "146",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 20070
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "149",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 38020
+              }
+            ]
+          },
+          "move": "local_train",
+          "from_time": "2025-12-16T20:55:00+09:00",
+          "to_time": "2025-12-16T21:07:00+09:00",
+          "time": 12,
+          "distance": 6500,
+          "line_name": "京都市営東西線"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.99211,
+            "lon": 135.816893
+          },
+          "name": "山科",
+          "node_id": "00003102",
+          "node_types": [
+            "station"
+          ],
+          "gateway": "1番口",
+          "numbering": {
+            "arrival": [
+              {
+                "symbol": "T",
+                "number": "07"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T21:07:00+09:00",
+          "to_time": "2025-12-16T21:27:00+09:00",
+          "time": 20,
+          "distance": 1309,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.001311,
+            "lon": 135.818806
+          },
+          "name": "goal"
+        }
+      ]
+    },
+    {
+      "summary": {
+        "no": "3",
+        "start": {
+          "type": "point",
+          "coord": {
+            "lat": 34.9858,
+            "lon": 135.7588
+          },
+          "name": "start"
+        },
+        "goal": {
+          "type": "point",
+          "coord": {
+            "lat": 35.001311,
+            "lon": 135.818806
+          },
+          "name": "goal"
+        },
+        "move": {
+          "transit_count": 1,
+          "walk_distance": 1605,
+          "fare": {
+            "unit_0": 470,
+            "unit_128_train": 17650,
+            "unit_130_train": 50340,
+            "unit_133_train": 92460
+          },
+          "type": "move",
+          "from_time": "2025-12-16T20:34:00+09:00",
+          "to_time": "2025-12-16T21:39:00+09:00",
+          "time": 65,
+          "distance": 13905,
+          "move_type": [
+            "local_train",
+            "walk"
+          ]
+        }
+      },
+      "sections": [
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.9858,
+            "lon": 135.7588
+          },
+          "name": "start"
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T20:34:00+09:00",
+          "to_time": "2025-12-16T20:38:00+09:00",
+          "time": 4,
+          "distance": 296,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.986191,
+            "lon": 135.759051
+          },
+          "name": "京都",
+          "node_id": "00001756",
+          "node_types": [
+            "station",
+            "shuttle_busstop"
+          ],
+          "gateway": "中央口",
+          "numbering": {
+            "departure": [
+              {
+                "symbol": "E",
+                "number": "01"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "next_transit": true,
+          "transport": {
+            "fare": {
+              "unit_0": 180,
+              "unit_128": 5320,
+              "unit_130": 15190,
+              "unit_133": 25870,
+              "unit_136": 2980,
+              "unit_138": 8510,
+              "unit_141": 16130,
+              "unit_144": 2680,
+              "unit_146": 7650,
+              "unit_149": 14510,
+              "unit_152": 2080,
+              "unit_154": 5950,
+              "unit_157": 11290
+            },
+            "getoff": "中",
+            "color": "#9370DB",
+            "name": "ＪＲ嵯峨野線（京都-亀岡）",
+            "fare_season": "slack",
+            "company": {
+              "id": "00000002",
+              "name": "ＪＲ西日本"
+            },
+            "links": [
+              {
+                "id": "00000065",
+                "name": "ＪＲ山陰本線（京都-米子）",
+                "direction": "down",
+                "destination": {
+                  "id": "00000748",
+                  "name": "園部"
+                },
+                "from": {
+                  "id": "00001756",
+                  "name": "京都"
+                },
+                "to": {
+                  "id": "00007206",
+                  "name": "二条"
+                },
+                "is_timetable": "false"
+              }
+            ],
+            "id": "00000103",
+            "type": "普通",
+            "fare_break": {
+              "unit_0": true,
+              "unit_128": true,
+              "unit_130": true,
+              "unit_133": true,
+              "unit_136": true,
+              "unit_138": true,
+              "unit_141": true,
+              "unit_144": true,
+              "unit_146": true,
+              "unit_149": true,
+              "unit_152": true,
+              "unit_154": true,
+              "unit_157": true
+            },
+            "fare_detail": [
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "0",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 180
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "128",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 5320
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "130",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 15190
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "133",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 25870
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "136",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 2980
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "138",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 8510
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "141",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 16130
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "144",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 2680
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "146",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 7650
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "149",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 14510
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "152",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 2080
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "154",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 5950
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "157",
+                "goal": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "fare": 11290
+              }
+            ]
+          },
+          "move": "local_train",
+          "from_time": "2025-12-16T20:47:00+09:00",
+          "to_time": "2025-12-16T20:55:00+09:00",
+          "time": 8,
+          "distance": 4200,
+          "line_name": "ＪＲ嵯峨野線（京都-亀岡）",
+          "transfer_seconds": 180
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.010943,
+            "lon": 135.741667
+          },
+          "name": "二条",
+          "node_id": "00007206",
+          "node_types": [
+            "station",
+            "shuttle_busstop"
+          ],
+          "numbering": {
+            "arrival": [
+              {
+                "symbol": "E",
+                "number": "04"
+              }
+            ],
+            "departure": [
+              {
+                "symbol": "T",
+                "number": "15"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "transport": {
+            "fare": {
+              "unit_0": 290,
+              "unit_128": 12330,
+              "unit_130": 35150,
+              "unit_133": 66590,
+              "unit_136": 8800,
+              "unit_138": 25080,
+              "unit_141": 47520,
+              "unit_144": 7040,
+              "unit_146": 20070,
+              "unit_149": 38020
+            },
+            "getoff": "前",
+            "color": "#FF4500",
+            "name": "京都市営東西線",
+            "fare_season": "normal",
+            "company": {
+              "id": "00000038",
+              "name": "京都市交通局"
+            },
+            "links": [
+              {
+                "id": "00000293",
+                "name": "京都市営東西線",
+                "direction": "up",
+                "destination": {
+                  "id": "00009091",
+                  "name": "六地蔵（奈良線・京都市営）"
+                },
+                "from": {
+                  "id": "00007206",
+                  "name": "二条"
+                },
+                "to": {
+                  "id": "00003102",
+                  "name": "山科"
+                },
+                "is_timetable": "false"
+              }
+            ],
+            "id": "00000684",
+            "type": "普通",
+            "fare_break": {
+              "unit_0": true,
+              "unit_128": true,
+              "unit_130": true,
+              "unit_133": true,
+              "unit_136": true,
+              "unit_138": true,
+              "unit_141": true,
+              "unit_144": true,
+              "unit_146": true,
+              "unit_149": true
+            },
+            "fare_detail": [
+              {
+                "start": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "id": "0",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 290
+              },
+              {
+                "start": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "id": "128",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 12330
+              },
+              {
+                "start": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "id": "130",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 35150
+              },
+              {
+                "start": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "id": "133",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 66590
+              },
+              {
+                "start": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "id": "136",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 8800
+              },
+              {
+                "start": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "id": "138",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 25080
+              },
+              {
+                "start": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "id": "141",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 47520
+              },
+              {
+                "start": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "id": "144",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 7040
+              },
+              {
+                "start": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "id": "146",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 20070
+              },
+              {
+                "start": {
+                  "name": "二条",
+                  "node_id": "00007206"
+                },
+                "id": "149",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 38020
+              }
+            ]
+          },
+          "move": "local_train",
+          "from_time": "2025-12-16T21:03:00+09:00",
+          "to_time": "2025-12-16T21:19:00+09:00",
+          "time": 16,
+          "distance": 8100,
+          "line_name": "京都市営東西線"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.99211,
+            "lon": 135.816893
+          },
+          "name": "山科",
+          "node_id": "00003102",
+          "node_types": [
+            "station"
+          ],
+          "gateway": "1番口",
+          "numbering": {
+            "arrival": [
+              {
+                "symbol": "T",
+                "number": "07"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T21:19:00+09:00",
+          "to_time": "2025-12-16T21:39:00+09:00",
+          "time": 20,
+          "distance": 1309,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.001311,
+            "lon": 135.818806
+          },
+          "name": "goal"
+        }
+      ]
+    },
+    {
+      "summary": {
+        "no": "4",
+        "start": {
+          "type": "point",
+          "coord": {
+            "lat": 34.9858,
+            "lon": 135.7588
+          },
+          "name": "start"
+        },
+        "goal": {
+          "type": "point",
+          "coord": {
+            "lat": 35.001311,
+            "lon": 135.818806
+          },
+          "name": "goal"
+        },
+        "move": {
+          "transit_count": 2,
+          "walk_distance": 1605,
+          "fare": {
+            "unit_0": 650,
+            "unit_128_train": 22510,
+            "unit_130_train": 64230,
+            "unit_133_train": 119360
+          },
+          "type": "move",
+          "from_time": "2025-12-16T20:34:00+09:00",
+          "to_time": "2025-12-16T21:39:00+09:00",
+          "time": 65,
+          "distance": 11005,
+          "move_type": [
+            "local_train",
+            "walk"
+          ]
+        }
+      },
+      "sections": [
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.9858,
+            "lon": 135.7588
+          },
+          "name": "start"
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T20:34:00+09:00",
+          "to_time": "2025-12-16T20:39:00+09:00",
+          "time": 5,
+          "distance": 296,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.986191,
+            "lon": 135.759051
+          },
+          "name": "京都",
+          "node_id": "00001756",
+          "node_types": [
+            "station",
+            "shuttle_busstop"
+          ],
+          "gateway": "中央口",
+          "numbering": {
+            "departure": [
+              {
+                "symbol": "D",
+                "number": "01"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "next_transit": true,
+          "transport": {
+            "fare": {
+              "unit_0": 150,
+              "unit_128": 4310,
+              "unit_130": 12350,
+              "unit_133": 21070,
+              "unit_136": 2330,
+              "unit_138": 6680,
+              "unit_141": 12640,
+              "unit_144": 2090,
+              "unit_146": 6010,
+              "unit_149": 11370,
+              "unit_152": 1630,
+              "unit_154": 4670,
+              "unit_157": 8840
+            },
+            "getoff": "前",
+            "color": "#AA731C",
+            "name": "ＪＲ奈良線",
+            "fare_season": "slack",
+            "company": {
+              "id": "00000002",
+              "name": "ＪＲ西日本"
+            },
+            "links": [
+              {
+                "id": "00000086",
+                "name": "ＪＲ奈良線",
+                "direction": "down",
+                "destination": {
+                  "id": "00000513",
+                  "name": "宇治（奈良線）"
+                },
+                "from": {
+                  "id": "00001756",
+                  "name": "京都"
+                },
+                "to": {
+                  "id": "00006845",
+                  "name": "東福寺"
+                },
+                "is_timetable": "false"
+              }
+            ],
+            "id": "00000092",
+            "type": "普通",
+            "fare_break": {
+              "unit_0": true,
+              "unit_128": true,
+              "unit_130": true,
+              "unit_133": true,
+              "unit_136": true,
+              "unit_138": true,
+              "unit_141": true,
+              "unit_144": true,
+              "unit_146": true,
+              "unit_149": true,
+              "unit_152": true,
+              "unit_154": true,
+              "unit_157": true
+            },
+            "fare_detail": [
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "0",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 150
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "128",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 4310
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "130",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 12350
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "133",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 21070
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "136",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 2330
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "138",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 6680
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "141",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 12640
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "144",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 2090
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "146",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 6010
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "149",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 11370
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "152",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 1630
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "154",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 4670
+              },
+              {
+                "start": {
+                  "name": "京都",
+                  "node_id": "00001756"
+                },
+                "id": "157",
+                "goal": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "fare": 8840
+              }
+            ]
+          },
+          "move": "local_train",
+          "from_time": "2025-12-16T20:47:00+09:00",
+          "to_time": "2025-12-16T20:49:00+09:00",
+          "time": 2,
+          "distance": 1100,
+          "line_name": "ＪＲ奈良線",
+          "transfer_seconds": 180
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.981254,
+            "lon": 135.769909
+          },
+          "name": "東福寺",
+          "node_id": "00006845",
+          "node_types": [
+            "station"
+          ],
+          "numbering": {
+            "arrival": [
+              {
+                "symbol": "D",
+                "number": "02"
+              }
+            ],
+            "departure": [
+              {
+                "symbol": "KH",
+                "number": "36"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "next_transit": true,
+          "transport": {
+            "fare": {
+              "unit_0": 240,
+              "unit_128": 7630,
+              "unit_130": 21750,
+              "unit_133": 41210,
+              "unit_136": 2220,
+              "unit_138": 6330,
+              "unit_141": 11990
+            },
+            "getoff": "前・中・後",
+            "color": "#005840",
+            "name": "京阪本線",
+            "fare_season": "normal",
+            "company": {
+              "id": "00000036",
+              "name": "京阪電気鉄道"
+            },
+            "links": [
+              {
+                "id": "00000285",
+                "name": "京阪本線",
+                "direction": "up",
+                "destination": {
+                  "id": "00003029",
+                  "name": "三条（京都府）"
+                },
+                "from": {
+                  "id": "00006845",
+                  "name": "東福寺"
+                },
+                "to": {
+                  "id": "00003029",
+                  "name": "三条（京都府）"
+                },
+                "is_timetable": "false"
+              }
+            ],
+            "id": "00000675",
+            "type": "普通",
+            "fare_break": {
+              "unit_0": true,
+              "unit_128": true,
+              "unit_130": true,
+              "unit_133": true,
+              "unit_136": true,
+              "unit_138": true,
+              "unit_141": true
+            },
+            "fare_detail": [
+              {
+                "start": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "id": "0",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 240
+              },
+              {
+                "start": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "id": "128",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 7630
+              },
+              {
+                "start": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "id": "130",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 21750
+              },
+              {
+                "start": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "id": "133",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 41210
+              },
+              {
+                "start": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "id": "136",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 2220
+              },
+              {
+                "start": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "id": "138",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 6330
+              },
+              {
+                "start": {
+                  "name": "東福寺",
+                  "node_id": "00006845"
+                },
+                "id": "141",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 11990
+              }
+            ]
+          },
+          "move": "local_train",
+          "from_time": "2025-12-16T20:57:00+09:00",
+          "to_time": "2025-12-16T21:03:00+09:00",
+          "time": 6,
+          "distance": 3200,
+          "line_name": "京阪本線"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.008737,
+            "lon": 135.772313
+          },
+          "name": "三条（京都府）",
+          "node_id": "00003029",
+          "node_types": [
+            "station"
+          ],
+          "numbering": {
+            "arrival": [
+              {
+                "symbol": "KH",
+                "number": "40"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T21:03:00+09:00",
+          "to_time": "2025-12-16T21:06:00+09:00",
+          "time": 3,
+          "distance": 0,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.009234,
+            "lon": 135.773906
+          },
+          "name": "三条京阪",
+          "node_id": "00003032",
+          "node_types": [
+            "station"
+          ],
+          "numbering": {
+            "departure": [
+              {
+                "symbol": "T",
+                "number": "11"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "transport": {
+            "fare": {
+              "unit_0": 260,
+              "unit_128": 10570,
+              "unit_130": 30130,
+              "unit_133": 57080,
+              "unit_136": 5040,
+              "unit_138": 14370,
+              "unit_141": 27220,
+              "unit_144": 4030,
+              "unit_146": 11490,
+              "unit_149": 21770
+            },
+            "getoff": "前",
+            "color": "#FF4500",
+            "name": "京都市営東西線",
+            "fare_season": "normal",
+            "company": {
+              "id": "00000038",
+              "name": "京都市交通局"
+            },
+            "links": [
+              {
+                "id": "00000293",
+                "name": "京都市営東西線",
+                "direction": "up",
+                "destination": {
+                  "id": "00009091",
+                  "name": "六地蔵（奈良線・京都市営）"
+                },
+                "from": {
+                  "id": "00003032",
+                  "name": "三条京阪"
+                },
+                "to": {
+                  "id": "00003102",
+                  "name": "山科"
+                },
+                "is_timetable": "false"
+              }
+            ],
+            "id": "00000684",
+            "type": "普通",
+            "fare_break": {
+              "unit_0": true,
+              "unit_128": true,
+              "unit_130": true,
+              "unit_133": true,
+              "unit_136": true,
+              "unit_138": true,
+              "unit_141": true,
+              "unit_144": true,
+              "unit_146": true,
+              "unit_149": true
+            },
+            "fare_detail": [
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "0",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 260
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "128",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 10570
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "130",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 30130
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "133",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 57080
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "136",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 5040
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "138",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 14370
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "141",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 27220
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "144",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 4030
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "146",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 11490
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "149",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 21770
+              }
+            ]
+          },
+          "move": "local_train",
+          "from_time": "2025-12-16T21:11:00+09:00",
+          "to_time": "2025-12-16T21:19:00+09:00",
+          "time": 8,
+          "distance": 5100,
+          "line_name": "京都市営東西線"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.99211,
+            "lon": 135.816893
+          },
+          "name": "山科",
+          "node_id": "00003102",
+          "node_types": [
+            "station"
+          ],
+          "gateway": "1番口",
+          "numbering": {
+            "arrival": [
+              {
+                "symbol": "T",
+                "number": "07"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T21:19:00+09:00",
+          "to_time": "2025-12-16T21:39:00+09:00",
+          "time": 20,
+          "distance": 1309,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.001311,
+            "lon": 135.818806
+          },
+          "name": "goal"
+        }
+      ]
+    },
+    {
+      "summary": {
+        "no": "5",
+        "start": {
+          "type": "point",
+          "coord": {
+            "lat": 34.9858,
+            "lon": 135.7588
+          },
+          "name": "start"
+        },
+        "goal": {
+          "type": "point",
+          "coord": {
+            "lat": 35.001311,
+            "lon": 135.818806
+          },
+          "name": "goal"
+        },
+        "move": {
+          "transit_count": 1,
+          "walk_distance": 2642,
+          "fare": {
+            "unit_0": 440,
+            "unit_128_train": 16870,
+            "unit_130_train": 48090,
+            "unit_133_train": 91100
+          },
+          "type": "move",
+          "from_time": "2025-12-16T20:34:00+09:00",
+          "to_time": "2025-12-16T21:40:00+09:00",
+          "time": 66,
+          "distance": 10042,
+          "move_type": [
+            "local_train",
+            "rapid_train",
+            "walk"
+          ]
+        }
+      },
+      "sections": [
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.9858,
+            "lon": 135.7588
+          },
+          "name": "start"
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T20:34:00+09:00",
+          "to_time": "2025-12-16T20:55:00+09:00",
+          "time": 21,
+          "distance": 1333,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.98939,
+            "lon": 135.767696
+          },
+          "name": "七条",
+          "node_id": "00003376",
+          "node_types": [
+            "station"
+          ],
+          "gateway": "3番口",
+          "numbering": {
+            "departure": [
+              {
+                "symbol": "KH",
+                "number": "37"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "next_transit": true,
+          "transport": {
+            "fare": {
+              "unit_0": 180,
+              "unit_128": 6300,
+              "unit_130": 17960,
+              "unit_133": 34020,
+              "unit_136": 2030,
+              "unit_138": 5790,
+              "unit_141": 10970
+            },
+            "getoff": "前・中・後",
+            "color": "#005840",
+            "name": "京阪本線特急",
+            "fare_season": "normal",
+            "company": {
+              "id": "00000036",
+              "name": "京阪電気鉄道"
+            },
+            "links": [
+              {
+                "id": "00000285",
+                "name": "京阪本線",
+                "direction": "up",
+                "destination": {
+                  "id": "00003029",
+                  "name": "三条（京都府）"
+                },
+                "from": {
+                  "id": "00003376",
+                  "name": "七条"
+                },
+                "to": {
+                  "id": "00003029",
+                  "name": "三条（京都府）"
+                },
+                "is_timetable": "false"
+              }
+            ],
+            "id": "00000678",
+            "type": "快速",
+            "fare_break": {
+              "unit_0": true,
+              "unit_128": true,
+              "unit_130": true,
+              "unit_133": true,
+              "unit_136": true,
+              "unit_138": true,
+              "unit_141": true
+            },
+            "fare_detail": [
+              {
+                "start": {
+                  "name": "七条",
+                  "node_id": "00003376"
+                },
+                "id": "0",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 180
+              },
+              {
+                "start": {
+                  "name": "七条",
+                  "node_id": "00003376"
+                },
+                "id": "128",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 6300
+              },
+              {
+                "start": {
+                  "name": "七条",
+                  "node_id": "00003376"
+                },
+                "id": "130",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 17960
+              },
+              {
+                "start": {
+                  "name": "七条",
+                  "node_id": "00003376"
+                },
+                "id": "133",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 34020
+              },
+              {
+                "start": {
+                  "name": "七条",
+                  "node_id": "00003376"
+                },
+                "id": "136",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 2030
+              },
+              {
+                "start": {
+                  "name": "七条",
+                  "node_id": "00003376"
+                },
+                "id": "138",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 5790
+              },
+              {
+                "start": {
+                  "name": "七条",
+                  "node_id": "00003376"
+                },
+                "id": "141",
+                "goal": {
+                  "name": "三条（京都府）",
+                  "node_id": "00003029"
+                },
+                "fare": 10970
+              }
+            ]
+          },
+          "move": "rapid_train",
+          "from_time": "2025-12-16T21:00:00+09:00",
+          "to_time": "2025-12-16T21:04:00+09:00",
+          "time": 4,
+          "distance": 2300,
+          "line_name": "京阪本線特急"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.008737,
+            "lon": 135.772313
+          },
+          "name": "三条（京都府）",
+          "node_id": "00003029",
+          "node_types": [
+            "station"
+          ],
+          "numbering": {
+            "arrival": [
+              {
+                "symbol": "KH",
+                "number": "40"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T21:04:00+09:00",
+          "to_time": "2025-12-16T21:07:00+09:00",
+          "time": 3,
+          "distance": 0,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.009234,
+            "lon": 135.773906
+          },
+          "name": "三条京阪",
+          "node_id": "00003032",
+          "node_types": [
+            "station"
+          ],
+          "numbering": {
+            "departure": [
+              {
+                "symbol": "T",
+                "number": "11"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "transport": {
+            "fare": {
+              "unit_0": 260,
+              "unit_128": 10570,
+              "unit_130": 30130,
+              "unit_133": 57080,
+              "unit_136": 5040,
+              "unit_138": 14370,
+              "unit_141": 27220,
+              "unit_144": 4030,
+              "unit_146": 11490,
+              "unit_149": 21770
+            },
+            "getoff": "前",
+            "color": "#FF4500",
+            "name": "京都市営東西線",
+            "fare_season": "normal",
+            "company": {
+              "id": "00000038",
+              "name": "京都市交通局"
+            },
+            "links": [
+              {
+                "id": "00000293",
+                "name": "京都市営東西線",
+                "direction": "up",
+                "destination": {
+                  "id": "00009091",
+                  "name": "六地蔵（奈良線・京都市営）"
+                },
+                "from": {
+                  "id": "00003032",
+                  "name": "三条京阪"
+                },
+                "to": {
+                  "id": "00003102",
+                  "name": "山科"
+                },
+                "is_timetable": "false"
+              }
+            ],
+            "id": "00000684",
+            "type": "普通",
+            "fare_break": {
+              "unit_0": true,
+              "unit_128": true,
+              "unit_130": true,
+              "unit_133": true,
+              "unit_136": true,
+              "unit_138": true,
+              "unit_141": true,
+              "unit_144": true,
+              "unit_146": true,
+              "unit_149": true
+            },
+            "fare_detail": [
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "0",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 260
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "128",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 10570
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "130",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 30130
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "133",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 57080
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "136",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 5040
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "138",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 14370
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "141",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 27220
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "144",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 4030
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "146",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 11490
+              },
+              {
+                "start": {
+                  "name": "三条京阪",
+                  "node_id": "00003032"
+                },
+                "id": "149",
+                "goal": {
+                  "name": "山科",
+                  "node_id": "00003102"
+                },
+                "fare": 21770
+              }
+            ]
+          },
+          "move": "local_train",
+          "from_time": "2025-12-16T21:12:00+09:00",
+          "to_time": "2025-12-16T21:20:00+09:00",
+          "time": 8,
+          "distance": 5100,
+          "line_name": "京都市営東西線"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 34.99211,
+            "lon": 135.816893
+          },
+          "name": "山科",
+          "node_id": "00003102",
+          "node_types": [
+            "station"
+          ],
+          "gateway": "1番口",
+          "numbering": {
+            "arrival": [
+              {
+                "symbol": "T",
+                "number": "07"
+              }
+            ]
+          }
+        },
+        {
+          "type": "move",
+          "move": "walk",
+          "from_time": "2025-12-16T21:20:00+09:00",
+          "to_time": "2025-12-16T21:40:00+09:00",
+          "time": 20,
+          "distance": 1309,
+          "line_name": "徒歩"
+        },
+        {
+          "type": "point",
+          "coord": {
+            "lat": 35.001311,
+            "lon": 135.818806
+          },
+          "name": "goal"
+        }
+      ]
+    }
+  ],
+  "unit": {
+    "datum": "wgs84",
+    "coord_unit": "degree",
+    "distance": "metre",
+    "time": "minute",
+    "currency": "JPY"
+  }
+}

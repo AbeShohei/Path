@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
+  /* Use X-RAPIDAPI-KEY (hyphen or underscore) if available, otherwise fallback to NAVITIME_API_KEY */
+  const rapidApiKey = env['X-RAPIDAPI-KEY'] || env['X_RAPIDAPI_KEY'] || env['NAVITIME_API_KEY'] || '';
+
   return {
     server: {
       port: 3000,
@@ -15,7 +18,7 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: () => '/map_script?host=localhost',
           headers: {
-            'x-rapidapi-key': env['X-RAPIDAPI-KEY'] || '',
+            'x-rapidapi-key': rapidApiKey,
             'x-rapidapi-host': 'navitime-maps.p.rapidapi.com'
           }
         },
@@ -25,7 +28,7 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
           headers: {
-            'x-rapidapi-key': env['X-RAPIDAPI-KEY'] || '',
+            'x-rapidapi-key': rapidApiKey,
             'x-rapidapi-host': 'navitime-route-totalnavi.p.rapidapi.com'
           }
         },
@@ -35,7 +38,7 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
           headers: {
-            'x-rapidapi-key': env['X-RAPIDAPI-KEY'] || '',
+            'x-rapidapi-key': rapidApiKey,
             'x-rapidapi-host': 'navitime-route-totalnavi.p.rapidapi.com'
           }
         }

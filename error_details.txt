@@ -1,0 +1,5 @@
+DATE: 2025-12-16T08:11:46.700Z
+ERROR: Route API Error: 429 {"message":"You have exceeded the MONTHLY quota for Requests on your current plan, BASIC. Upgrade your plan at https:\/\/rapidapi.com\/navitimejapan-navitimejapan\/api\/navitime-route-totalnavi"}
+STACK: Error: Route API Error: 429 {"message":"You have exceeded the MONTHLY quota for Requests on your current plan, BASIC. Upgrade your plan at https:\/\/rapidapi.com\/navitimejapan-navitimejapan\/api\/navitime-route-totalnavi"}
+    at run (C:\Users\shoko\Documents\program\KyotoGuide\fetch-navitime-mock.cjs:50:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)

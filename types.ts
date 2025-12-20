@@ -17,12 +17,35 @@ export interface Spot {
   placeId?: string; // Google Place ID for photos
 }
 
+// Turn information for walking navigation
+export interface Turn {
+  location: { lat: number; lng: number };
+  direction: '右' | '左' | '直進' | 'Uターン';
+  angle: number;              // Angle in degrees (positive = right, negative = left)
+  distanceFromStart: number;  // Distance from segment start in meters
+  distanceToNext: number;     // Distance to next turn or end in meters
+  instruction?: string;       // e.g. "右に曲がる", "左折して直進"
+}
+
 export interface RouteSegment {
   type: 'WALK' | 'BUS' | 'TRAIN' | 'SUBWAY';
   text: string;     // e.g. "Walk to station", "Bus 205"
   duration: string; // e.g. "5 min"
+  durationMinutes?: number;  // Duration in minutes for calculations
   departureTime?: string; // e.g. "14:35", "Every 10 mins"
+  arrivalTime?: string;   // e.g. "14:50"
+  platform?: string;      // e.g. "Platform 3", "Bus Stop A"
+  direction?: string;     // e.g. "for Kokusai Kaikan" (bound_for/destination)
+  gateway?: string;       // e.g. "中央口" (station gate)
+  getoff?: string;        // e.g. "前" (exit position on train: front/back)
+  lineColor?: string;     // e.g. "#0072BC" (line color for display)
+  companyName?: string;   // e.g. "ＪＲ西日本"
+  trainType?: string;     // e.g. "普通", "快速"
+  stops?: string[];       // List of passed stations/stops
+  stopCount?: number;     // Number of stops
+  distance?: number;      // Distance in meters
   path?: { lat: number; lng: number }[]; // Segment-specific path for rendering
+  turns?: Turn[];         // Turn-by-turn directions for WALK segments
 }
 
 export interface RouteOption {

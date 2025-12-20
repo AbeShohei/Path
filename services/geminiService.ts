@@ -1,4 +1,4 @@
-import { RouteOption, TransportMode, TransitUpdate, RouteSegment } from "../types";
+import { RouteOption, TransportMode, TransitUpdate, RouteSegment, Spot } from "../types";
 
 // OpenRouter API Configuration
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
@@ -138,48 +138,236 @@ export const getTransitInfo = async (query: string): Promise<TransitUpdate | nul
 }
 
 // 3. Generate Guide Text (Walking or On-Board)
+// 3. Generate Guide Text (Walking or On-Board) - Migrated to Dify
 // Stage: TO_STOP, ON_BUS, ALIGHTING, TO_DEST
-export const generateGuideContent = async (context: string, stage?: string, durationSeconds: number = 30): Promise<string> => {
+// Migrated to Dify with Flattened Payload
+import { GuideContext, DifyGuidePayload, TriggerType } from './guideService';
+
+export const generateGuideContent = async (context: string, stage?: string, durationSeconds: number = 30, nearbySpots: Spot[] = []): Promise<string> => {
+    const API_KEY = import.meta.env.VITE_DIFY_API_KEY;
+    const API_URL = import.meta.env.VITE_DIFY_API_URL || 'https://api.dify.ai/v1';
+
+    // Fallback logic
+    const useFallback = (msg: string) => {
+        console.warn(`Dify API Fallback: ${msg}`);
+        if (stage === 'ON_BUS') return "現在、バスは定刻通り運行しております。車窓からの景色をお楽しみください。";
+        if (stage === 'TO_STOP') return "バス停へ向かっています。足元に注意して移動してください。";
+        if (stage === 'ALIGHTING') return "まもなく降車です。お忘れ物にご注意ください。";
+        return "目的地へ向かって案内を継続します。";
+    };
+
+    if (!API_KEY) return useFallback("No API Key");
+
+    // --- 1. Determine Trigger Type & Basic Info ---
+    let triggerType: TriggerType = 'TRANSIT_RIDING'; // Default
+    let navMode: DifyGuidePayload['user_mode'] = 'TRANSIT';
+
+    if (stage === 'ON_BUS') {
+        triggerType = 'TRANSIT_RIDING';
+        navMode = 'TRANSIT';
+    } else if (stage === 'ALIGHTING') {
+        triggerType = 'TRANSIT_ALIGHTING';
+        navMode = 'TRANSIT';
+    } else if (stage === 'TO_STOP' || stage === 'TO_DEST') {
+        triggerType = 'WALK_GUIDE';
+        navMode = 'WALK';
+    }
+
+    // --- 2. Parse Legacy Context String ---
+    // Context is often like "目的地: 毘沙門堂。ルート: ＪＲ琵琶湖線。" or "次は、京都駅。"
+    let cleanTargetName = context;
+    let cleanLineName = "公共交通機関";
+    let cleanDestination = "目的地";
+
+    // Simple heuristic parser
+    if (context.includes("目的地:")) {
+        const parts = context.split("。");
+        const destPart = parts.find(p => p.includes("目的地:")) || "";
+        cleanTargetName = destPart.replace("目的地:", "").trim();
+        cleanDestination = cleanTargetName;
+        // Try to extract route name if available
+        const routePart = parts.find(p => p.includes("ルート:"));
+        if (routePart) cleanLineName = routePart.replace("ルート:", "").trim();
+    } else if (context.includes("次は、")) {
+        const parts = context.split("。");
+        cleanTargetName = parts[0].replace("次は、", "").replace("です", "").trim();
+    }
+
+    // Fallback
+    if (!cleanTargetName || cleanTargetName.length > 20) {
+        cleanTargetName = "周辺スポット";
+    }
+
+    // Format nearby spots for Dify (Simplified JSON string)
+    // Only send essential data to save tokens and avoid complexity
+    const nearbySpotsData = nearbySpots.slice(0, 3).map(s => ({
+        name: s.name,
+        description: s.description ? s.description.substring(0, 50) : "", // Truncate description even more
+    }));
+
+    // --- 3. Construct Flattened Payload ---
+    const payloadData: DifyGuidePayload = {
+        trigger_type: triggerType,
+        user_mode: navMode,
+        // Functional Info
+        nav_line_name: navMode === 'TRANSIT' ? cleanLineName : undefined,
+        nav_bound_for: navMode === 'TRANSIT' ? cleanDestination : undefined,
+        nav_destination: cleanDestination,
+        nav_gateway: stage === 'ALIGHTING' ? '改札/出口' : undefined, // Placeholder if not real data
+        nav_getoff_door: stage === 'ALIGHTING' ? 'ドア' : undefined,
+
+        // Tourism Info
+        spot_name: cleanTargetName !== "周辺スポット" ? cleanTargetName : undefined,
+        spot_search_query: triggerType === 'TRANSIT_RIDING'
+            ? `${cleanLineName} 車窓 景色`
+            : `${cleanTargetName} 歴史 観光`,
+
+        nearby_spots_data: JSON.stringify(nearbySpotsData), // Send as string
+
+        // Error info (mock)
+        error_message: undefined
+    };
+
     try {
-        // Calculate target character count dynamically
-        // - Short (<30s): ~100 chars (Brief)
-        // - Medium (30-120s): ~300 chars (Standard)
-        // - Long (>120s): ~600+ chars (Detailed storytelling)
-        const charsPerSecond = 4;
-        const targetLength = Math.max(50, Math.min(durationSeconds * charsPerSecond, 800));
+        console.log("Sending Dify Payload (Discrete):", payloadData); // Debug log
 
-        // Refined System Instruction: Tourist Guide Persona
-        let systemInstruction = "あなたは京都に精通した「AI観光ガイド」です。ユーザーの移動中に、その場所の歴史、文化、風景の魅力を語ってください。車内アナウンスのような事務的な内容は最小限にし、車窓から見える景色や、その地域の知られざるエピソードを情緒豊かに解説してください。文章中にマークダウン記号(**等)は含めないでください。";
-        let prompt = "";
+        // Convert Payload to Discrete Inputs (All strings/numbers)
+        // Dify expects flat key-value pairs in 'inputs'
+        const inputs = {
+            trigger_type: payloadData.trigger_type,
+            user_mode: payloadData.user_mode || 'TRANSIT',
 
-        const timeInstruction = `この案内は${durationSeconds}秒程度の尺で読み上げられます。約${Math.floor(targetLength)}文字で構成してください。時間はたっぷりあるので、焦らず詳しく語ってください。`;
-        const shortTimeInstruction = `この案内は${durationSeconds}秒程度の尺です。約${Math.floor(targetLength)}文字で簡潔に要点を伝えてください。`;
+            nav_line_name: payloadData.nav_line_name || "",
+            nav_bound_for: payloadData.nav_bound_for || "",
+            nav_destination: payloadData.nav_destination || "",
+            nav_gateway: payloadData.nav_gateway || "",
+            nav_getoff_door: payloadData.nav_getoff_door || "",
 
-        if (stage === 'TO_STOP') {
-            prompt = `状況: ユーザーはバス停へ徒歩移動中。${context}。\nタスク: これから始まる旅への期待を高めるような、京都の街歩きの楽しみ方を軽く語ってください。\n制約: ${shortTimeInstruction}`;
-        } else if (stage === 'ON_BUS') {
-            // Focus on sightseeing history instead of transit info
-            prompt = `状況: 京都のバス/電車で移動中。所要時間は約${Math.floor(durationSeconds / 60)}分です。${context}。\nタスク: この路線の沿線にある寺社仏閣、通りの歴史、または京都の季節の風物詩について語ってください。単なる移動時間を「観光の時間」に変えるような、深みのある解説をお願いします。\n必須: 事務的な運行情報は含めないでください。専ら観光ガイドに徹してください。\n制約: ${timeInstruction}`;
-        } else if (stage === 'ALIGHTING') {
-            prompt = `状況: まもなく降車。${context}。\nタスク: 降車の準備を促しつつ、目的地エリアの雰囲気を伝えてください。\n制約: ${shortTimeInstruction}`;
-        } else if (stage === 'TO_DEST') {
-            prompt = `状況: 降車後、目的地へ徒歩移動中。${context}。\nタスク: 目的地の歴史的背景、見どころ、参拝のポイントを詳しく解説してください。到着するまでの間、ユーザーの気分を高揚させてください。\n制約: ${timeInstruction}`;
-        } else {
-            prompt = `状況: ${context}。\nタスク: 京都の魅力を伝えるガイドを行ってください。\n制約: ${targetLength}文字程度`;
+            spot_name: payloadData.spot_name || "",
+            spot_search_query: payloadData.spot_search_query || "",
+
+            nearby_spots_data: payloadData.nearby_spots_data || "[]", // New Input
+
+            error_message: payloadData.error_message || "",
+
+            // Control Output Length
+            // Speak until the next guide trigger (leaving small 15s buffer)
+            target_speaking_duration: String(Math.max(30, durationSeconds - 15))
+        };
+
+        const payload = {
+            inputs: inputs,
+            response_mode: "blocking",
+            user: "kyoto-guide-user-legacy"
+        };
+
+        const response = await fetch(`${API_URL}/workflows/run`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const responseText = await callOpenRouter([{ role: 'user', content: prompt }], systemInstruction);
+        const data = await response.json();
+        console.log("Dify Response Raw:", data); // Debug log
 
-        // Remove markdown asterisks for clean text display
-        return responseText.replace(/\*\*/g, "");
+        if (data.data.status !== 'succeeded') {
+            console.warn("Dify Workflow Status:", data.data.status, data.data.error);
+        }
+
+        const guideText = data.data.outputs?.text;
+
+        if (!guideText) return useFallback("Empty response from Dify");
+
+        // Remove markdown artifacts if any
+        return guideText.replace(/\*\*/g, "");
+
     } catch (e) {
-        console.warn("OpenRouter API Error (Guide Gen): Returning Mock Text.", e);
-        // Fallback texts
-        if (stage === 'ON_BUS') return "現在、バスは定刻通り運行しております。車内ではつり革や手すりにおつかまりください。次は目的地周辺です。";
-        if (stage === 'TO_STOP') return "バス停へ向かっています。足元に注意して移動してください。まもなくバスが到着します。";
-        return "現在、詳細なガイド情報を取得できませんが、目的地へ向かって案内を継続します。";
+        console.error("Dify Error:", e);
+        return useFallback(e instanceof Error ? e.message : 'Unknown error');
     }
 }
+
+
+// 4. Text-to-Speech (Browser Native)
+// Keep reference to active utterance to prevent garbage collection on mobile/Chrome
+// --- DIFY INTEGRATION (SIMULATION) ---
+
+export interface DifyTriggerContext {
+    trigger: 'GUIDE_DEPARTURE' | 'GUIDE_TRANSIT_HUB' | 'GUIDE_ON_BOARD' | 'GUIDE_ARRIVAL' | 'GUIDE_FINAL_LEG' | 'GUIDE_EXCEPTION';
+    expected_output_structure: {
+        traffic_content: string;
+        tourism_content: string;
+    };
+    user_state: {
+        current_location: { lat: number; lng: number };
+        transport_mode: TransportMode;
+        is_off_route?: boolean;
+    };
+    transit_context: {
+        line_name?: string;
+        bound_for?: string;
+        next_stop?: string;
+        stops_remaining?: number;
+        departure_time?: string;
+        platform_info?: string;
+        delay_status?: string;
+    };
+    tourism_context?: {
+        nearby_landmarks?: string[];
+        current_area_name?: string;
+    };
+}
+
+/**
+ * Simulates a Dify RAG trigger by logging the payload and returning split content.
+ */
+export const simulateDifyTrigger = async (context: DifyTriggerContext): Promise<{
+    traffic: string;
+    tourism: string;
+}> => {
+    console.group('🚀 [Dify RAG Simulation] Trigger Fired');
+    console.log(`Trigger Type: ${context.trigger}`);
+    console.log('📦 Context Payload:', JSON.stringify(context, null, 2));
+
+    console.log('🤖 [Dify] Simulating separated content generation...');
+    console.groupEnd();
+
+    // Mock response logic based on trigger type for testing UI
+    let traffic = "";
+    let tourism = "";
+
+    switch (context.trigger) {
+        case 'GUIDE_DEPARTURE':
+            traffic = `これより${context.transit_context.next_stop || '目的地'}まで徒歩移動します。`;
+            tourism = `このルートの途中には、${context.tourism_context?.nearby_landmarks?.[0] || '歴史的なスポット'}があります。`;
+            break;
+        case 'GUIDE_TRANSIT_HUB':
+            traffic = `${context.transit_context.line_name}、${context.transit_context.bound_for}行きは、${context.transit_context.platform_info}から発車します。`;
+            tourism = ""; // Usually empty for transit hubs as per design
+            break;
+        case 'GUIDE_ON_BOARD':
+            traffic = `次は${context.transit_context.next_stop}です。`;
+            tourism = `${context.transit_context.line_name}は、歴史ある路線です。車窓からの景色をご覧ください。`;
+            break;
+        case 'GUIDE_ARRIVAL':
+            traffic = `まもなく${context.transit_context.next_stop}です。降車準備をお願いします。`;
+            tourism = "";
+            break;
+        case 'GUIDE_FINAL_LEG':
+            traffic = `ここから目的地まで徒歩で向かいます。`;
+            tourism = `この参道は古くからの景観を残しています。石畳にご注目ください。`;
+            break;
+    }
+
+    return { traffic, tourism };
+};
 
 // 4. Text-to-Speech (Browser Native)
 // Keep reference to active utterance to prevent garbage collection on mobile/Chrome
@@ -229,3 +417,6 @@ export const playTextToSpeech = async (text: string): Promise<{ duration: number
         };
     }
 };
+
+// Update Mock Data to export functions if needed
+export { MOCK_ROUTES };
