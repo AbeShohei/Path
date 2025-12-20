@@ -4,7 +4,7 @@ import { getTransitInfo, generateGuideContent, playTextToSpeech, getRouteOptions
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
 import { getCongestionLevel, getCurrentTimeOfDay, TimeOfDay, getTimeOfDayLabel } from './services/humanFlowService';
 import { generateDifyContext, generatePromptContext } from './services/difyContextService';
-import { useSpotPhotos } from './hooks/useSpotPhotos';
+
 import { useLocationSimulator } from './hooks/useLocationSimulator';
 import { useGuideSystem } from './hooks/useGuideSystem';
 import { getDistance } from './services/guideService';
@@ -140,8 +140,7 @@ function App() {
     const [guideText, setGuideText] = useState("");
     const [transitInfo, setTransitInfo] = useState<TransitUpdate | null>(null);
 
-    // Spot Photos from Google Places API
-    const { spotPhotos, spotDetails, fetchPhotosForSpots } = useSpotPhotos();
+
 
     // Location Simulator for testing navigation
     const locationSimulator = useLocationSimulator();
@@ -200,9 +199,20 @@ function App() {
         });
     };
 
-    const handleSpotSelect = async (spot: Spot) => {
+    const handleSpotSelect = async (spot: Spot | null) => {
+        if (!spot) {
+            setSelectedSpot(null);
+            setFocusedSpotId(null);
+            setHideOtherPins(false); // Restore pins
+            return;
+        }
         setSelectedSpot(spot);
-        setSheetHeight(88); // Minimize sheet to show popup/pin clearly
+
+        // Only minimize sheet if NOT navigating (keep guide visible)
+        if (mode !== AppMode.NAVIGATING) {
+            setSheetHeight(88);
+        }
+
         // Use timestamp to ensure re-trigger even for same spot
         setFocusedSpotId(`${spot.id}-${Date.now()}`);
         // List selection does NOT hide other pins
@@ -219,23 +229,14 @@ function App() {
     };
 
     // Force sheet open when navigation starts
-    useEffect(() => {
-        if (mode === AppMode.NAVIGATING) {
-            setSheetHeight(Math.floor(window.innerHeight * 0.45));
-        }
-    }, [mode]);
+    // Force sheet open when navigation starts - DISABLED per user request
+    // useEffect(() => {
+    //     if (mode === AppMode.NAVIGATING) {
+    //         setSheetHeight(Math.floor(window.innerHeight * 0.45));
+    //     }
+    // }, [mode]);
 
-    // Fetch photos for spots when they load
-    // Memoize spot IDs to prevent unnecessary photo fetches
-    const spotIds = React.useMemo(() => spots.map(s => s.id).join(','), [spots]);
 
-    // Fetch photos for spots when they load (only when spot list changes)
-    useEffect(() => {
-        if (spots.length > 0) {
-            // console.log('Fetching photos for', spots.length, 'spots');
-            fetchPhotosForSpots(spots);
-        }
-    }, [spotIds, fetchPhotosForSpots]); // Depend on ID string, not array reference
 
     // useEffect(() => {
     //     console.log('Current SpotDetails:', spotDetails);
@@ -329,19 +330,15 @@ function App() {
         // Also filter out spots without category data (types)
         return currentSpots
             .filter(s => selectedCongestion.includes(s.congestionLevel))
-            .filter(s => {
-                // Hide spots without category (types) data
-                const types = spotDetails.get(s.name)?.types;
-                return types && types.length > 0;
-            })
+
             .filter(s => {
                 // Exclude spots with "案内" (information/guidance centers) in their name
                 return !s.name.includes('案内');
             })
             .sort((a, b) => {
                 // Primary: Has photo? (Photo first)
-                const aHasPhoto = !!(a.imageUrl || spotPhotos.get(a.name));
-                const bHasPhoto = !!(b.imageUrl || spotPhotos.get(b.name));
+                const aHasPhoto = !!(a.imageUrl);
+                const bHasPhoto = !!(b.imageUrl);
                 if (aHasPhoto !== bHasPhoto) {
                     return aHasPhoto ? -1 : 1;
                 }
@@ -352,7 +349,7 @@ function App() {
                 // Tertiary: distance (closer is better)
                 return getDistance(a) - getDistance(b);
             });
-    }, [mode, selectedRoute, spots, selectedSpot, selectedCongestion, coords, selectedTime, spotDetails, hideOtherPins]);
+    }, [mode, selectedRoute, spots, selectedSpot, selectedCongestion, coords, selectedTime, hideOtherPins]);
 
     // ルート検索を開始（InfoWindowの「ルートを見る」ボタンから呼ばれる）
     // ルート検索を開始（InfoWindowの「ルートを見る」ボタンから呼ばれる）
@@ -408,17 +405,21 @@ function App() {
         setMode(AppMode.NAVIGATING);
         setNavStage('TO_STOP');
         setFocusedSpotId(null); // Clear focus to help close InfoWindow
+        setSelectedSpot(null); // Auto-close popup on start (Feature Request)
         setStopsAway(5);
         setGuideText("");
         setTransitInfo(null);
         setAudioDuration(0);
+
         // Initialize timer with actual segment duration from route
         const firstSegmentDuration = selectedRoute?.segments?.[0]?.duration;
         const initialSeconds = parseDurationStr(firstSegmentDuration) || STAGE_DURATIONS['TO_STOP'] / 1000;
         setRemainingSeconds(initialSeconds);
         // Reset lyrics widget to readable size
         setLyricsHeight(180);
-        setSheetHeight(Math.floor(window.innerHeight * 0.45)); // Ensure sheet is open
+
+        // NOTE: setSheetHeight REMOVED per user request ("Don't minimize")
+
         showToast("ナビゲーションを開始します");
     };
 
@@ -757,8 +758,10 @@ function App() {
         setIsPlaying(false);
     };
 
-    // Sheet Drag Handlers for Nearby Spots - Free-form dragging
+    // Sheet Drag Handlers for Nearby Spots - Direct DOM Manipulation for Performance
     const handlePointerDown = (e: React.PointerEvent) => {
+        e.stopPropagation();
+        e.preventDefault(); // Prevent default touch behavior and map interaction
         setIsDragging(true);
         dragStartY.current = e.clientY;
         sheetStartHeight.current = sheetHeight;
@@ -767,27 +770,48 @@ function App() {
 
     const handlePointerMove = (e: React.PointerEvent) => {
         if (!isDragging) return;
+        e.stopPropagation(); // Also prevent move propagation
+
+        // Use requestAnimationFrame to prevent layout thrashing, 
+        // but for simple height updates, direct assignment is usually fine.
+        // We bypass React state (setSheetHeight) to avoid re-rendering the whole App tree 60fps.
+
         const deltaY = dragStartY.current - e.clientY; // positive = dragging up
         const newHeight = sheetStartHeight.current + deltaY;
 
         // Constraints: minimum 88px, maximum 90% of screen
         const minHeight = 88;
         const maxHeight = Math.floor(window.innerHeight * 0.9);
+        const clampedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
-        setSheetHeight(Math.max(minHeight, Math.min(maxHeight, newHeight)));
-    };
-
+        // Ensure DOM is in sync with the state we just set (React will update it, but good to be explicit)
+        sheetRef.current.style.height = `${clampedHeight}px`;
+    }
     const handlePointerUp = (e: React.PointerEvent) => {
         if (!isDragging) return;
-        setIsDragging(false);
+        e.stopPropagation();
+        e.preventDefault(); // Prevent click event from firing on map after drag
         (e.target as HTMLElement).releasePointerCapture(e.pointerId);
 
-        // Optional: snap to closest preset if near threshold
-        const screenHeight = window.innerHeight;
-        if (sheetHeight < 100) {
-            setSheetHeight(88); // Snap to minimized
-        } else if (sheetHeight > screenHeight * 0.85) {
-            setSheetHeight(Math.floor(screenHeight * 0.9)); // Snap to full
+        // Delay resetting isDragging to block subsequent click event from hitting the map (prevents "Tap" issue)
+        // Increased to 500ms to cover standard mobile 300ms tap delay
+        setTimeout(() => setIsDragging(false), 500);
+
+        if (sheetRef.current) {
+            const currentHeight = parseInt(sheetRef.current.style.height || '0', 10);
+
+            // Snap Logic
+            const screenHeight = window.innerHeight;
+            let finalHeight = currentHeight;
+
+            if (currentHeight < 150) {
+                finalHeight = 88;
+            } else if (currentHeight > screenHeight * 0.85) {
+                finalHeight = Math.floor(screenHeight * 0.9);
+            }
+
+            setSheetHeight(finalHeight);
+            sheetRef.current.style.height = `${finalHeight}px`;
         }
     };
 
@@ -940,16 +964,19 @@ function App() {
                                 : (coords || { latitude: 34.9858, longitude: 135.7588 });
                             return getDistance(cur, s.location) > 50;
                         })}
-                        onSelectSpot={handleRouteSearch}
+                        onSelectSpot={handleSpotSelect}
+                        onViewRoute={handleRouteSearch}
                         onPinClick={() => setSheetHeight(88)}
+
                         selectedSpotId={selectedSpot?.id}
                         focusedSpotId={focusedSpotId || undefined}
                         selectedRoute={selectedRoute}
                         routeOptions={routeOptions}
-                        spotPhotos={spotPhotos}
-                        spotDetails={spotDetails}
-                        isNavigating={mode === AppMode.NAVIGATING}
+                        isNavigating={mode === AppMode.NAVIGATING || mode === AppMode.ROUTE_SELECT}
+                        isSheetDragging={isDragging}
+                        disableSmartPan={mode === AppMode.NAVIGATING}
                     />
+
                 </div>
 
                 {/* LANDING MODE */}
@@ -1022,23 +1049,42 @@ function App() {
                                     <div className="flex -space-x-2"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg></div>
                                 </div>
                             </div>
-                            <div className="w-full h-1 bg-gradient-to-r from-blue-500 via-green-500 to-red-500 mt-2 rounded-full opacity-50"></div>
                         </div>
 
-                        {/* List Sheet - Now Draggable */}
+                        {/* Invisible overlay behind sheet to block map events when sheet is expanded */}
+                        {sheetHeight > 120 && (
+                            <div
+                                className="absolute inset-0 z-[10]"
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                            />
+                        )}
+
+                        {/* Draggable Sheet Container */}
                         <div
                             ref={sheetRef}
-                            className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-[32px] z-10 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col pointer-events-auto ${isDragging ? '' : 'transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)]'}`}
+                            className="absolute bottom-0 left-0 right-0 z-[20] bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col pointer-events-auto transition-[height] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] overflow-hidden"
                             style={{ height: `${sheetHeight}px` }}
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onTouchEnd={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
                         >
-                            {/* Drag Handle Area */}
+                            {/* Drag Handle */}
                             <div
-                                className="w-full pt-3 pb-1 flex justify-center shrink-0 cursor-grab active:cursor-grabbing hover:bg-gray-50 rounded-t-[32px] transition-colors touch-none"
+                                className="w-full flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing hover:bg-gray-50 transition-colors touch-none shrink-0"
                                 onPointerDown={handlePointerDown}
                                 onPointerMove={handlePointerMove}
                                 onPointerUp={handlePointerUp}
                                 onPointerCancel={handlePointerUp}
                                 onPointerLeave={handlePointerUp}
+                                onClickCapture={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onTouchStart={(e) => e.stopPropagation()}
                             >
                                 <div className="w-12 h-1.5 bg-gray-300 rounded-full opacity-50 pointer-events-none"></div>
                             </div>
@@ -1091,65 +1137,62 @@ function App() {
                                         <span className="text-sm">スポットを探しています...</span>
                                     </div>
                                 ) : visibleSpots.length > 0 ? (
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="flex flex-col gap-3">
                                         {visibleSpots.map((spot, index) => {
-                                            const photoUrl = spot.imageUrl || spotPhotos.get(spot.name);
-                                            const congestionColor = spot.congestionLevel === 5 ? 'bg-red-500' :
-                                                spot.congestionLevel === 4 ? 'bg-yellow-500' :
-                                                    spot.congestionLevel === 3 ? 'bg-green-500' :
-                                                        spot.congestionLevel === 2 ? 'bg-cyan-500' : 'bg-blue-500';
+                                            const photoUrl = spot.imageUrl;
+
+                                            // Congestion Label Text (Removed in favor of Icon)
+                                            // const congestionText = ...
 
                                             return (
-                                                <div key={index} className="relative aspect-square cursor-pointer rounded-lg overflow-hidden bg-gray-100 shadow-sm hover:shadow-md" onClick={() => handleSpotSelect(spot)}>
-                                                    {/* Background Image */}
-                                                    {photoUrl ? (
-                                                        <img
-                                                            src={photoUrl}
-                                                            alt={spot.name}
-                                                            className="w-full h-full object-cover"
-                                                            loading="lazy"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                                            <CameraIcon className="w-8 h-8 text-gray-400" />
+                                                <div
+                                                    key={index}
+                                                    className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-4 cursor-pointer hover:shadow-md transition-shadow animate-fade-in-up"
+                                                    style={{ animationDelay: `${index * 50}ms` }}
+                                                    onClick={() => handleSpotSelect(spot)}
+                                                >
+                                                    <div className="flex-1 flex flex-col gap-2 min-w-0"> {/* min-w-0 needed for text truncation to work in flex child */}
+                                                        {/* Header: Title and Congestion Icon */}
+                                                        <div className="flex justify-between items-start gap-3">
+                                                            <h3 className="font-bold text-gray-900 leading-tight text-lg truncate flex-1">{spot.name}</h3>
+                                                            <div className="shrink-0 pt-0.5">
+                                                                <CongestionLevelIcon level={spot.congestionLevel} />
+                                                            </div>
                                                         </div>
-                                                    )}
 
-                                                    {/* Top-Left: Congestion Icon */}
-                                                    <div className="absolute top-1 left-1" title={`混雑度: ${spot.congestionLevel}`}>
-                                                        <CongestionLevelIcon level={spot.congestionLevel} />
+                                                        {/* Description */}
+                                                        <p
+                                                            className="text-xs text-gray-600 leading-relaxed"
+                                                            style={{
+                                                                display: '-webkit-box',
+                                                                WebkitBoxOrient: 'vertical',
+                                                                WebkitLineClamp: 4,
+                                                                overflow: 'hidden'
+                                                            }}
+                                                        >
+                                                            {spot.description}
+                                                        </p>
+
+                                                        {/* Metadata Footer - Vertical Stack */}
+                                                        <div className="flex flex-col gap-1.5 mt-2">
+                                                            {/* Hours */}
+                                                            {spot.openingHours && (
+                                                                <div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden">
+                                                                    <svg className="shrink-0 w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                    </svg>
+                                                                    <span className="truncate">{spot.openingHours}</span>
+                                                                </div>
+                                                            )}
+                                                            {/* Price */}
+                                                            {spot.price && (
+                                                                <div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden">
+                                                                    <div className="shrink-0 w-3.5 h-3.5 flex items-center justify-center text-indigo-400 font-bold text-[10px] border border-indigo-200 rounded-full">¥</div>
+                                                                    <span className="truncate">{spot.price}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
-
-                                                    {/* Bottom-Right: Category Label */}
-                                                    {(() => {
-                                                        const types = spotDetails.get(spot.name)?.types;
-                                                        if (types && types.length > 0) {
-                                                            const typeMap: Record<string, string> = {
-                                                                'place_of_worship': '寺社', 'shrine': '神社', 'hindu_temple': '寺院', 'church': '教会',
-                                                                'park': '公園', 'garden': '庭園', 'museum': '鑑賞', 'art_gallery': '鑑賞',
-                                                                'restaurant': '食事', 'cafe': 'カフェ', 'food': '食事', 'store': '買物',
-                                                                'tourist_attraction': '名所',
-                                                                'point_of_interest': '観光スポット', 'gym': 'ジム', 'lodging': '宿泊', 'natural_feature': '自然'
-                                                            };
-                                                            // Find first valid label
-                                                            const label = types.map(t => typeMap[t]).find(l => l) || types[0];
-                                                            if (label) {
-                                                                return (
-                                                                    <div className="absolute bottom-1 right-1 text-white text-xs font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
-                                                                        {label}
-                                                                    </div>
-                                                                );
-                                                            }
-                                                        }
-                                                        return null;
-                                                    })()}
-
-                                                    {/* Gradient Overlay for Text Readability (Only if no image, or always?) 
-                                                        Actually user asked for "congestion top-left, category bottom-right". 
-                                                        If image fails, we show name. If image exists, name is NOT requested, but might be good? 
-                                                        User said: "congestion icon top-left, category bottom-right. No other info."
-                                                        So I will STRICTLY follow "No other info" and hide name if image exists.
-                                                    */}
                                                 </div>
                                             );
                                         })}
@@ -1163,8 +1206,7 @@ function App() {
                             </div>
                         </div>
                     </div>
-                )
-                }
+                )}
 
                 {/* ROUTE SELECT MODE - Overlay */}
                 {
@@ -1421,12 +1463,11 @@ function App() {
                                 )}
                             </div>
                         </div>
-                    )
-                }
+                    )}
 
                 {/* NAVIGATION MODE - Overlay */}
                 {
-                    mode === AppMode.NAVIGATING && selectedRoute && selectedSpot && (
+                    mode === AppMode.NAVIGATING && selectedRoute && (
                         <>
                             {/* Minimized Floating Icon (Top Right) */}
                             {isNavWidgetMinimized && (
@@ -1707,8 +1748,7 @@ function App() {
                                 </div>
                             )}
                         </>
-                    )
-                }
+                    )}
 
                 {/* DESTINATION MODE - Full Screen Overlay */}
                 {
@@ -1828,8 +1868,7 @@ function App() {
                                 </button>
                             </div>
                         </div>
-                    )
-                }
+                    )}
 
             </main >
         </div >

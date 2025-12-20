@@ -1,470 +1,475 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, PolylineF } from '@react-google-maps/api';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Spot, Coordinates, RouteOption } from '../types';
+
+// Fix for default marker icons in React-Leaflet
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 interface MapProps {
     center: Coordinates;
     spots: Spot[];
-    onSelectSpot: (spot: Spot) => void;
+    onSelectSpot: (spot: Spot | null) => void;
+    onViewRoute?: (spot: Spot) => void; // New prop for explicit route action
     onPinClick?: () => void;
+    onMapClick?: () => void;
     selectedSpotId?: string;
     focusedSpotId?: string;
     selectedRoute?: RouteOption | null;
     isNavigating?: boolean;
     routeOptions?: RouteOption[];
-    spotPhotos?: Map<string, string>; // Google Places API photos
-    spotDetails?: Map<string, { types?: string[] }>;
+    isNavWidgetMinimized?: boolean;
+    isSheetDragging?: boolean;
+    disableSmartPan?: boolean;
 }
 
-// Map container style
-const containerStyle = {
-    width: '100%',
-    height: '100%'
-};
+const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigating, lastFocusedSpotId, disableSmartPan, selectedRoute }: {
+    center: Coordinates,
+    selectedSpotId?: string,
+    focusedSpotId?: string,
+    spots: Spot[],
+    isNavigating?: boolean,
+    lastFocusedSpotId: React.MutableRefObject<string | undefined>,
+    disableSmartPan?: boolean,
+    selectedRoute?: RouteOption
+}) => {
+    const map = useMap();
+    const isNavigatingRef = useRef(isNavigating);
 
-// Default center (Kyoto Station)
-const defaultCenter = {
-    lat: 34.9858,
-    lng: 135.7588
-};
+    useEffect(() => {
+        isNavigatingRef.current = isNavigating;
+    }, [isNavigating]);
 
-// Map options
-const mapOptions = {
-    disableDefaultUI: false,
-    zoomControl: true,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false,
-    gestureHandling: 'greedy',
-    styles: [
-        {
-            featureType: "poi",
-            elementType: "labels",
-            stylers: [{ visibility: "off" }]
+    // NOTE: Removed "Initial Center" useEffect to prevent map from resetting to 'center' (user location)
+    // whenever the component re-renders or 'center' prop (reference) changes.
+    // MapContainer handles the initial view. User can manually recenter using the button.
+
+    // Handle Focus (Smart Pan)
+    useEffect(() => {
+        // Only run logic if the focusedSpotId has actually changed from the last time we processed it
+        if (focusedSpotId && focusedSpotId !== lastFocusedSpotId.current && !disableSmartPan) {
+            lastFocusedSpotId.current = focusedSpotId; // Update ref immediately
+
+            // Extract actual ID
+            const lastHyphenIndex = focusedSpotId.lastIndexOf('-');
+            const actualId = lastHyphenIndex > 0 ? focusedSpotId.substring(0, lastHyphenIndex) : focusedSpotId;
+            const spot = spots.find(s => s.id === actualId);
+
+            if (spot) {
+                // Smart Pan Logic
+                // We want the pin to be at the bottom ~1/4 of the screen (offset visually)
+                // Use the TARGET zoom level for calculation to ensure the pixel offset is correct after the flyTo animation
+                const targetZoom = 16;
+                const mapSize = map.getSize();
+                const targetLat = spot.location.latitude;
+                const targetLng = spot.location.longitude;
+
+                // Project the target lat/lng to pixels at the TARGET zoom
+                const point = map.project([targetLat, targetLng], targetZoom);
+
+                // Shift the CENTER point UP (negative Y) so the spot appears DOWN (positive Y) relative to center
+                // 0.25 places the pin at 75% height (bottom quadrant), leaving room for popup above it and sheet below it
+                const newCenterPoint = L.point(point.x, point.y - mapSize.y * 0.25);
+                const newCenterLatLng = map.unproject(newCenterPoint, targetZoom);
+
+                map.flyTo(newCenterLatLng, targetZoom, { duration: 1.0 });
+            }
         }
-    ]
+    }, [focusedSpotId, map, spots, lastFocusedSpotId]);
+
+    // Handle Route Selection - Fit bounds to show entire route
+    const lastRouteIdRef = useRef<string | undefined>(undefined);
+    useEffect(() => {
+        if (selectedRoute && selectedRoute.id !== lastRouteIdRef.current) {
+            lastRouteIdRef.current = selectedRoute.id;
+
+            // Collect all path points from all segments
+            const allPoints: [number, number][] = [];
+
+            if (selectedRoute.segments) {
+                selectedRoute.segments.forEach(seg => {
+                    if (seg.path) {
+                        seg.path.forEach(p => allPoints.push([p.lat, p.lng]));
+                    }
+                });
+            } else if (selectedRoute.path) {
+                selectedRoute.path.forEach((p: any) => allPoints.push([p.lat, p.lng]));
+            }
+
+            if (allPoints.length > 1) {
+                const bounds = L.latLngBounds(allPoints);
+                // Fit with padding to account for UI elements (sheet at bottom)
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+            }
+        }
+    }, [selectedRoute, map]);
+
+    return null;
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], spotPhotos, spotDetails, isNavigating }) => {
-    // Determine API Key from environment
-    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
-        (import.meta as any).env?.GOOGLE_MAPS_API_KEY ||
-        (typeof process !== 'undefined' && process.env ? process.env.GOOGLE_MAPS_API_KEY : '') || '';
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false }) => {
+    const [activeSpot, setActiveSpot] = useState<Spot | null>(null);
+    const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
 
-    if (!apiKey) {
-        console.error("Google Maps API Key is missing!");
-    }
+    // Lifted Ref for tracking focused spot to prevent redundant pans on re-renders/remounts
+    const lastFocusedSpotId = useRef<string | undefined>(undefined);
 
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: apiKey || '',
-    });
+    // Sync activeSpot with selectedSpotId for initial external selection
+    useEffect(() => {
+        if (selectedSpotId) {
+            const spot = spots.find(s => s.id === selectedSpotId);
+            setActiveSpot(prev => (prev?.id === spot?.id ? prev : (spot || null)));
+        } else {
+            setActiveSpot(null);
+        }
+    }, [selectedSpotId, spots]);
 
-    const [map, setMap] = useState<google.maps.Map | null>(null);
-    const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
-    // State-controlled map center (to avoid GoogleMap center prop resetting setCenter)
-    const [mapCenter, setMapCenter] = useState<{ lat: number, lng: number }>({ lat: center.latitude, lng: center.longitude });
+    // Programmatically open popup when activeSpot changes
+    useEffect(() => {
+        if (activeSpot && markerRefs.current[activeSpot.id]) {
+            markerRefs.current[activeSpot.id]?.openPopup();
+        }
+    }, [activeSpot]);
 
-    // Close InfoWindow when navigation starts
+    // Close popup when navigating
     useEffect(() => {
         if (isNavigating) {
-            setActiveMarkerId(null);
+            setActiveSpot(null);
+            Object.values(markerRefs.current).forEach(marker => marker?.closePopup());
         }
     }, [isNavigating]);
 
-    // Ref to track if initial pan to center has been performed
-    const hasPannedToInitialCenter = useRef(false);
-
-    // Initial Pan Logic: Pan to center ONLY once when map is loaded and center is available
-    useEffect(() => {
-        if (map && center && !hasPannedToInitialCenter.current) {
-            setMapCenter({ lat: center.latitude, lng: center.longitude });
-            map.setCenter({ lat: center.latitude, lng: center.longitude });
-            hasPannedToInitialCenter.current = true;
-        }
-    }, [center, map]);
-
-    // NOTE: Removed logic that auto-pans on center update to prevent hindering user navigation.
-    // Map will now ONLY move when:
-    // 1. Initial load
-    // 2. User clicks "Recenter" button
-    // 3. User selects a spot (focusedSpotId changes)
-
-    // Helper for Smart Panning (Instant Jump with Offset)
-    // Places the pin at center-bottom of the screen (so popup is visible above)
-    // Uses zoom-level based calculation (doesn't depend on getBounds which can be null)
-    const handleSmartPan = useCallback((location: Coordinates) => {
-        if (!map) return;
-
-        const zoom = map.getZoom() || 15;
-
-        // Calculate latitude offset based on zoom level
-        // Formula: At zoom Z, 1 pixel ≈ 360 / (256 * 2^Z) degrees at equator
-        // Adjusted for latitude using cosine correction
-        const pixelOffset = 120; // pixels to offset (move pin toward bottom)
-        const worldPxPerDegree = (256 * Math.pow(2, zoom)) / 360;
-        const latRadians = location.latitude * Math.PI / 180;
-        const latOffsetDegrees = pixelOffset / worldPxPerDegree / Math.cos(latRadians);
-
-        // Shift center north to move spot south (toward bottom of screen)
-        const newCenterLat = location.latitude + latOffsetDegrees;
-        const newCenter = { lat: newCenterLat, lng: location.longitude };
-
-        // Update both the state (for GoogleMap prop) and direct API call
-        setMapCenter(newCenter);
-        map.setCenter(newCenter);
-    }, [map]);
-
-    // Handle focused spot (panning and opening popup) - from list selection
-    useEffect(() => {
-        if (map && focusedSpotId) {
-            // Extract actual ID (format: "spotId-timestamp")
-            const lastHyphenIndex = focusedSpotId.lastIndexOf('-');
-            const actualId = lastHyphenIndex > 0 ? focusedSpotId.substring(0, lastHyphenIndex) : focusedSpotId;
-
-            const spot = spots.find(s => s.id === actualId);
-            if (spot) {
-                // Pan with offset (instant jump) using smart logic
-                handleSmartPan(spot.location);
-                setActiveMarkerId(actualId);
-            }
-        }
-    }, [focusedSpotId, map, spots, handleSmartPan]);
-
-    const onLoad = useCallback((mapInstance: google.maps.Map) => {
-        setMap(mapInstance);
-    }, []);
-
-    const onUnmount = useCallback(() => {
-        setMap(null);
-    }, []);
-
-    // Helper to create SVG icon
-    const getMarkerIcon = (spot: Spot, isSelected: boolean) => {
-        const congestionColors = ['#3b82f6', '#06b6d4', '#22c55e', '#eab308', '#ef4444'];
-        const baseColor = congestionColors[spot.congestionLevel - 1] || '#3b82f6';
-        const color = baseColor; // Always use the congestion color
-        const scale = isSelected ? 1.4 : 1.0;
-
-        // Determine icon path based on genre
-        let iconPath = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"; // Default Pin
-        let innerIcon = ""; // Optional inner symbol
-
-        if (spotDetails && spotDetails.get(spot.name)?.types) {
-            const types = spotDetails.get(spot.name)!.types!;
-
-            if (types.includes('restaurant') || types.includes('cafe') || types.includes('food')) {
-                // Food: Knife & Fork (Restaurant)
-                innerIcon = "M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z";
-            } else if (types.includes('store') || types.includes('shopping_mall') || types.includes('clothing_store')) {
-                // Shopping: Bag
-                innerIcon = "M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z";
-            } else {
-                // All Others: Camera (Default for any spot with types)
-                innerIcon = "M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm8-9h-3.17L15 3H9L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 14H4V7h4.05l1.83-2h4.24l1.83 2H20v12z";
-            }
-        }
-        // We use a pin shape with an optional inner icon or a simple circle
-        const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${44 * scale}" height="${44 * scale}">
-          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.4)" />
-          </filter>
-          <g filter="url(#shadow)">
-            <path d="${iconPath}" fill="${color}" stroke="white" stroke-width="1.5" />
-            ${innerIcon ? `<path d="${innerIcon}" fill="white" transform="translate(7.8, 4.8) scale(0.35)" />` : `<circle cx="12" cy="9" r="3" fill="white" />`}
-          </g>
-        </svg>
-        `;
-
-        return {
-            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-            scaledSize: new google.maps.Size(44 * scale, 44 * scale),
-            anchor: new google.maps.Point(22 * scale, 44 * scale), // Bottom center
-        };
-    };
-
-    if (!isLoaded) {
-        return <div className="w-full h-full bg-gray-200 flex items-center justify-center">Loading Maps...</div>;
-    }
-
-    // Current Location Icon
-    const currentLocationIcon = {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 8,
-        fillColor: "#2563eb",
-        fillOpacity: 1,
-        strokeColor: "white",
-        strokeWeight: 2,
-    };
-
-    return (
-        <GoogleMap
-            mapContainerStyle={containerStyle}
-            center={mapCenter}
-            zoom={15}
-            onLoad={onLoad}
-            onUnmount={onUnmount}
-            options={mapOptions}
-            onClick={() => setActiveMarkerId(null)} // Close info window when clicking map
-        >
-            {/* Recenter Button - Always visible */}
+    // Recenter Helper
+    const RecenterButton = () => {
+        const map = useMap();
+        return (
             <button
                 onClick={() => {
-                    // Pan to current location
-                    const newCenter = { lat: center.latitude, lng: center.longitude };
-                    setMapCenter(newCenter);
-                    map?.setCenter(newCenter);
+                    map.flyTo([center.latitude, center.longitude], 15);
                 }}
-                className="absolute top-24 right-4 z-40 bg-white p-3 rounded-full shadow-lg text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
+                className="absolute top-[80px] right-4 z-[400] bg-white p-3 rounded-full shadow-lg text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
                 title="現在地に戻る"
+                onMouseDown={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => e.stopPropagation()}
             >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
                 </svg>
             </button>
-            {/* Current Location Marker (Approximate visual) */}
-            <MarkerF
-                position={{ lat: center.latitude, lng: center.longitude }}
-                icon={currentLocationIcon}
-                zIndex={100}
-                title="現在地"
+        );
+    };
+
+    // Congestion Icon Component (Internal to Map for self-containment)
+    const CongestionLevelIcon = ({ level, className = "" }: { level: number, className?: string }) => {
+        const commonClasses = `flex items-center justify-center text-white text-[10px] shadow-sm rounded ${className}`;
+        const PersonIcon = () => <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>;
+
+        if (level === 5) {
+            return (
+                <div className={`${commonClasses} bg-red-500 w-6 h-6`}>
+                    <div className="flex -space-x-2">
+                        <PersonIcon /><PersonIcon /><PersonIcon /><PersonIcon />
+                    </div>
+                </div>
+            );
+        }
+        if (level === 4) {
+            return (
+                <div className={`${commonClasses} bg-yellow-500 w-6 h-6`}>
+                    <div className="flex -space-x-2">
+                        <PersonIcon /><PersonIcon /><PersonIcon />
+                    </div>
+                </div>
+            );
+        }
+        if (level === 3) {
+            return (
+                <div className={`${commonClasses} bg-green-500 w-6 h-6`}>
+                    <div className="flex -space-x-2">
+                        <PersonIcon /><PersonIcon />
+                    </div>
+                </div>
+            );
+        }
+        if (level === 2) {
+            return (
+                <div className={`${commonClasses} bg-cyan-500 w-6 h-6`}>
+                    <div className="flex -space-x-1">
+                        <PersonIcon />
+                    </div>
+                </div>
+            );
+        }
+        // Level 1
+        return (
+            <div className={`${commonClasses} bg-blue-500 w-6 h-6`}>
+                <PersonIcon />
+            </div>
+        );
+    };
+
+    // Custom Marker Icon Generator
+    const createCustomIcon = (spot: Spot, isSelected: boolean) => {
+        const congestionColors = ['#3b82f6', '#06b6d4', '#22c55e', '#eab308', '#ef4444'];
+        const baseColor = congestionColors[spot.congestionLevel - 1] || '#3b82f6';
+        const color = baseColor;
+        const scale = isSelected ? 1.4 : 1.0;
+        const size = 44 * scale;
+
+        const iconPath = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z";
+
+        const svgHtml = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));">
+            <path d="${iconPath}" fill="${color}" stroke="white" stroke-width="1.5" />
+            <circle cx="12" cy="9" r="3" fill="white" />
+        </svg>
+        `;
+
+        return L.divIcon({
+            html: svgHtml,
+            className: 'custom-marker-icon',
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size],
+            popupAnchor: [0, -size]
+        });
+    };
+
+    // Current Location Icon
+    const currentLocationIcon = L.divIcon({
+        html: `<div style="width: 16px; height: 16px; background-color: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);"></div>`,
+        className: 'current-location-icon',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+    });
+
+    // Click Handler for Background
+    const MapClickHandler = () => {
+        useMapEvents({
+            click: (e) => {
+                setActiveSpot(null);
+                Object.values(markerRefs.current).forEach(marker => marker?.closePopup());
+                if (onMapClick) onMapClick();
+                onSelectSpot(null); // Also clear parent state
+            }
+        });
+        return null;
+    };
+
+    return (
+        <MapContainer
+            center={[center.latitude, center.longitude]}
+            zoom={15}
+            style={{ width: '100%', height: '100%', pointerEvents: isSheetDragging ? 'none' : 'auto' }}
+            zoomControl={false}
+        >
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {/* Spot Markers */}
+            <MapClickHandler />
+
+            <MapController
+                center={center}
+                selectedSpotId={selectedSpotId}
+                focusedSpotId={focusedSpotId}
+                spots={spots}
+                isNavigating={isNavigating}
+                lastFocusedSpotId={lastFocusedSpotId}
+                disableSmartPan={disableSmartPan}
+                selectedRoute={selectedRoute}
+            />
+
+            <RecenterButton />
+
+            {/* Current Location */}
+            <Marker position={[center.latitude, center.longitude]} icon={currentLocationIcon} />
+
+            {/* Spots */}
             {spots.map(spot => (
-                <MarkerF
+                <Marker
                     key={spot.id}
-                    position={{ lat: spot.location.latitude, lng: spot.location.longitude }}
-                    icon={getMarkerIcon(spot, activeMarkerId === spot.id)}
-                    onClick={() => {
-                        setActiveMarkerId(spot.id);
-                        if (onPinClick) onPinClick();
-                        handleSmartPan(spot.location);
+                    position={[spot.location.latitude, spot.location.longitude]}
+                    icon={createCustomIcon(spot, activeSpot?.id === spot.id)}
+                    ref={(ref) => {
+                        if (ref) {
+                            markerRefs.current[spot.id] = ref;
+                        } else {
+                            delete markerRefs.current[spot.id];
+                        }
                     }}
-                />
-            ))}
-
-            {/* Single InfoWindow - Rendered OUTSIDE of MarkerF to prevent duplicates */}
-            {activeMarkerId && (() => {
-                const spot = spots.find(s => s.id === activeMarkerId);
-                if (!spot) return null;
-                return (
-                    <InfoWindowF
-                        position={{ lat: spot.location.latitude, lng: spot.location.longitude }}
-                        onCloseClick={() => setActiveMarkerId(null)}
-                        options={{
-                            pixelOffset: new google.maps.Size(0, -40),
-                            disableAutoPan: false, // Auto-pan to keep window in view
-                            maxWidth: 340 // Allow slightly wider
-                        }}
+                    eventHandlers={{
+                        click: () => {
+                            setActiveSpot(spot);
+                            onSelectSpot(spot);
+                            if (onPinClick) onPinClick();
+                        }
+                    }}
+                >
+                    <Popup
+                        closeButton={false}
+                        className="custom-popup"
+                        maxWidth={280}
+                        minWidth={180}
+                        autoPan={false}
                     >
-                        <div style={{
-                            width: 'auto',
-                            minWidth: '200px',
-                            maxWidth: '90vw', // Utilize viewport width to ensure margins
-                            fontFamily: 'sans-serif',
-                            overflow: 'hidden',
-                            borderRadius: '12px',
-                            background: 'white'
-                        }}>
-                            {/* Image with close button overlay */}
-                            {(() => {
-                                const photoUrl = spot.imageUrl || spotPhotos?.get(spot.name);
-                                return (
-                                    <div style={{ position: 'relative', width: '100%', height: photoUrl ? '140px' : '0px', overflow: 'hidden' }}>
-                                        {photoUrl && (
-                                            <img
-                                                src={photoUrl}
-                                                alt={spot.name}
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                            />
-                                        )}
-                                    </div>
-                                );
-                            })()}
-
-                            {/* Close button - Always visible */}
+                        <div className="w-full relative bg-white rounded-xl overflow-hidden font-sans">
+                            {/* Close Button */}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setActiveMarkerId(null);
+                                    setActiveSpot(null);
+                                    onSelectSpot(null);
+                                    markerRefs.current[spot.id]?.closePopup();
                                 }}
-                                style={{
-                                    position: 'absolute',
-                                    top: '10px',
-                                    right: '10px',
-                                    width: '30px',
-                                    height: '30px',
-                                    borderRadius: '50%',
-                                    background: 'rgba(255,255,255,0.95)',
-                                    backdropFilter: 'blur(8px)',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    boxShadow: '0 2px 10px rgba(0,0,0,0.25)',
-                                    zIndex: 20 // Ensure z-index is high enough
-                                }}
+                                className="absolute top-1 right-1 z-20 w-6 h-6 rounded-full bg-white/90 backdrop-blur-sm border-0 shadow-sm flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
+                                type="button"
                             >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5" strokeLinecap="round">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5" strokeLinecap="round">
                                     <line x1="18" y1="6" x2="6" y2="18" />
                                     <line x1="6" y1="6" x2="18" y2="18" />
                                 </svg>
                             </button>
 
-                            {/* Content */}
-                            <div style={{ padding: '12px' }}>
-                                <div className="font-bold text-base mb-1 text-gray-800">{spot.name}</div>
-                                <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white mb-2`}
-                                    style={{
-                                        backgroundColor: spot.congestionLevel === 5 ? '#ef4444' :
-                                            spot.congestionLevel === 4 ? '#eab308' :
-                                                spot.congestionLevel === 3 ? '#22c55e' :
-                                                    spot.congestionLevel === 2 ? '#06b6d4' : '#3b82f6'
-                                    }}>
-                                    {['快適', 'やや快適', '通常', 'やや混雑', '混雑'][spot.congestionLevel - 1]}
+                            {/* Content matching Spot Card Layout - Compact/Tight Version */}
+                            <div className="p-3 font-sans bg-white">
+                                {/* Header: Congestion Icon AND Title - Icon First as requested */}
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <div className="shrink-0">
+                                        <CongestionLevelIcon level={spot.congestionLevel} />
+                                    </div>
+                                    <h3 className="font-bold text-gray-900 leading-tight text-[16px] truncate flex-1">{spot.name}</h3>
                                 </div>
-                                {spotDetails?.get(spot.name)?.types && spotDetails.get(spot.name)!.types!.length > 0 && (
-                                    <div className="flex gap-1 mb-2 flex-wrap">
-                                        {spotDetails.get(spot.name)!.types!.slice(0, 3).map((type, idx) => {
-                                            // 簡易的な翻訳マップ
-                                            const typeMap: Record<string, string> = {
-                                                'place_of_worship': '寺社仏閣', 'shrine': '神社', 'hindu_temple': '寺院', 'church': '教会',
-                                                'park': '公園', 'garden': '庭園', 'museum': '博物館', 'art_gallery': '美術館',
-                                                'restaurant': '飲食店', 'cafe': 'カフェ', 'food': '飲食店', 'store': 'お店',
-                                                'tourist_attraction': '観光名所'
-                                                // 'point_of_interest': 'スポット' // Excluded
-                                            };
-                                            const label = typeMap[type] || null;
-                                            return label ? (
-                                                <span key={idx} className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
-                                                    {label}
-                                                </span>
-                                            ) : null;
-                                        })}
-                                    </div>
-                                )}
-                                {spot.description && <div className="text-xs text-gray-600 mb-2 leading-snug line-clamp-2">{spot.description}</div>}
 
-                                {spot.openingHours && (
-                                    <div className="flex items-start gap-1.5 text-xs text-gray-500 mb-1">
-                                        <svg className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                                            <polyline points="12 6 12 12 16 14" strokeWidth="2" />
-                                        </svg>
-                                        <span className="leading-snug line-clamp-1">{spot.openingHours}</span>
-                                    </div>
-                                )}
+                                {/* Description */}
+                                <p
+                                    className="text-xs text-gray-600 leading-relaxed mb-2"
+                                    style={{
+                                        display: '-webkit-box',
+                                        WebkitBoxOrient: 'vertical',
+                                        WebkitLineClamp: 3,
+                                        overflow: 'hidden'
+                                    }}
+                                >
+                                    {spot.description}
+                                </p>
 
-                                {spot.price && (
-                                    <div className="flex items-start gap-1.5 text-xs text-gray-500 mb-2">
-                                        <svg className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <line x1="12" y1="1" x2="12" y2="23" strokeWidth="2" />
-                                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" strokeWidth="2" />
-                                        </svg>
-                                        <span className="leading-snug line-clamp-1">{spot.price}</span>
-                                    </div>
-                                )}
+                                {/* Metadata Footer - Vertical Stack - Compact */}
+                                <div className="flex flex-col gap-1.5">
+                                    {/* Hours */}
+                                    {spot.openingHours && (
+                                        <div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden">
+                                            <svg className="shrink-0 w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span className="truncate">{spot.openingHours}</span>
+                                        </div>
+                                    )}
+                                    {/* Price */}
+                                    {spot.price && (
+                                        <div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden">
+                                            <div className="shrink-0 w-3.5 h-3.5 flex items-center justify-center text-indigo-400 font-bold text-[10px] border border-indigo-200 rounded-full">¥</div>
+                                            <span className="truncate">{spot.price}</span>
+                                        </div>
+                                    )}
+                                </div>
+
                                 <button
-                                    onClick={() => onSelectSpot(spot)}
-                                    className="w-full mt-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 py-2 rounded shadow text-xs font-bold cursor-pointer transition-transform active:scale-95"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (onViewRoute) onViewRoute(spot);
+                                    }}
+                                    className="w-full mt-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-2 rounded shadow text-xs font-bold hover:opacity-90 transition-opacity"
                                 >
                                     ルートを見る
                                 </button>
                             </div>
                         </div>
-                    </InfoWindowF>
-                );
-            })()}
+                    </Popup>
+                </Marker >
+            ))}
 
-            {/* Route Polylines */}
-            {selectedRoute && (selectedRoute.segments ? (
-                selectedRoute.segments.map((seg, i) => {
-                    if (!seg.path || seg.path.length === 0) return null;
-                    const path = seg.path.map((p: any) => ({ lat: p.lat, lng: p.lng }));
+            {/* Routes */}
+            {
+                selectedRoute && (selectedRoute.segments ? (
+                    selectedRoute.segments.map((seg, i) => {
+                        if (!seg.path || seg.path.length === 0) return null;
+                        const path = seg.path.map((p: any) => [p.lat, p.lng] as [number, number]);
 
-                    const isWalk = seg.type === 'WALK';
-                    const googleBlue = '#4285F4';
+                        const isWalk = seg.type === 'WALK';
 
-                    if (isWalk) {
-                        // Walking: Blue dots
-                        return (
-                            <PolylineF
-                                key={i}
-                                path={path}
-                                options={{
-                                    strokeColor: 'transparent', // Invisible main line
-                                    strokeOpacity: 0,
-                                    icons: [{
-                                        icon: {
-                                            path: google.maps.SymbolPath.CIRCLE,
-                                            scale: 3, // Smaller dots
-                                            fillOpacity: 1,
-                                            fillColor: googleBlue,
-                                            strokeOpacity: 0
-                                        },
-                                        offset: '0',
-                                        repeat: '10px' // Closer spacing
-                                    }]
-                                }}
-                            />
-                        );
-                    } else {
-                        // Transit/Drive: Solid Blue with White Border
-                        return (
-                            <React.Fragment key={i}>
-                                {/* Border Line (White, wider) */}
-                                <PolylineF
-                                    path={path}
-                                    options={{
-                                        strokeColor: 'white',
-                                        strokeOpacity: 1.0,
-                                        strokeWeight: 11,
-                                        zIndex: 10
+                        if (isWalk) {
+                            return (
+                                <Polyline
+                                    key={i}
+                                    positions={path}
+                                    pathOptions={{
+                                        color: '#4285F4',
+                                        weight: 5,
+                                        dashArray: '1, 10', // Dots
+                                        lineCap: 'round',
+                                        opacity: 0.8
                                     }}
                                 />
-                                {/* Main Line (Blue, on top) */}
-                                <PolylineF
-                                    path={path}
-                                    options={{
-                                        strokeColor: googleBlue,
-                                        strokeOpacity: 1.0,
-                                        strokeWeight: 8,
-                                        zIndex: 11
-                                    }}
-                                />
-                            </React.Fragment>
-                        );
-                    }
-                })
-            ) : selectedRoute.path ? (
-                <React.Fragment>
-                    {/* Border */}
-                    <PolylineF
-                        path={selectedRoute.path.map((p: any) => ({ lat: p.lat, lng: p.lng }))}
-                        options={{
-                            strokeColor: 'white',
-                            strokeOpacity: 1.0,
-                            strokeWeight: 11,
-                            zIndex: 10
-                        }}
-                    />
-                    {/* Main */}
-                    <PolylineF
-                        path={selectedRoute.path.map((p: any) => ({ lat: p.lat, lng: p.lng }))}
-                        options={{
-                            strokeColor: '#4285F4', // Google Blue
-                            strokeOpacity: 1.0,
-                            strokeWeight: 8,
-                            zIndex: 11
-                        }}
-                    />
-                </React.Fragment>
-            ) : null)}
+                            );
+                        } else {
+                            return (
+                                <React.Fragment key={i}>
+                                    {/* Border */}
+                                    <Polyline
+                                        positions={path}
+                                        pathOptions={{
+                                            color: 'white',
+                                            weight: 11,
+                                            opacity: 1.0
+                                        }}
+                                    />
+                                    {/* Main */}
+                                    <Polyline
+                                        positions={path}
+                                        pathOptions={{
+                                            color: '#4285F4',
+                                            weight: 8,
+                                            opacity: 1.0
+                                        }}
+                                    />
+                                </React.Fragment>
+                            );
+                        }
+                    })
+                ) : selectedRoute.path ? (
+                    <React.Fragment>
+                        <Polyline
+                            positions={selectedRoute.path.map((p: any) => [p.lat, p.lng] as [number, number])}
+                            pathOptions={{
+                                color: 'white',
+                                weight: 11,
+                                opacity: 1.0
+                            }}
+                        />
+                        <Polyline
+                            positions={selectedRoute.path.map((p: any) => [p.lat, p.lng] as [number, number])}
+                            pathOptions={{
+                                color: '#4285F4',
+                                weight: 8,
+                                opacity: 1.0
+                            }}
+                        />
+                    </React.Fragment>
+                ) : null)
+            }
 
-        </GoogleMap>
+        </MapContainer >
     );
 };
 

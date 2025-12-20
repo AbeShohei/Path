@@ -45,11 +45,10 @@ export default defineConfig(({ mode }) => {
       }
     },
     plugins: [react()],
-    envPrefix: ['VITE_', 'GOOGLE_MAPS_API_KEY'], // Allow accessing GOOGLE_MAPS_API_KEY via import.meta.env
+    envPrefix: ['VITE_'], // Allow accessing VITE_ prefixed envs
     define: {
       'process.env.API_KEY': JSON.stringify(env.OPENROUTER_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GOOGLE_MAPS_API_KEY': JSON.stringify(env.GOOGLE_MAPS_API_KEY),
       'process.env.OPENROUTER_API_KEY': JSON.stringify(env.OPENROUTER_API_KEY),
       'process.env.NAVITIME_API_KEY': JSON.stringify(env.NAVITIME_API_KEY)
     },
