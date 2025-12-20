@@ -143,7 +143,7 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
     const getMarkerIcon = (spot: Spot, isSelected: boolean) => {
         const congestionColors = ['#3b82f6', '#06b6d4', '#22c55e', '#eab308', '#ef4444'];
         const baseColor = congestionColors[spot.congestionLevel - 1] || '#3b82f6';
-        const color = isSelected ? '#4f46e5' : baseColor;
+        const color = baseColor; // Always use the congestion color
         const scale = isSelected ? 1.4 : 1.0;
 
         // Determine icon path based on genre
@@ -280,38 +280,39 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                             />
                                         )}
-                                        {/* Close button - positioned with padding from edge */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setActiveMarkerId(null);
-                                            }}
-                                            style={{
-                                                position: 'absolute',
-                                                top: '10px',
-                                                right: '10px',
-                                                width: '30px',
-                                                height: '30px',
-                                                borderRadius: '50%',
-                                                background: 'rgba(255,255,255,0.95)',
-                                                backdropFilter: 'blur(8px)',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                boxShadow: '0 2px 10px rgba(0,0,0,0.25)',
-                                                zIndex: 10
-                                            }}
-                                        >
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5" strokeLinecap="round">
-                                                <line x1="18" y1="6" x2="6" y2="18" />
-                                                <line x1="6" y1="6" x2="18" y2="18" />
-                                            </svg>
-                                        </button>
                                     </div>
                                 );
                             })()}
+
+                            {/* Close button - Always visible */}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMarkerId(null);
+                                }}
+                                style={{
+                                    position: 'absolute',
+                                    top: '10px',
+                                    right: '10px',
+                                    width: '30px',
+                                    height: '30px',
+                                    borderRadius: '50%',
+                                    background: 'rgba(255,255,255,0.95)',
+                                    backdropFilter: 'blur(8px)',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 10px rgba(0,0,0,0.25)',
+                                    zIndex: 20 // Ensure z-index is high enough
+                                }}
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5" strokeLinecap="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
 
                             {/* Content */}
                             <div style={{ padding: '12px' }}>
@@ -385,33 +386,82 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onPinClick, sele
                     const path = seg.path.map((p: any) => ({ lat: p.lat, lng: p.lng }));
 
                     const isWalk = seg.type === 'WALK';
+                    const googleBlue = '#4285F4';
 
-                    return (
-                        <PolylineF
-                            key={i}
-                            path={path}
-                            options={{
-                                strokeColor: isWalk ? '#ea580c' : '#0097a7', // Darker Orange (600) or Darker Cyan (700)
-                                strokeOpacity: 1.0,
-                                strokeWeight: isWalk ? 6 : 8,
-                                icons: isWalk ? [{
-                                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 2, fillOpacity: 1, fillColor: '#ea580c' },
-                                    offset: '0',
-                                    repeat: '10px'
-                                }] : undefined
-                            }}
-                        />
-                    );
+                    if (isWalk) {
+                        // Walking: Blue dots
+                        return (
+                            <PolylineF
+                                key={i}
+                                path={path}
+                                options={{
+                                    strokeColor: 'transparent', // Invisible main line
+                                    strokeOpacity: 0,
+                                    icons: [{
+                                        icon: {
+                                            path: google.maps.SymbolPath.CIRCLE,
+                                            scale: 3, // Smaller dots
+                                            fillOpacity: 1,
+                                            fillColor: googleBlue,
+                                            strokeOpacity: 0
+                                        },
+                                        offset: '0',
+                                        repeat: '10px' // Closer spacing
+                                    }]
+                                }}
+                            />
+                        );
+                    } else {
+                        // Transit/Drive: Solid Blue with White Border
+                        return (
+                            <React.Fragment key={i}>
+                                {/* Border Line (White, wider) */}
+                                <PolylineF
+                                    path={path}
+                                    options={{
+                                        strokeColor: 'white',
+                                        strokeOpacity: 1.0,
+                                        strokeWeight: 11,
+                                        zIndex: 10
+                                    }}
+                                />
+                                {/* Main Line (Blue, on top) */}
+                                <PolylineF
+                                    path={path}
+                                    options={{
+                                        strokeColor: googleBlue,
+                                        strokeOpacity: 1.0,
+                                        strokeWeight: 8,
+                                        zIndex: 11
+                                    }}
+                                />
+                            </React.Fragment>
+                        );
+                    }
                 })
             ) : selectedRoute.path ? (
-                <PolylineF
-                    path={selectedRoute.path.map((p: any) => ({ lat: p.lat, lng: p.lng }))}
-                    options={{
-                        strokeColor: '#0097a7', // Darker Cyan (700)
-                        strokeOpacity: 1.0,
-                        strokeWeight: 8
-                    }}
-                />
+                <React.Fragment>
+                    {/* Border */}
+                    <PolylineF
+                        path={selectedRoute.path.map((p: any) => ({ lat: p.lat, lng: p.lng }))}
+                        options={{
+                            strokeColor: 'white',
+                            strokeOpacity: 1.0,
+                            strokeWeight: 11,
+                            zIndex: 10
+                        }}
+                    />
+                    {/* Main */}
+                    <PolylineF
+                        path={selectedRoute.path.map((p: any) => ({ lat: p.lat, lng: p.lng }))}
+                        options={{
+                            strokeColor: '#4285F4', // Google Blue
+                            strokeOpacity: 1.0,
+                            strokeWeight: 8,
+                            zIndex: 11
+                        }}
+                    />
+                </React.Fragment>
             ) : null)}
 
         </GoogleMap>
