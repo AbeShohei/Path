@@ -1,48 +1,37 @@
 import { RouteOption, TransportMode, TransitUpdate, RouteSegment, Spot } from "../types";
 
 // OpenRouter API Configuration
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || ''; // Use Vite env var
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
-const MODEL_NAME = 'tngtech/deepseek-r1t2-chimera:free';
+const MODEL_NAME = 'google/gemini-2.0-flash-exp:free'; // Using a fast, free model capable of JSON
 
-// --- MOCK DATA DEFINITIONS ---
+// --- MOCK DATA DEFINITIONS (Updated for Bus/Subway Only) ---
 
 const MOCK_ROUTES: RouteOption[] = [
     {
         id: "mock-1",
-        title: "市営バス205系統 (推奨)",
+        title: "市営バス205系統",
         duration: "約25分",
         cost: "230円",
-        steps: ["京都駅前(バス)に乗車", "目的地付近で降車"],
+        steps: ["京都駅前(バス)に乗車", "河原町三条で降車"],
         transportMode: TransportMode.TRANSIT,
         segments: [
             { type: 'WALK', text: 'バス停へ', duration: '5分' },
-            { type: 'BUS', text: '市営205系統', duration: '17分', departureTime: '5分後' },
+            { type: 'BUS', text: '市営バス205系統', duration: '17分', departureTime: '5分後', direction: '北大路バスターミナル行', companyName: '京都市営バス' },
             { type: 'WALK', text: '目的地へ', duration: '3分' }
         ]
     },
     {
         id: "mock-2",
-        title: "地下鉄烏丸線 + 徒歩",
+        title: "地下鉄烏丸線",
         duration: "約20分",
         cost: "260円",
-        steps: ["京都駅(地下鉄)に乗車", "四条駅で降車", "目的地まで徒歩"],
+        steps: ["京都駅(地下鉄)に乗車", "烏丸御池駅で降車"],
         transportMode: TransportMode.TRANSIT,
         segments: [
             { type: 'WALK', text: '地下鉄改札へ', duration: '3分' },
-            { type: 'SUBWAY', text: '烏丸線 国際会館行', duration: '7分', departureTime: '3分後' },
+            { type: 'SUBWAY', text: '烏丸線', duration: '7分', departureTime: '3分後', direction: '国際会館行', companyName: '京都市営地下鉄' },
             { type: 'WALK', text: '目的地へ', duration: '10分' }
-        ]
-    },
-    {
-        id: "mock-3",
-        title: "徒歩ルート",
-        duration: "約45分",
-        cost: "0円",
-        steps: ["目的地まで徒歩"],
-        transportMode: TransportMode.WALKING,
-        segments: [
-            { type: 'WALK', text: '目的地まで直行', duration: '45分' }
         ]
     }
 ];
@@ -58,17 +47,24 @@ const MOCK_TRANSIT_UPDATE: TransitUpdate = {
 // Helper function to call OpenRouter API (OpenAI-compatible)
 async function callOpenRouter(messages: Array<{ role: string, content: string }>, systemInstruction?: string): Promise<string> {
     try {
+        const apiKey = OPENROUTER_API_KEY;
+        if (!apiKey) {
+            console.warn('OpenRouter API Key not found. Using Mock Data.');
+            throw new Error('No API Key');
+        }
+
         const requestBody: any = {
             model: MODEL_NAME,
             messages: systemInstruction
                 ? [{ role: 'system', content: systemInstruction }, ...messages]
                 : messages,
+            response_format: { type: 'json_object' } // Request JSON output
         };
 
         const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
                 'HTTP-Referer': window.location.origin,
                 'X-Title': 'Path - Smart Tourism Kyoto Guide'
@@ -90,16 +86,8 @@ async function callOpenRouter(messages: Array<{ role: string, content: string }>
 
 import { getNavitimeRoutes } from './navitimeService';
 
-// 1. Get Route Options using NAVITIME Route Search API
-export const getRouteOptions = async (
-    originName: string,
-    destinationName: string,
-    originCoords?: { latitude: number; longitude: number },
-    destCoords?: { latitude: number; longitude: number }
-): Promise<RouteOption[]> => {
-    // NAVITIMEサービスを使用
-    return getNavitimeRoutes(originName, destinationName, originCoords, destCoords);
-};
+// 1. Get Route Options (Removed - Replaced by routeService.ts)
+// export const getRouteOptions = ... (Deleted)
 
 // 2. Get Real-time Transit/Traffic Info
 export const getTransitInfo = async (query: string): Promise<TransitUpdate | null> => {

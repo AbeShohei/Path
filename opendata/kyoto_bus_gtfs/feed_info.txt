@@ -1,0 +1,2 @@
+feed_publisher_name,feed_publisher_url,feed_lang,feed_start_date,feed_end_date,feed_version
+"京都市交通局",https://www.city.kyoto.lg.jp/kotsu/,ja,20251202,20260331,"Kyoto_City_Bus_GTFS_2025_0017_02"
