@@ -46,12 +46,18 @@ export interface RouteSegment {
   distance?: number;      // Distance in meters
   path?: { lat: number; lng: number }[]; // Segment-specific path for rendering
   turns?: Turn[];         // Turn-by-turn directions for WALK segments
+  routeId?: string;       // Unique ID for map matching (e.g. bus_20500)
+  lineName?: string;      // Legacy: Line name string
+  waitMinutes?: number;   // Estimated wait time in minutes
+  intermediateStops?: { name: string; time?: string; lat?: number; lng?: number }[]; // Stops between boarding and alighting
 }
 
 export interface RouteOption {
   id: string;
   title: string;
   duration: string;
+  startTime?: string; // e.g. "14:30"
+  endTime?: string;   // e.g. "15:15"
   cost: string;
   steps: string[]; // Keep for backward compatibility or summary
   segments: RouteSegment[]; // New structured data

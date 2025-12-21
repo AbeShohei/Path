@@ -17320,7 +17320,23 @@ RAW_SPOTS.forEach(spot => {
   }
 });
 
-const KYOTO_SPOTS = Array.from(uniqueSpotsMap.values());
+// Filter to only include spots within Kyoto City boundaries
+// Kyoto City approximate bounds: lat 34.85-35.15, lon 135.60-135.90
+const KYOTO_CITY_BOUNDS = {
+  minLat: 34.85,
+  maxLat: 35.15,
+  minLon: 135.60,
+  maxLon: 135.90
+};
+
+const isWithinKyotoCity = (lat: number, lon: number): boolean => {
+  return lat >= KYOTO_CITY_BOUNDS.minLat && lat <= KYOTO_CITY_BOUNDS.maxLat &&
+    lon >= KYOTO_CITY_BOUNDS.minLon && lon <= KYOTO_CITY_BOUNDS.maxLon;
+};
+
+const KYOTO_SPOTS = Array.from(uniqueSpotsMap.values()).filter(spot =>
+  isWithinKyotoCity(spot.location.latitude, spot.location.longitude)
+);
 
 // Calculate distance using Haversine formula
 export function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number): number {

@@ -1,0 +1,6 @@
+[out:json][timeout:300];
+area["name"="京都市"]->.kyoto;
+(
+  relation["type"="route"]["route"="bus"]["operator"~"京都市交通局|京都市営"];
+);
+out geom;

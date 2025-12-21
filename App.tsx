@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Coordinates, AppMode, Spot, TransportMode, GroundingChunk, RouteOption, RouteSegment, TransitUpdate } from './types';
-import { getTransitInfo, generateGuideContent, playTextToSpeech, getRouteOptions } from './services/geminiService';
+import { getTransitInfo, generateGuideContent, playTextToSpeech } from './services/geminiService';
+import { routeService } from './services/routeService';
+import { wikimediaService } from './services/wikimediaService';
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
 import { getCongestionLevel, getCurrentTimeOfDay, TimeOfDay, getTimeOfDayLabel } from './services/humanFlowService';
 import { generateDifyContext, generatePromptContext } from './services/difyContextService';
@@ -103,6 +105,7 @@ function App() {
     const [coords, setCoords] = useState<Coordinates | null>(null);
     const [spots, setSpots] = useState<Spot[]>([]);
     const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
     const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
     const [focusedSpotId, setFocusedSpotId] = useState<string | null>(null);  // For list click pan+popup
@@ -118,6 +121,27 @@ function App() {
     const [isNavWidgetMinimized, setIsNavWidgetMinimized] = useState(false); // Minimize AI guide widget in nav mode
     const [lyricsHeight, setLyricsHeight] = useState(100); // Lyrics area height in pixels
     const [hideOtherPins, setHideOtherPins] = useState(false); // Hide other pins when "View Route" is clicked
+
+    // Bus Routes Display State
+    const [showBusRoutes, setShowBusRoutes] = useState(false);
+    const [busRoutes, setBusRoutes] = useState<{
+        routeId: string;
+        routeName: string;
+        routeShortName: string;
+        color: string;
+        description: string;
+        coordinates: [number, number][];
+    }[]>([]);
+    const [subwayRoutes, setSubwayRoutes] = useState<{
+        routeId: string;
+        routeName: string;
+        routeShortName: string;
+        color: string;
+        description: string;
+        coordinates: [number, number][];
+    }[]>([]);
+
+    const [highlightedRouteIds, setHighlightedRouteIds] = useState<string[]>([]);
 
     // Sheet Drag State
     const [isDragging, setIsDragging] = useState(false);
@@ -159,6 +183,29 @@ function App() {
         { level: 5, label: '混雑', color: 'bg-red-500' }
     ];
 
+    // Load bus and subway routes data
+    useEffect(() => {
+        // Load Bus Routes
+        fetch('/data/kyoto-bus-routes.json')
+            .then(res => res.json())
+            .then(data => {
+                if (data.routes) {
+                    setBusRoutes(data.routes);
+                }
+            })
+            .catch(err => console.error('Failed to load bus routes:', err));
+
+        // Load Subway Routes
+        fetch('/data/kyoto-subway-routes.json')
+            .then(res => res.json())
+            .then(data => {
+                if (data.routes) {
+                    setSubwayRoutes(data.routes);
+                }
+            })
+            .catch(err => console.error('Failed to load subway routes:', err));
+    }, []);
+
     // 1. Get Location
     const requestLocation = () => {
         setLoading(true);
@@ -177,15 +224,47 @@ function App() {
     // 2. Fetch Spots (Using predefined data)
     const fetchSpots = async (pos: Coordinates) => {
         setLoading(true);
-        // Simulate slight delay for realism
-        setTimeout(() => {
-            // Fetch all spots (use large radius to include all)
-            const nearbySpots = findNearbySpots(pos, 9999);
-            setSpots(nearbySpots);
-            setMode(AppMode.PLANNING);
-            setSheetHeight(Math.floor(window.innerHeight * 0.45));
-            setLoading(false);
-        }, 600);
+
+        // Fetch all spots
+        const nearbySpots = findNearbySpots(pos, 9999);
+
+        // Filter to only show spots near bus stops (within 3km of a bus stop)
+        const accessibleSpots: Spot[] = [];
+        for (const spot of nearbySpots) {
+            const hasBusAccess = await routeService.hasNearbyBusStops(
+                spot.location.latitude,
+                spot.location.longitude,
+                5000 // 5km radius
+            );
+            if (hasBusAccess) {
+                accessibleSpots.push(spot);
+            }
+        }
+
+        // Fetch Wikimedia images for spots without images (async, non-blocking)
+        const spotsNeedingImages = accessibleSpots.filter(s => !s.imageUrl);
+        if (spotsNeedingImages.length > 0) {
+            // Fetch in background, update state when done
+            (async () => {
+                const imageMap = await wikimediaService.getSpotImages(
+                    spotsNeedingImages.map(s => s.name)
+                );
+                if (imageMap.size > 0) {
+                    setSpots(prev => prev.map(spot => {
+                        const wikiImage = imageMap.get(spot.name);
+                        if (wikiImage && !spot.imageUrl) {
+                            return { ...spot, imageUrl: wikiImage };
+                        }
+                        return spot;
+                    }));
+                }
+            })();
+        }
+
+        setSpots(accessibleSpots);
+        setMode(AppMode.PLANNING);
+        setSheetHeight(Math.floor(window.innerHeight * 0.45));
+        setLoading(false);
     };
 
     // Handle congestion toggle
@@ -201,6 +280,11 @@ function App() {
 
     const handleSpotSelect = async (spot: Spot | null) => {
         if (!spot) {
+            // Don't clear the destination spot when in ROUTE_SELECT mode
+            if (mode === AppMode.ROUTE_SELECT) {
+                // Just close popup, keep destination selected
+                return;
+            }
             setSelectedSpot(null);
             setFocusedSpotId(null);
             setHideOtherPins(false); // Restore pins
@@ -311,10 +395,18 @@ function App() {
 
         // Relaxed condition: If a route is selected, always filter pins (unless explicitly cleared)
         if (selectedRoute) {
-            // Filter spots near the selected route
-            // Default to empty path if missing
-            const routePath = selectedRoute.path || [];
-            const nearbySpots = filterSpotsNearRoute(currentSpots, routePath, 0.1); // 100m radius (0.1km)
+            // Build combined path from all segments
+            let routePath: { lat: number; lng: number }[] = [];
+            if (selectedRoute.segments) {
+                for (const seg of selectedRoute.segments) {
+                    if (seg.path && seg.path.length > 0) {
+                        routePath = routePath.concat(seg.path);
+                    }
+                }
+            }
+
+            // Filter spots near the route (50m radius)
+            const nearbySpots = filterSpotsNearRoute(currentSpots, routePath, 0.05); // 50m radius
 
             // Always include destination spot if it exists
             if (selectedSpot && !nearbySpots.find(s => s.id === selectedSpot.id)) {
@@ -351,6 +443,73 @@ function App() {
             });
     }, [mode, selectedRoute, spots, selectedSpot, selectedCongestion, coords, selectedTime, hideOtherPins]);
 
+    // Update highlighted routes when selectedRoute changes
+    useEffect(() => {
+        const idsToHighlight: string[] = [];
+        if (selectedRoute) {
+            // Helper to normalize route names (Full-width -> Half-width, remove prefixes)
+            const normalize = (str: string) => {
+                if (!str) return '';
+                return str.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+                    .replace(/市バス/g, '')
+                    .replace(/京都バス/g, '')
+                    .replace(/号系統/g, '')
+                    .replace(/系統/g, '')
+                    .replace(/特/g, '')
+                    .trim();
+            };
+
+            selectedRoute.segments.forEach(seg => {
+                if (seg.type === 'BUS') {
+                    // Strategy 0: Exact routeId Match (Best - from GTFS)
+                    if (seg.routeId) {
+                        const found = busRoutes.find(r => r.routeId === seg.routeId);
+                        if (found) {
+                            idsToHighlight.push(found.routeId);
+                            return;
+                        }
+                    }
+
+                    // Strategy 1: Normalized name match (Fallback)
+                    const segName = seg.lineName || seg.text || '';
+                    const normalizedSeg = normalize(segName);
+                    const found = busRoutes.find(r => {
+                        return normalize(r.routeShortName) === normalizedSeg || normalize(r.routeName) === normalizedSeg;
+                    });
+
+                    if (found) {
+                        idsToHighlight.push(found.routeId);
+                        return;
+                    }
+                }
+
+                if (seg.type === 'SUBWAY') {
+                    if (seg.lineName) {
+                        const found = subwayRoutes.find(r => r.routeName === seg.lineName || r.routeShortName === seg.lineName);
+                        if (found) {
+                            idsToHighlight.push(found.routeId);
+                            return;
+                        }
+                    }
+                    if (seg.text) {
+                        const isKarasuma = seg.text.includes('烏丸');
+                        const isTozai = seg.text.includes('東西');
+
+                        if (isKarasuma) {
+                            const found = subwayRoutes.find(r => r.routeName.includes('烏丸'));
+                            if (found) idsToHighlight.push(found.routeId);
+                        }
+                        if (isTozai) {
+                            const found = subwayRoutes.find(r => r.routeName.includes('東西'));
+                            if (found) idsToHighlight.push(found.routeId);
+                        }
+                    }
+                }
+            });
+        }
+        setHighlightedRouteIds(idsToHighlight);
+    }, [selectedRoute, busRoutes, subwayRoutes]);
+
     // ルート検索を開始（InfoWindowの「ルートを見る」ボタンから呼ばれる）
     // ルート検索を開始（InfoWindowの「ルートを見る」ボタンから呼ばれる）
     const handleRouteSearch = async (spot: Spot) => {
@@ -365,16 +524,25 @@ function App() {
         // Use current location if available, otherwise fallback to Kyoto Station
         const kyotoStation = { latitude: 34.9858, longitude: 135.7588 };
         const originCoords = coords || kyotoStation;
-        const originName = coords ? "現在地" : "京都駅";
 
-        const fetchedRoutes = await getRouteOptions(
-            originName,
-            spot.name,
-            originCoords,
-            spot.location
-        );
+        // Use RouteService for deterministic routing
+        // Use RouteService for deterministic routing with Streaming
+        setRouteOptions([]); // Clear explicitly before search
+        const fetchedRoutes = await routeService.searchRoutes(originCoords, spot.location, {}, (route) => {
+            setRouteOptions(prev => {
+                const next = [...prev, route];
+                // Sort by Earliest Departure
+                return next.sort((a, b) => {
+                    const getDep = (r: RouteOption) => {
+                        const s = r.segments.find(sg => sg.type === 'BUS' || sg.type === 'SUBWAY');
+                        return s?.departureTime ? parseInt(s.departureTime.replace(':', '')) : 9999;
+                    };
+                    return getDep(a) - getDep(b);
+                });
+            });
+        });
 
-        setRouteOptions(fetchedRoutes);
+        setRouteOptions(fetchedRoutes); // Final consistent state
 
         // Auto-select first route to show it by default
         if (fetchedRoutes.length > 0) {
@@ -406,7 +574,12 @@ function App() {
         setNavStage('TO_STOP');
         setFocusedSpotId(null); // Clear focus to help close InfoWindow
         setSelectedSpot(null); // Auto-close popup on start (Feature Request)
-        setStopsAway(5);
+
+        // Initialize stopsAway from GTFS data (+1 for destination stop)
+        const busSegment = selectedRoute?.segments?.find(s => s.type === 'BUS' || s.type === 'SUBWAY');
+        const realStopCount = (busSegment?.intermediateStops?.length || 0) + 1;
+        setStopsAway(realStopCount > 0 ? realStopCount : 5);
+
         setGuideText("");
         setTransitInfo(null);
         setAudioDuration(0);
@@ -502,14 +675,43 @@ function App() {
                     }
                 }
 
-                // Special logic for ON_BUS stops update
+                // Calculate remaining stops based on current time vs scheduled stop times
                 if (navStage === 'ON_BUS') {
-                    const totalDuration = getSegmentDurationForStage('ON_BUS');
-                    // Update stops every 20% of the way
-                    const progress = 1 - (next / totalDuration); // 0 to 1
-                    const newStops = Math.max(1, 5 - Math.floor(progress * 5));
-                    if (newStops !== stopsAway) {
-                        setStopsAway(newStops);
+                    const busSegment = selectedRoute?.segments?.find(s => s.type === 'BUS' || s.type === 'SUBWAY');
+                    const intermediateStops = busSegment?.intermediateStops || [];
+                    const arrivalTimeStr = busSegment?.arrivalTime;
+
+                    if (intermediateStops.length > 0) {
+                        // Count how many stops we've passed based on current time
+                        const now = new Date();
+                        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+                        let passedStops = 0;
+                        for (const stop of intermediateStops) {
+                            if (stop.time) {
+                                const [h, m] = stop.time.split(':').map(Number);
+                                if (currentMinutes >= h * 60 + m) {
+                                    passedStops++;
+                                }
+                            }
+                        }
+
+                        // +1 for destination stop
+                        const totalStops = intermediateStops.length + 1;
+                        const newStops = Math.max(1, totalStops - passedStops);
+
+                        if (newStops !== stopsAway) {
+                            setStopsAway(newStops);
+                        }
+                    } else {
+                        // Fallback: timer-based countdown
+                        const totalDuration = getSegmentDurationForStage('ON_BUS');
+                        const progress = 1 - (remainingSeconds / totalDuration);
+                        const initialStops = stopsAway > 0 ? stopsAway : 5;
+                        const newStops = Math.max(1, initialStops - Math.floor(progress * initialStops));
+                        if (newStops !== stopsAway) {
+                            setStopsAway(newStops);
+                        }
                     }
                 }
 
@@ -614,22 +816,27 @@ function App() {
             // Play audio automatically
             await handleGenerateGuide(selectedRoute, navStage, durationSec, true);
 
-            // Set Transit Info Mockup
+            // Set Transit Info from GTFS data
+            const busSegment = selectedRoute.segments.find(s => s.type === 'BUS' || s.type === 'SUBWAY');
+            const realDepartureTime = busSegment?.departureTime || '--:--';
+            const realArrivalTime = busSegment?.arrivalTime || '--:--';
+            const realStopCount = (busSegment?.intermediateStops?.length || 0) + 1;
+
             if (navStage === 'TO_STOP') {
                 setTransitInfo({
                     status: 'ON_TIME',
-                    stopsAway: 1,
+                    stopsAway: realStopCount,
                     currentLocation: '接近中',
-                    nextBusTime: 'まもなく',
-                    message: 'まもなく到着'
+                    nextBusTime: realDepartureTime,
+                    message: `${realDepartureTime} 発`
                 });
             } else if (navStage === 'ON_BUS') {
                 setTransitInfo({
                     status: 'ON_TIME',
                     stopsAway: stopsAway,
                     currentLocation: '移動中',
-                    nextBusTime: '10:45',
-                    message: '定刻通り運行中'
+                    nextBusTime: realArrivalTime,
+                    message: `${realArrivalTime} 着予定`
                 });
             }
         };
@@ -833,16 +1040,32 @@ function App() {
     const getStageTimeInfo = () => {
         if (!selectedRoute) return null;
 
-        // Dynamic countdown display: Remove seconds, just use ceil minutes
+        // Get bus segment for departure time
+        const busSegment = selectedRoute.segments?.find(s => s.type === 'BUS' || s.type === 'SUBWAY');
+        const departureTimeStr = busSegment?.departureTime;
+        const arrivalTimeStr = busSegment?.arrivalTime;
+
+        // Calculate time until departure (for TO_STOP stage)
+        let minutesUntilDeparture = 0;
+        if (departureTimeStr) {
+            const [depH, depM] = departureTimeStr.split(':').map(Number);
+            const now = new Date();
+            const depMinutes = depH * 60 + depM;
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            minutesUntilDeparture = Math.max(0, depMinutes - nowMinutes);
+        }
+
+        // Dynamic countdown for walk/ride segments
         const mins = Math.ceil(remainingSeconds / 60);
         const timeStr = `${mins}分`;
         const arrivalTime = getDynamicArrivalTime(remainingSeconds);
 
         if (navStage === 'TO_STOP') {
-            return `最寄りへ移動中 (あと ${timeStr}) - ${arrivalTime}着`;
+            const depTimeDisplay = minutesUntilDeparture > 0 ? `出発まであと${minutesUntilDeparture}分` : '出発時刻です';
+            return `最寄りへ移動中 (${depTimeDisplay}) - ${departureTimeStr || arrivalTime}発`;
         }
         if (navStage === 'ON_BUS') {
-            return `乗車中 (あと ${timeStr}) - ${arrivalTime}着予定`;
+            return `乗車中 (あと ${timeStr}) - ${arrivalTimeStr || arrivalTime}着予定`;
         }
         if (navStage === 'ALIGHTING') {
             return `まもなく到着 (あと ${timeStr})`;
@@ -869,9 +1092,8 @@ function App() {
         const newHeight = lyricsStartHeight.current + deltaY;
 
         // Constrain height to keep widget on screen
-        // Calculate safe max height: Window Height - Header/Controls (~220px) - Safety Margin
-        const safeMaxHeight = window.innerHeight - 240;
-        const clampedHeight = Math.max(60, Math.min(safeMaxHeight, newHeight));
+        // Max 400px to prevent overflow, min 60px
+        const clampedHeight = Math.max(60, Math.min(400, newHeight));
         setLyricsHeight(clampedHeight);
     };
 
@@ -975,6 +1197,9 @@ function App() {
                         isNavigating={mode === AppMode.NAVIGATING || mode === AppMode.ROUTE_SELECT}
                         isSheetDragging={isDragging}
                         disableSmartPan={mode === AppMode.NAVIGATING}
+                        showBusRoutes={showBusRoutes}
+                        busRoutes={busRoutes}
+                        subwayRoutes={subwayRoutes}
                     />
 
                 </div>
@@ -1021,6 +1246,11 @@ function App() {
                                         </>
                                     )}
                                 </button>
+
+                                {/* Credits */}
+                                <div className="mt-4 text-center">
+                                    <p className="text-[10px] text-white/50">Images provided by Wikimedia Commons (CC-BY-SA)</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1095,19 +1325,42 @@ function App() {
                                         <h2 className="text-xl font-bold text-gray-800">近くの観光スポット</h2>
                                         <p className={`text-sm text-gray-400 transition-opacity duration-200 ${sheetHeight < 120 ? 'opacity-0 h-0' : 'opacity-100'}`}>{visibleSpots.length}件のスポットが見つかりました</p>
                                     </div>
-                                    <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
-                                        {(['morning', 'noon', 'evening'] as TimeOfDay[]).map((t) => (
+                                    <div className="flex items-center gap-2">
+                                        {/* View Mode Toggle */}
+                                        <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
                                             <button
-                                                key={t}
-                                                onClick={() => setSelectedTime(t)}
-                                                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedTime === t
-                                                    ? 'bg-white text-indigo-600 shadow-sm'
-                                                    : 'text-gray-400 hover:text-gray-600'
-                                                    }`}
+                                                onClick={() => setViewMode('list')}
+                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                                             >
-                                                {t === 'morning' ? '朝' : t === 'noon' ? '昼' : '夕'}
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                                </svg>
                                             </button>
-                                        ))}
+                                            <button
+                                                onClick={() => setViewMode('grid')}
+                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        {/* Time Filter */}
+                                        <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
+                                            {(['morning', 'noon', 'evening'] as TimeOfDay[]).map((t) => (
+                                                <button
+                                                    key={t}
+                                                    onClick={() => setSelectedTime(t)}
+                                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedTime === t
+                                                        ? 'bg-white text-indigo-600 shadow-sm'
+                                                        : 'text-gray-400 hover:text-gray-600'
+                                                        }`}
+                                                >
+                                                    {t === 'morning' ? '朝' : t === 'noon' ? '昼' : '夕'}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1137,21 +1390,73 @@ function App() {
                                         <span className="text-sm">スポットを探しています...</span>
                                     </div>
                                 ) : visibleSpots.length > 0 ? (
-                                    <div className="flex flex-col gap-3">
+                                    <div className={viewMode === 'grid' ? "grid grid-cols-3 gap-1" : "flex flex-col gap-3"}>
                                         {visibleSpots.map((spot, index) => {
                                             const photoUrl = spot.imageUrl;
 
-                                            // Congestion Label Text (Removed in favor of Icon)
-                                            // const congestionText = ...
+                                            // Grid View Item
+                                            if (viewMode === 'grid') {
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="aspect-square relative cursor-pointer bg-gray-100 rounded-md overflow-hidden hover:opacity-90 transition-opacity animate-fade-in-up"
+                                                        style={{ animationDelay: `${index * 30}ms` }}
+                                                        onClick={() => handleSpotSelect(spot)}
+                                                    >
+                                                        {photoUrl ? (
+                                                            <img
+                                                                src={photoUrl}
+                                                                alt={spot.name}
+                                                                loading="lazy"
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement?.classList.add('no-image'); }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center p-2 text-center text-[10px] text-gray-500 font-bold bg-gray-50 border border-gray-100">
+                                                                {spot.name}
+                                                            </div>
+                                                        )}
 
+                                                        {/* Congestion Icon (Top Right) */}
+                                                        <div className="absolute top-1 right-1 bg-white/80 backdrop-blur-sm rounded-full p-0.5 shadow-sm">
+                                                            <div className="scale-75 origin-center">
+                                                                <CongestionLevelIcon level={spot.congestionLevel} />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Name Overlay (Solid Semi-Transparent) */}
+                                                        {photoUrl && (
+                                                            <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-[1px]">
+                                                                <p className="text-[10px] text-white font-bold truncate text-center">{spot.name}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            }
+
+                                            // List View Item (Card)
                                             return (
                                                 <div
                                                     key={index}
-                                                    className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-4 cursor-pointer hover:shadow-md transition-shadow animate-fade-in-up"
+                                                    className="flex flex-col bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-shadow animate-fade-in-up"
                                                     style={{ animationDelay: `${index * 50}ms` }}
                                                     onClick={() => handleSpotSelect(spot)}
                                                 >
-                                                    <div className="flex-1 flex flex-col gap-2 min-w-0"> {/* min-w-0 needed for text truncation to work in flex child */}
+                                                    {/* Full Width Cover Image */}
+                                                    {photoUrl && (
+                                                        <div className="w-full h-32 bg-gray-100 relative">
+                                                            <img
+                                                                src={photoUrl}
+                                                                alt={spot.name}
+                                                                loading="lazy"
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                                            />
+                                                            {/* Price Badge Overlay - REMOVED */}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex-1 flex flex-col gap-2 p-4 pt-3">
                                                         {/* Header: Title and Congestion Icon */}
                                                         <div className="flex justify-between items-start gap-3">
                                                             <h3 className="font-bold text-gray-900 leading-tight text-lg truncate flex-1">{spot.name}</h3>
@@ -1166,28 +1471,26 @@ function App() {
                                                             style={{
                                                                 display: '-webkit-box',
                                                                 WebkitBoxOrient: 'vertical',
-                                                                WebkitLineClamp: 4,
+                                                                WebkitLineClamp: 2,
                                                                 overflow: 'hidden'
                                                             }}
                                                         >
                                                             {spot.description}
                                                         </p>
 
-                                                        {/* Metadata Footer - Vertical Stack */}
-                                                        <div className="flex flex-col gap-1.5 mt-2">
-                                                            {/* Hours */}
+                                                        {/* Metadata Footer */}
+                                                        <div className="mt-1 flex flex-col gap-1">
                                                             {spot.openingHours && (
-                                                                <div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden">
+                                                                <div className="flex items-center gap-2 text-[11px] text-gray-500">
                                                                     <svg className="shrink-0 w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                                     </svg>
                                                                     <span className="truncate">{spot.openingHours}</span>
                                                                 </div>
                                                             )}
-                                                            {/* Price */}
                                                             {spot.price && (
-                                                                <div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden">
-                                                                    <div className="shrink-0 w-3.5 h-3.5 flex items-center justify-center text-indigo-400 font-bold text-[10px] border border-indigo-200 rounded-full">¥</div>
+                                                                <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                                                                    <div className="shrink-0 w-3.5 h-3.5 flex items-center justify-center text-indigo-400 font-bold text-[9px] border border-indigo-200 rounded-full">¥</div>
                                                                     <span className="truncate">{spot.price}</span>
                                                                 </div>
                                                             )}
@@ -1206,7 +1509,8 @@ function App() {
                             </div>
                         </div>
                     </div>
-                )}
+                )
+                }
 
                 {/* ROUTE SELECT MODE - Overlay */}
                 {
@@ -1269,12 +1573,7 @@ function App() {
                                                 <div className="font-bold text-gray-600">{selectedRoute.cost}</div>
                                             </div>
                                             <div className="text-sm text-gray-500 font-medium">
-                                                {(() => {
-                                                    const now = new Date();
-                                                    const durationNum = parseInt(selectedRoute.duration) || 0;
-                                                    const arrivalDate = new Date(now.getTime() + durationNum * 60000);
-                                                    return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')} 発 - ${arrivalDate.getHours()}:${arrivalDate.getMinutes().toString().padStart(2, '0')} 着`;
-                                                })()}
+                                                {selectedRoute.startTime} 発 - {selectedRoute.endTime} 着
                                             </div>
                                         </div>
 
@@ -1302,7 +1601,23 @@ function App() {
                                                     {/* Duration Column (Left) */}
                                                     <div className="w-14 shrink-0 text-right pt-1">
                                                         <div className="text-sm font-bold text-gray-900 leading-none">{seg.duration}</div>
-                                                        {seg.departureTime && <div className="text-[10px] text-gray-500 mt-1">{seg.departureTime}</div>}
+                                                        {seg.departureTime && (
+                                                            <div className="flex flex-col items-end">
+                                                                <div className="text-[10px] text-gray-500 mt-1 font-mono">
+                                                                    {seg.departureTime}発
+                                                                </div>
+                                                                {seg.arrivalTime && (
+                                                                    <div className="text-[10px] text-gray-500 font-mono">
+                                                                        {seg.arrivalTime}着
+                                                                    </div>
+                                                                )}
+                                                                {seg.waitMinutes !== undefined && seg.waitMinutes > 0 && (
+                                                                    <div className="text-[9px] text-orange-500 mt-0.5">
+                                                                        ({seg.waitMinutes}分待ち)
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
 
                                                     {/* Icon Column (Center) */}
@@ -1371,11 +1686,7 @@ function App() {
                                         ) : (
                                             routeOptions.map((route, idx) => {
                                                 // Metadata Calculation
-                                                const now = new Date();
-                                                const startTime = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
                                                 const durationNum = parseInt(route.duration) || 0;
-                                                const arrivalDate = new Date(now.getTime() + durationNum * 60000);
-                                                const arrivalTime = `${arrivalDate.getHours()}:${arrivalDate.getMinutes().toString().padStart(2, '0')}`;
 
                                                 // Determine if Cheapest/Fastest
                                                 const allCosts = routeOptions.map(r => parseInt(r.cost.replace(/[^0-9]/g, '')) || 0);
@@ -1400,7 +1711,7 @@ function App() {
                                                             <div className="flex items-baseline gap-2">
                                                                 <span className="text-xl font-extrabold text-gray-900 leading-none">{durationNum}分</span>
                                                                 <span className="text-sm font-semibold text-gray-500">
-                                                                    {startTime} - {arrivalTime}
+                                                                    {route.startTime} - {route.endTime}
                                                                 </span>
                                                             </div>
                                                             <div className="font-bold text-gray-900 text-base">{route.cost === '0円' ? '無料' : route.cost}</div>
@@ -1463,7 +1774,8 @@ function App() {
                                 )}
                             </div>
                         </div>
-                    )}
+                    )
+                }
 
                 {/* NAVIGATION MODE - Overlay */}
                 {
@@ -1553,7 +1865,7 @@ function App() {
                             {!isNavWidgetMinimized && (
                                 <div className={`absolute bottom-0 left-0 right-0 z-10 p-3 pointer-events-none transition-all duration-300 max-h-[85vh]`}>
                                     <div className="pointer-events-auto w-full max-w-md mx-auto">
-                                        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden relative flex flex-col animate-fade-in-up">
+                                        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden relative flex flex-col-reverse animate-fade-in-up">
                                             <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 z-10"></div>
 
                                             {/* Compact Header with Controls */}
@@ -1748,7 +2060,8 @@ function App() {
                                 </div>
                             )}
                         </>
-                    )}
+                    )
+                }
 
                 {/* DESTINATION MODE - Full Screen Overlay */}
                 {
@@ -1868,7 +2181,8 @@ function App() {
                                 </button>
                             </div>
                         </div>
-                    )}
+                    )
+                }
 
             </main >
         </div >

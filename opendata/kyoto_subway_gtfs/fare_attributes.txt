@@ -1,0 +1,6 @@
+fare_id,price,currency_type,payment_method,transfers,agency_id,transfer_duration
+F1,220,JPY,1,0,2000020261009,
+F2,260,JPY,1,0,2000020261009,
+F3,290,JPY,1,0,2000020261009,
+F4,330,JPY,1,0,2000020261009,
+F5,360,JPY,1,0,2000020261009,

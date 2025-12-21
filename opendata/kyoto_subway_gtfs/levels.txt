@@ -1,0 +1,10 @@
+level_id,level_index,level_name
+LV_GND,0.0,地上
+LV_BLD,1.0,橋上駅舎
+LV_CON,-1.0,コンコース階（改札）
+LV_MEZ,-1.5,中間階
+LV_FRM,-2.0,ホーム階
+LV_FRM_OIKE_UP,-2.0,烏丸御池駅　地下2階ホーム（烏丸線）
+LV_FRM_OIKE_LO,-3.0,烏丸御池駅　地下3階ホーム（東西線）
+LV_FRM_MISA_UP,-2.0,御陵駅　地下2階ホーム（下り）
+LV_FRM_MISA_LO,-3.0,御陵駅　地下3階ホーム（上り）
