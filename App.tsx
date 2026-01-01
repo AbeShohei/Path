@@ -11,6 +11,7 @@ import { useLocationSimulator } from './hooks/useLocationSimulator';
 import { useGuideSystem } from './hooks/useGuideSystem';
 import { getDistance } from './services/guideService';
 import Map from './components/Map';
+import { GuideSlider } from './components/GuideSlider';
 import LyricsReader from './components/LyricsReader';
 
 // SVG Icons
@@ -102,25 +103,33 @@ const parseDurationStr = (str: string | undefined): number => {
 
 function App() {
     const [mode, setMode] = useState<AppMode>(AppMode.LANDING);
-    const [coords, setCoords] = useState<Coordinates | null>(null);
-    const [spots, setSpots] = useState<Spot[]>([]);
-    const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-    const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
-    const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
-    const [focusedSpotId, setFocusedSpotId] = useState<string | null>(null);  // For list click pan+popup
-    const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
-    const [selectedRoute, setSelectedRoute] = useState<RouteOption | null>(null);
-    const [showRouteDetail, setShowRouteDetail] = useState(false); // Separate state for showing detail view
-    const [showAudioPrompt, setShowAudioPrompt] = useState(false);
-    // Sheet height in pixels (for free-form dragging)
-    const [sheetHeight, setSheetHeight] = useState(Math.floor(window.innerHeight * 0.45));
     const [routeSheetState, setRouteSheetState] = useState<'minimized' | 'default' | 'full'>('default');
     const [routeTab, setRouteTab] = useState<'RECOMMENDED' | 'TRANSIT' | 'WALKING'>('RECOMMENDED');
     const [showNavRouteDetail, setShowNavRouteDetail] = useState(false); // Route detail during navigation
     const [isNavWidgetMinimized, setIsNavWidgetMinimized] = useState(false); // Minimize AI guide widget in nav mode
     const [lyricsHeight, setLyricsHeight] = useState(100); // Lyrics area height in pixels
     const [hideOtherPins, setHideOtherPins] = useState(false); // Hide other pins when "View Route" is clicked
+
+    const [coords, setCoords] = useState<Coordinates | null>(null);
+    const [spots, setSpots] = useState<Spot[]>([]);
+    const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
+
+    // Selection State
+    const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
+    const [destinationSpot, setDestinationSpot] = useState<Spot | null>(null); // Track destination separately
+    const [focusedSpotId, setFocusedSpotId] = useState<string | null>(null);  // For list click pan+popup
+
+    // Route State
+    const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
+    const [selectedRoute, setSelectedRoute] = useState<RouteOption | null>(null);
+    const [showRouteDetail, setShowRouteDetail] = useState(false); // Separate state for showing detail view
+    const [showAudioPrompt, setShowAudioPrompt] = useState(false);
+    const [showArrivalModal, setShowArrivalModal] = useState(false); // Arrival confirmation modal
+
+    // Sheet height in pixels (for free-form dragging)
+    const [sheetHeight, setSheetHeight] = useState(Math.floor(window.innerHeight * 0.45));
 
     // Bus Routes Display State
     const [showBusRoutes, setShowBusRoutes] = useState(false);
@@ -174,6 +183,9 @@ function App() {
     const [isMuted, setIsMuted] = useState(false);
     const [audioDuration, setAudioDuration] = useState(0);
     const currentAudioController = useRef<{ stop: () => void } | null>(null);
+
+    // Currently highlighted guide spot (for map pin highlighting)
+    const [highlightedGuideSpotId, setHighlightedGuideSpotId] = useState<string | null>(null);
 
     const congestionOptions = [
         { level: 1, label: '快適', color: 'bg-blue-500' },
@@ -229,17 +241,17 @@ function App() {
         const nearbySpots = findNearbySpots(pos, 9999);
 
         // Filter to only show spots near bus stops (within 3km of a bus stop)
-        const accessibleSpots: Spot[] = [];
-        for (const spot of nearbySpots) {
-            const hasBusAccess = await routeService.hasNearbyBusStops(
+        // Parallelize checks for performance
+        const accessChecks = await Promise.all(nearbySpots.map(async (spot) => {
+            const hasAccess = await routeService.hasNearbyBusStops(
                 spot.location.latitude,
                 spot.location.longitude,
                 5000 // 5km radius
             );
-            if (hasBusAccess) {
-                accessibleSpots.push(spot);
-            }
-        }
+            return hasAccess ? spot : null;
+        }));
+
+        const accessibleSpots = accessChecks.filter(s => s !== null) as Spot[];
 
         // Fetch Wikimedia images for spots without images (async, non-blocking)
         const spotsNeedingImages = accessibleSpots.filter(s => !s.imageUrl);
@@ -341,19 +353,7 @@ function App() {
     const currentSegment = selectedRoute?.segments ? selectedRoute.segments[currentSegIndex] || null : null;
     const nextSegment = selectedRoute?.segments ? selectedRoute.segments[currentSegIndex + 1] || null : null;
 
-    const { activeGuide } = useGuideSystem({
-        coords: simulatedPosition ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng } : coords,
-        currentSegment,
-        nextSegment,
-        routeSegments: selectedRoute?.segments || [],
-        spots: spots,
-        isNavigating: mode === AppMode.NAVIGATING,
-        onPlayGuide: (text) => {
-            setGuideText(text);
-            handlePlayAudio(text);
-        }
-    });
-    // -------------------------------
+
 
     // Auto-start simulation when entering navigation mode
     const simulationStartedRef = useRef(false);
@@ -405,8 +405,8 @@ function App() {
                 }
             }
 
-            // Filter spots near the route (50m radius)
-            const nearbySpots = filterSpotsNearRoute(currentSpots, routePath, 0.05); // 50m radius
+            // Filter spots near the route (100m radius)
+            const nearbySpots = filterSpotsNearRoute(currentSpots, routePath, 0.1); // 100m radius
 
             // Always include destination spot if it exists
             if (selectedSpot && !nearbySpots.find(s => s.id === selectedSpot.id)) {
@@ -422,12 +422,19 @@ function App() {
         // Also filter out spots without category data (types)
         return currentSpots
             .filter(s => selectedCongestion.includes(s.congestionLevel))
-
             .filter(s => {
                 // Exclude spots with "案内" (information/guidance centers) in their name
                 return !s.name.includes('案内');
             })
+            .filter(s => {
+                // Exclude spots without photos
+                return !!s.imageUrl;
+            })
             .sort((a, b) => {
+                // Priority 0: '赤山禅院' always first
+                if (a.name === '赤山禅院') return -1;
+                if (b.name === '赤山禅院') return 1;
+
                 // Primary: Has photo? (Photo first)
                 const aHasPhoto = !!(a.imageUrl);
                 const bHasPhoto = !!(b.imageUrl);
@@ -442,6 +449,15 @@ function App() {
                 return getDistance(a) - getDistance(b);
             });
     }, [mode, selectedRoute, spots, selectedSpot, selectedCongestion, coords, selectedTime, hideOtherPins]);
+
+    // --- Guide System Integration (Moved after visibleSpots to use filtered list) ---
+    const { nearbyGuides, nearbySpots, loading: guideLoading } = useGuideSystem({
+        coords: simulatedPosition ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng } : coords,
+        currentSegment,
+        spots: visibleSpots, // Use visibleSpots (filtered by route) instead of all spots
+        isNavigating: mode === AppMode.NAVIGATING
+    });
+    // -------------------------------
 
     // Update highlighted routes when selectedRoute changes
     useEffect(() => {
@@ -510,12 +526,22 @@ function App() {
         setHighlightedRouteIds(idsToHighlight);
     }, [selectedRoute, busRoutes, subwayRoutes]);
 
+    // Auto-close popup when entering NAVIGATING mode
+    useEffect(() => {
+        if (mode === AppMode.NAVIGATING) {
+            setSelectedSpot(null);
+            setFocusedSpotId(null);
+        }
+    }, [mode]);
+
     // ルート検索を開始（InfoWindowの「ルートを見る」ボタンから呼ばれる）
     // ルート検索を開始（InfoWindowの「ルートを見る」ボタンから呼ばれる）
     const handleRouteSearch = async (spot: Spot) => {
-        setSelectedSpot(spot);
         setHideOtherPins(true); // "View Route" hides other pins
         setMode(AppMode.ROUTE_SELECT);
+        setDestinationSpot(spot); // Set destination (persisted even if popup closes)
+        // setSelectedSpot(null); // REMOVED: Keep popup open per user request to "restore" behavior
+        setFocusedSpotId(null); // Also clear focus
         setLoading(true);
         setRouteSheetState('default');
         setShowRouteDetail(false); // Start on comparison screen, not detail view
@@ -552,10 +578,23 @@ function App() {
         setLoading(false);
     };
 
-    // 4. Start Navigation (Trigger Prompt)
+    // 4. Start Navigation (Skip audio prompt, directly start)
     const startNavigation = (route: RouteOption) => {
         setSelectedRoute(route);
-        setShowAudioPrompt(true);
+        setSelectedSpot(null); // Close popup immediately
+        // Directly start navigation with audio enabled (skip prompt)
+        confirmNavigation(true);
+    };
+
+    // 5. End Navigation (Transition to destination tourism guide)
+    const handleEndNavigation = () => {
+        setMode(AppMode.DESTINATION);
+        setSelectedSpot(destinationSpot); // Show destination tourism guide
+        setSelectedRoute(null);
+        setNavStage('TO_STOP');
+        setGuideText("");
+        setTransitInfo(null);
+        stopCurrentAudio();
     };
 
     // Confirm and start
@@ -564,11 +603,7 @@ function App() {
         setIsMuted(!enableAudio);
         stopCurrentAudio();
 
-        // UNLOCK AUDIO ENGINE: Play a short sound immediately on user interaction
-        // This is required for mobile browsers (iOS/Android) to allow subsequent auto-play
-        if (enableAudio) {
-            playTextToSpeech("ナビゲーションを開始します");
-        }
+        // Audio playback removed per user request
 
         setMode(AppMode.NAVIGATING);
         setNavStage('TO_STOP');
@@ -592,8 +627,7 @@ function App() {
         setLyricsHeight(180);
 
         // NOTE: setSheetHeight REMOVED per user request ("Don't minimize")
-
-        showToast("ナビゲーションを開始します");
+        // Toast notification removed per user request
     };
 
     // Stop current audio helper
@@ -657,16 +691,13 @@ function App() {
 
                     // Logic to switch stages
                     if (navStage === 'TO_STOP') {
-                        showToast("バスが到着しました。乗車します。");
                         changeStage('ON_BUS');
                         setStopsAway(4);
                         return getSegmentDurationForStage('ON_BUS');
                     } else if (navStage === 'ON_BUS') {
-                        showToast("まもなく目的地付近のバス停です。");
                         changeStage('ALIGHTING');
                         return getSegmentDurationForStage('ALIGHTING');
                     } else if (navStage === 'ALIGHTING') {
-                        showToast("降車しました。目的地へ向かいます。");
                         changeStage('TO_DEST');
                         return getSegmentDurationForStage('TO_DEST');
                     } else if (navStage === 'TO_DEST') {
@@ -814,7 +845,7 @@ function App() {
             }
 
             // Play audio automatically
-            await handleGenerateGuide(selectedRoute, navStage, durationSec, true);
+            // await handleGenerateGuide(selectedRoute, navStage, durationSec, true);
 
             // Set Transit Info from GTFS data
             const busSegment = selectedRoute.segments.find(s => s.type === 'BUS' || s.type === 'SUBWAY');
@@ -844,50 +875,8 @@ function App() {
         autoGenerate();
     }, [navStage, mode]);
 
-
-    // 5. Gemini Actions in Navigation
-    const handleGenerateGuide = async (routeOverride?: RouteOption, stageOverride?: NavigationStage, durationSeconds: number = 30, isAutoPlay: boolean = false) => {
-        const route = routeOverride || selectedRoute;
-        const stage = stageOverride || navStage;
-        if (!selectedSpot || !route) return;
-
-        setLoading(true);
-
-        // Filter en-route spots (excluding current location < 50m)
-        const currentPos = simulatedPosition
-            ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
-            : (coords || { latitude: 34.9858, longitude: 135.7588 });
-
-        const enRouteSpots = visibleSpots.filter(s => {
-            const dist = getDistance(currentPos, s.location);
-            return dist > 50; // Exclude if <= 50m (User request)
-        });
-
-        console.log('[DEBUG] All Visible Spots:', visibleSpots);
-        console.log('[DEBUG] Filtered En-Route Spots (>50m):', enRouteSpots);
-
-        // Determine vehicle type from route segments
-        const transitSeg = route.segments.find(s => s.type === 'BUS' || s.type === 'TRAIN' || s.type === 'SUBWAY');
-        const vehicleName = transitSeg?.type === 'TRAIN' ? '電車'
-            : transitSeg?.type === 'SUBWAY' ? '地下鉄'
-                : 'バス';
-
-        // Create detailed context
-        let context = `目的地: ${selectedSpot.name}。ルート: ${route.title}。`;
-        if (stage === 'ON_BUS') {
-            context += `現在、${vehicleName}に乗車中です。目的地まであと${stopsAway}駅です。`;
-        }
-
-        // Pass enRouteSpots to API
-        const text = await generateGuideContent(context, stage, durationSeconds, enRouteSpots);
-        setLoading(false);
-        setGuideText(text);
-
-        // Only auto-play if still in navigation mode
-        if (text && isAutoPlay && mode === AppMode.NAVIGATING) {
-            handlePlayAudio(text);
-        }
-    };
+    // 5. Gemini Actions (Legacy removed)
+    // New GuideSlider handles guide generation and playback.
 
     const handlePlayAudio = async (text: string) => {
         if (!text) return;
@@ -936,21 +925,7 @@ function App() {
     const handleArrive = () => {
         stopCurrentAudio();
         setMode(AppMode.DESTINATION);
-        handleGenerateDestinationGuide(true);
-    };
-
-    const handleGenerateDestinationGuide = async (isAutoPlay: boolean = false) => {
-        if (!selectedSpot) return;
-        setLoading(true);
-        // 60 seconds for destination guide
-        const text = await generateGuideContent(`ユーザーは${selectedSpot.name}に到着しました。この場所の歴史的背景、見どころ、参拝のマナーなどを案内してください。`, 'TO_DEST', 60);
-        setLoading(false);
-        setGuideText(text);
-
-        // Only auto-play if still in destination mode
-        if (text && isAutoPlay && mode === AppMode.DESTINATION) {
-            handlePlayAudio(text);
-        }
+        // handleGenerateDestinationGuide(true); // Removed legacy call
     };
 
     const goBackToPlanning = () => {
@@ -1180,12 +1155,23 @@ function App() {
                         center={simulatedPosition
                             ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
                             : (coords || { latitude: 34.9858, longitude: 135.7588 })}
-                        spots={visibleSpots.filter(s => {
+                        spots={(() => {
+                            // Use nearbySpots for instant pin display (no waiting for guide content)
+                            const nearbySpotIds = new Set(nearbySpots.map(s => s.id));
+
+                            // During navigation, only show nearby spots (instantly available)
+                            const isInNavMode = mode === AppMode.NAVIGATING;
+
+                            const baseSpots = isInNavMode
+                                ? visibleSpots.filter(s => nearbySpotIds.has(s.id))
+                                : visibleSpots;
+
+                            // Filter by distance from current position
                             const cur = simulatedPosition
                                 ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
                                 : (coords || { latitude: 34.9858, longitude: 135.7588 });
-                            return getDistance(cur, s.location) > 50;
-                        })}
+                            return baseSpots.filter(s => getDistance(cur, s.location) > 50);
+                        })()}
                         onSelectSpot={handleSpotSelect}
                         onViewRoute={handleRouteSearch}
                         onPinClick={() => setSheetHeight(88)}
@@ -1194,12 +1180,13 @@ function App() {
                         focusedSpotId={focusedSpotId || undefined}
                         selectedRoute={selectedRoute}
                         routeOptions={routeOptions}
-                        isNavigating={mode === AppMode.NAVIGATING || mode === AppMode.ROUTE_SELECT}
+                        isNavigating={mode === AppMode.NAVIGATING}
                         isSheetDragging={isDragging}
                         disableSmartPan={mode === AppMode.NAVIGATING}
                         showBusRoutes={showBusRoutes}
                         busRoutes={busRoutes}
                         subwayRoutes={subwayRoutes}
+                        highlightedGuideSpotId={highlightedGuideSpotId}
                     />
 
                 </div>
@@ -1545,7 +1532,7 @@ function App() {
 
                                             <div className="flex flex-col gap-1.5">
                                                 <span className="text-gray-500 text-xs font-medium">京都駅</span>
-                                                <span className="text-gray-900 text-sm font-bold truncate leading-tight">{selectedSpot?.name}</span>
+                                                <span className="text-gray-900 text-sm font-bold truncate leading-tight">{destinationSpot?.name}</span>
                                             </div>
                                         </div>
 
@@ -1654,7 +1641,7 @@ function App() {
                                                 <div className="flex flex-col items-center shrink-0 w-8">
                                                     <div className="w-4 h-4 rounded-full bg-red-500 shrink-0 shadow-sm ring-4 ring-red-100 relative z-10"></div>
                                                 </div>
-                                                <div className="font-bold text-gray-800 pt-0.5">{selectedSpot?.name}</div>
+                                                <div className="font-bold text-gray-800 pt-0.5">{destinationSpot?.name}</div>
                                             </div>
 
                                             <div className="h-28"></div> {/* Spacer for fixed button */}
@@ -1682,6 +1669,19 @@ function App() {
                                                     <div className="absolute top-0 left-0 w-full h-full border-4 border-indigo-600 rounded-full animate-spin border-t-transparent"></div>
                                                 </div>
                                                 <p className="text-sm font-bold">最適なルートを検索中...</p>
+                                            </div>
+                                        ) : routeOptions.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center py-16 text-gray-500 text-center">
+                                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                                    <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <p className="font-bold text-gray-800">ルートが見つかりませんでした</p>
+                                                <p className="text-xs text-gray-400 mt-2">
+                                                    近くにバス停がないか、<br />
+                                                    データが取得できませんでした。
+                                                </p>
                                             </div>
                                         ) : (
                                             routeOptions.map((route, idx) => {
@@ -1781,22 +1781,6 @@ function App() {
                 {
                     mode === AppMode.NAVIGATING && selectedRoute && (
                         <>
-                            {/* Minimized Floating Icon (Top Right) */}
-                            {isNavWidgetMinimized && (
-                                <button
-                                    onClick={() => setIsNavWidgetMinimized(false)}
-                                    className="absolute top-20 right-4 z-50 w-14 h-14 bg-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white animate-bounce-in border-4 border-white/30 backdrop-blur-md hover:scale-105 transition-transform"
-                                >
-                                    <SpeakerIcon className="w-6 h-6" />
-                                    {isPlaying && (
-                                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                                        </span>
-                                    )}
-                                </button>
-                            )}
-
                             {/* Location Simulator Control Panel */}
                             <div className="absolute top-20 left-4 z-50 bg-white/95 backdrop-blur-md rounded-xl shadow-lg px-3 py-2 border border-gray-200">
                                 <div className="text-[10px] font-bold text-gray-500 mb-1.5">位置シミュレーター</div>
@@ -1861,204 +1845,21 @@ function App() {
                                 )}
                             </div>
 
-                            {/* Expanded AI Guide Widget - Compact Version */}
-                            {!isNavWidgetMinimized && (
-                                <div className={`absolute bottom-0 left-0 right-0 z-10 p-3 pointer-events-none transition-all duration-300 max-h-[85vh]`}>
-                                    <div className="pointer-events-auto w-full max-w-md mx-auto">
-                                        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden relative flex flex-col-reverse animate-fade-in-up">
-                                            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 z-10"></div>
-
-                                            {/* Compact Header with Controls */}
-                                            <div className="px-3 py-1.5 flex justify-between items-center bg-gray-50/80 z-10 shrink-0">
-                                                <div className="flex items-center gap-2">
-                                                    {showNavRouteDetail ? (
-                                                        <span className="text-[10px] font-bold text-gray-700">ルート詳細</span>
-                                                    ) : (
-                                                        <>
-                                                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                                                                {isMuted ? <MuteIcon className="w-3 h-3" /> : <SpeakerIcon className="w-3 h-3" />} AI
-                                                            </span>
-                                                            {guideText && (
-                                                                <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${isPlaying ? 'bg-red-100 text-red-600' : 'bg-indigo-100 text-indigo-600'}`}>
-                                                                    {isPlaying ? '再生中' : '自動'}
-                                                                </span>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <button
-                                                        onClick={() => setShowNavRouteDetail(!showNavRouteDetail)}
-                                                        className={`p-1 hover:bg-gray-200 rounded transition-colors ${showNavRouteDetail ? 'bg-indigo-100 text-indigo-600' : 'text-gray-500'}`}
-                                                        title="ルート詳細"
-                                                    >
-                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setIsNavWidgetMinimized(true)}
-                                                        className="p-1 hover:bg-gray-200 rounded text-gray-400 transition-colors"
-                                                    >
-                                                        <ChevronDownIcon className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {/* Main Content - Switches between Guide and Route Detail */}
-                                            {showNavRouteDetail ? (
-                                                /* Route Detail Expanded View */
-                                                <div className="flex-1 overflow-y-auto max-h-[35vh]">
-                                                    {/* Route Summary */}
-                                                    <div className="px-3 py-2 bg-indigo-50/50 border-b border-indigo-100 flex items-center justify-between">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-lg font-extrabold text-indigo-900">{selectedRoute.duration}</span>
-                                                            <span className="text-xs font-bold text-indigo-600">{selectedRoute.title}</span>
-                                                        </div>
-                                                        <span className="text-sm font-bold text-indigo-700">{selectedRoute.cost}</span>
-                                                    </div>
-
-                                                    {/* Segments List */}
-                                                    <div className="p-2 space-y-1.5">
-                                                        {selectedRoute.segments.map((seg, i) => (
-                                                            <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                                                                <div className={`
-                                                                    flex items-center justify-center w-7 h-7 rounded-full shrink-0
-                                                                    ${seg.type === 'WALK' ? 'bg-gray-200 text-gray-600' :
-                                                                        seg.type === 'BUS' ? 'bg-blue-100 text-blue-600' :
-                                                                            seg.type === 'SUBWAY' ? 'bg-green-100 text-green-600' :
-                                                                                'bg-orange-100 text-orange-600'}
-                                                                `}>
-                                                                    <SegmentIcon type={seg.type} className="w-3.5 h-3.5" />
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="text-xs font-bold text-gray-800 truncate">
-                                                                        {seg.type === 'WALK' ? '徒歩' : seg.text}
-                                                                    </div>
-                                                                </div>
-                                                                <div className="text-[10px] font-bold text-gray-500 shrink-0">
-                                                                    {seg.duration || '---'}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-
-                                                        {/* Destination */}
-                                                        <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
-                                                            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-red-500 text-white shrink-0">
-                                                                <MapPinIcon className="w-3.5 h-3.5" />
-                                                            </div>
-                                                            <div className="text-xs font-bold text-gray-800 truncate flex-1">{selectedSpot.name}</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                /* Normal Guide View */
-                                                <>
-                                                    {/* Compact Journey Stage Bar */}
-                                                    <div className="px-3 py-1.5 bg-white border-b border-gray-100">
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-1">
-                                                                <button onClick={() => changeStage('TO_STOP')} className={`p-1.5 rounded-full ${navStage === 'TO_STOP' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
-                                                                    <WalkIcon className="w-3.5 h-3.5" />
-                                                                </button>
-                                                                <div className={`w-4 h-0.5 ${navStage !== 'TO_STOP' ? 'bg-indigo-400' : 'bg-gray-200'}`}></div>
-                                                                <button onClick={() => changeStage('ON_BUS')} className={`p-1.5 rounded-full ${navStage === 'ON_BUS' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
-                                                                    <BusIcon className="w-3.5 h-3.5" />
-                                                                </button>
-                                                                <div className={`w-4 h-0.5 ${navStage === 'ALIGHTING' || navStage === 'TO_DEST' ? 'bg-indigo-400' : 'bg-gray-200'}`}></div>
-                                                                <button onClick={() => changeStage('TO_DEST')} className={`p-1.5 rounded-full ${navStage === 'TO_DEST' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
-                                                                    <MapPinIcon className="w-3.5 h-3.5" />
-                                                                </button>
-                                                            </div>
-                                                            {stageTimeInfo && (
-                                                                <div className="flex items-center gap-1 text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-full">
-                                                                    <ClockIcon className="w-3 h-3" />
-                                                                    <span className="truncate max-w-[120px]">{stageTimeInfo}</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Compact Transit Info (Integrated) */}
-                                                    {selectedRoute.transportMode === TransportMode.TRANSIT && (navStage === 'TO_STOP' || navStage === 'ON_BUS' || navStage === 'ALIGHTING') && (() => {
-                                                        // Find the current transit segment
-                                                        const transitSeg = selectedRoute.segments.find(s => s.type === 'BUS' || s.type === 'TRAIN' || s.type === 'SUBWAY');
-                                                        const lineName = transitSeg?.text || selectedRoute.title;
-                                                        const lineNumber = lineName.match(/\d+/)?.[0];
-                                                        const isBus = transitSeg?.type === 'BUS';
-
-                                                        return (
-                                                            <div className="px-3 py-2 bg-indigo-50/50 border-b border-indigo-100 flex items-center justify-between">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-xs font-bold text-indigo-600">
-                                                                        {isBus && lineNumber ? `${lineNumber}系統` : lineName}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="text-right">
-                                                                    {navStage === 'TO_STOP' ? (
-                                                                        <span className="text-xs font-bold text-indigo-600">まもなく到着</span>
-                                                                    ) : (
-                                                                        <span className="text-sm font-black text-indigo-600">あと{stopsAway}駅</span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })()}
-
-                                                    {/* Compact Lyrics Content Area - Draggable */}
-                                                    <div
-                                                        className="relative bg-gray-50 overflow-hidden"
-                                                        style={{ height: `${lyricsHeight}px`, transition: isLyricsDragging ? 'none' : 'height 0.2s ease' }}
-                                                    >
-                                                        {/* Drag Handle - Top */}
-                                                        <div
-                                                            className="absolute top-0 left-0 right-0 h-4 flex items-center justify-center cursor-ns-resize z-20 hover:bg-gray-100/50 touch-none"
-                                                            onPointerDown={handleLyricsPointerDown}
-                                                            onPointerMove={handleLyricsPointerMove}
-                                                            onPointerUp={handleLyricsPointerUp}
-                                                            onPointerCancel={handleLyricsPointerUp}
-                                                        >
-                                                            <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
-                                                        </div>
-                                                        <div className="relative z-10 h-full flex flex-col items-center justify-center p-2 pt-4">
-                                                            {guideText ? (
-                                                                <LyricsReader text={guideText} isPlaying={isPlaying} duration={audioDuration} />
-                                                            ) : (
-                                                                <div className="flex items-center gap-2 text-gray-400">
-                                                                    <div className="w-4 h-4 rounded-full border-2 border-gray-300 border-t-indigo-500 animate-spin"></div>
-                                                                    <span className="text-xs">{navStage === 'TO_STOP' ? "バス停へ..." : "ガイド生成中..."}</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            )}
-
-                                            {/* Compact Controls */}
-                                            <div className="px-3 py-2 bg-white border-t border-gray-100 shrink-0 flex items-center justify-between gap-2">
-                                                {!showNavRouteDetail && guideText ? (
-                                                    <button
-                                                        onClick={() => handlePlayAudio(guideText)}
-                                                        disabled={isPlaying}
-                                                        className="flex-1 flex items-center justify-center gap-1.5 bg-gray-900 hover:bg-black disabled:bg-gray-600 text-white px-3 py-1.5 rounded-full text-[10px] font-bold transition-all"
-                                                    >
-                                                        <PlayIcon className="w-3 h-3" />
-                                                        {isPlaying ? '再生中' : 'もう一度'}
-                                                    </button>
-                                                ) : <div className="flex-1"></div>}
-
-                                                {navStage === 'TO_DEST' && (
-                                                    <button
-                                                        onClick={handleArrive}
-                                                        className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-full text-[10px] font-bold transition-all"
-                                                    >
-                                                        <MapPinIcon className="w-3 h-3" />
-                                                        到着
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
+                            {/* Guide Slider UI (Always Visible) */}
+                            {/* Guide Slider UI (Bottom Sheet) */}
+                            <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
+                                <div className="pointer-events-auto">
+                                    <GuideSlider
+                                        guides={nearbyGuides}
+                                        loading={loading}
+                                        onPlayAudio={handlePlayAudio}
+                                        onStopAudio={stopCurrentAudio}
+                                        isPlaying={isPlaying}
+                                        onCurrentGuideChange={(guide) => setHighlightedGuideSpotId(guide?.spotId || null)}
+                                        onComplete={handleEndNavigation}
+                                    />
                                 </div>
-                            )}
+                            </div>
                         </>
                     )
                 }

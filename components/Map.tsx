@@ -45,6 +45,7 @@ interface MapProps {
     busRoutes?: BusRoute[];
     subwayRoutes?: BusRoute[];
     highlightedRouteIds?: string[];
+    highlightedGuideSpotId?: string | null;
 }
 
 const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigating, lastFocusedSpotId, disableSmartPan, selectedRoute }: {
@@ -111,7 +112,7 @@ const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigat
     return null;
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false, showBusRoutes = false, busRoutes = [], subwayRoutes = [], highlightedRouteIds = [] }) => {
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false, showBusRoutes = false, busRoutes = [], subwayRoutes = [], highlightedRouteIds = [], highlightedGuideSpotId }) => {
     const [activeSpot, setActiveSpot] = useState<Spot | null>(null);
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
     const lastFocusedSpotId = useRef<string | undefined>(undefined);
@@ -175,14 +176,38 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
         return <div className={`${commonClasses} bg-blue-500 w-6 h-6`}><PersonIcon /></div>;
     };
 
-    const createCustomIcon = (spot: Spot, isSelected: boolean) => {
+    const createCustomIcon = (spot: Spot, isSelected: boolean, isHighlighted: boolean = false, isInNavMode: boolean = false) => {
         const congestionColors = ['#3b82f6', '#06b6d4', '#22c55e', '#eab308', '#ef4444'];
         const baseColor = congestionColors[spot.congestionLevel - 1] || '#3b82f6';
-        const color = baseColor;
-        const scale = isSelected ? 1.4 : 1.0;
+
+        // During navigation: white for all except highlighted (which gets original color)
+        // Not navigating: use base color, orange for highlighted
+        let color: string;
+        let scale: number;
+
+        if (isInNavMode) {
+            // Navigation mode: highlighted = original color + large, others = white + small
+            if (isHighlighted) {
+                color = baseColor;
+                scale = 1.1;
+            } else {
+                color = '#d1d5db'; // Gray-300 (light gray/white-ish)
+                scale = 0.8;
+            }
+        } else {
+            // Normal mode
+            color = baseColor;
+            scale = isSelected ? 1.4 : 1.0;
+        }
+
         const size = 44 * scale;
         const iconPath = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z";
-        const svgHtml = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));"><path d="${iconPath}" fill="${color}" stroke="white" stroke-width="1.5" /><circle cx="12" cy="9" r="3" fill="white" /></svg>`;
+
+        const svgHtml = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                <path d="${iconPath}" fill="${color}" stroke="${isInNavMode && !isHighlighted ? '#9ca3af' : 'white'}" stroke-width="1.5" />
+                <circle cx="12" cy="9" r="3" fill="${isInNavMode && !isHighlighted ? '#9ca3af' : 'white'}" />
+            </svg>`;
         return L.divIcon({ html: svgHtml, className: 'custom-marker-icon', iconSize: [size, size], iconAnchor: [size / 2, size], popupAnchor: [0, -size] });
     };
 
@@ -271,24 +296,35 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
             <Marker position={[center.latitude, center.longitude]} icon={currentLocationIcon} />
 
             {/* Spots */}
-            {spots.map(spot => (
-                <Marker key={spot.id} position={[spot.location.latitude, spot.location.longitude]} icon={createCustomIcon(spot, activeSpot?.id === spot.id)} ref={(ref) => { if (ref) markerRefs.current[spot.id] = ref; else delete markerRefs.current[spot.id]; }} eventHandlers={{ click: () => { setActiveSpot(spot); onSelectSpot(spot); if (onPinClick) onPinClick(); } }}>
-                    <Popup closeButton={false} className="custom-popup" maxWidth={280} minWidth={180} autoPan={false}>
-                        <div className="w-full relative bg-white rounded-xl overflow-hidden font-sans">
-                            <button onClick={(e) => { e.stopPropagation(); setActiveSpot(null); onSelectSpot(null); markerRefs.current[spot.id]?.closePopup(); }} className="absolute top-1 right-1 z-20 w-6 h-6 rounded-full bg-white/90 backdrop-blur-sm border-0 shadow-sm flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button>
-                            <div className="p-3 font-sans bg-white">
-                                <div className="flex items-center gap-2 mb-1.5"><div className="shrink-0"><CongestionLevelIcon level={spot.congestionLevel} /></div><h3 className="font-bold text-gray-900 leading-tight text-[16px] truncate flex-1">{spot.name}</h3></div>
-                                <p className="text-xs text-gray-600 leading-relaxed mb-2" style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3, overflow: 'hidden' }}>{spot.description}</p>
-                                <div className="flex flex-col gap-1.5">
-                                    {spot.openingHours && (<div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden"><svg className="shrink-0 w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span className="truncate">{spot.openingHours}</span></div>)}
-                                    {spot.price && (<div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden"><div className="shrink-0 w-3.5 h-3.5 flex items-center justify-center text-indigo-400 font-bold text-[10px] border border-indigo-200 rounded-full">¥</div><span className="truncate">{spot.price}</span></div>)}
+            {spots.map(spot => {
+                const isSelected = activeSpot?.id === spot.id;
+                const isHighlighted = highlightedGuideSpotId === spot.id;
+                return (
+                    <Marker
+                        key={spot.id}
+                        position={[spot.location.latitude, spot.location.longitude]}
+                        icon={createCustomIcon(spot, isSelected, isHighlighted, isNavigating)}
+                        ref={(ref) => { if (ref) markerRefs.current[spot.id] = ref; else delete markerRefs.current[spot.id]; }}
+                        eventHandlers={{ click: () => { setActiveSpot(spot); onSelectSpot(spot); if (onPinClick) onPinClick(); } }}
+                        zIndexOffset={isHighlighted ? 1000 : 0}
+                    >
+                        <Popup closeButton={false} className="custom-popup" maxWidth={280} minWidth={180} autoPan={false}>
+                            <div className="w-full relative bg-white rounded-xl overflow-hidden font-sans">
+                                <button onClick={(e) => { e.stopPropagation(); setActiveSpot(null); onSelectSpot(null); markerRefs.current[spot.id]?.closePopup(); }} className="absolute top-1 right-1 z-20 w-6 h-6 rounded-full bg-white/90 backdrop-blur-sm border-0 shadow-sm flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button>
+                                <div className="p-3 font-sans bg-white">
+                                    <div className="flex items-center gap-2 mb-1.5"><div className="shrink-0"><CongestionLevelIcon level={spot.congestionLevel} /></div><h3 className="font-bold text-gray-900 leading-tight text-[16px] truncate flex-1">{spot.name}</h3></div>
+                                    <p className="text-xs text-gray-600 leading-relaxed mb-2" style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3, overflow: 'hidden' }}>{spot.description}</p>
+                                    <div className="flex flex-col gap-1.5">
+                                        {spot.openingHours && (<div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden"><svg className="shrink-0 w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span className="truncate">{spot.openingHours}</span></div>)}
+                                        {spot.price && (<div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden"><div className="shrink-0 w-3.5 h-3.5 flex items-center justify-center text-indigo-400 font-bold text-[10px] border border-indigo-200 rounded-full">¥</div><span className="truncate">{spot.price}</span></div>)}
+                                    </div>
+                                    <button onClick={(e) => { e.stopPropagation(); if (onViewRoute) onViewRoute(spot); }} className="w-full mt-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-2 rounded shadow text-xs font-bold hover:opacity-90 transition-opacity">ルートを見る</button>
                                 </div>
-                                <button onClick={(e) => { e.stopPropagation(); if (onViewRoute) onViewRoute(spot); }} className="w-full mt-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-2 rounded shadow text-xs font-bold hover:opacity-90 transition-opacity">ルートを見る</button>
                             </div>
-                        </div>
-                    </Popup>
-                </Marker>
-            ))}
+                        </Popup>
+                    </Marker>
+                );
+            })}
 
             {/* Selected Route - render from segments only, ignore top-level path */}
             {selectedRoute && selectedRoute.segments && (

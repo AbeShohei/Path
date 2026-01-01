@@ -10,51 +10,48 @@ interface WikimediaImage {
 
 class WikimediaService {
     private cache: Map<string, string> = new Map();
+    private staticLoadPromise: Promise<void>;
+
+    constructor() {
+        this.staticLoadPromise = this.loadStaticData();
+    }
+
+    private async loadStaticData() {
+        try {
+            const res = await fetch('/data/spot_images.json');
+            if (res.ok) {
+                const data = await res.json();
+                Object.entries(data).forEach(([key, value]) => {
+                    this.cache.set(key, value as string);
+                });
+                console.log('[WikimediaService] Loaded static spot images:', Object.keys(data).length);
+            }
+        } catch (e) {
+            console.warn('[WikimediaService] Failed to load static spot images', e);
+        }
+    }
 
     // Fetch image URL for a spot by name
     async getSpotImage(spotName: string): Promise<string | null> {
-        // Check cache first
+        await this.staticLoadPromise; // Wait for prebuilt data
+
+        // 1. Check Memory Cache (includes Static Data)
         if (this.cache.has(spotName)) {
             return this.cache.get(spotName) || null;
         }
 
-        try {
-            const query = encodeURIComponent(spotName);
-            const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${query}&gsrlimit=3&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=600&format=json&origin=*`;
-
-            const response = await fetch(url);
-            if (!response.ok) {
-                console.warn('Wikimedia API request failed:', response.statusText);
-                return null;
-            }
-
-            const data = await response.json();
-
-            if (!data.query || !data.query.pages) {
-                return null;
-            }
-
-            // Find the first image result
-            const pages = Object.values(data.query.pages) as any[];
-            for (const page of pages) {
-                if (page.imageinfo && page.imageinfo.length > 0) {
-                    const imageInfo = page.imageinfo[0];
-                    // Prefer thumbnail URL (sized appropriately) over original
-                    const imageUrl = imageInfo.thumburl || imageInfo.url;
-
-                    if (imageUrl) {
-                        // Cache the result
-                        this.cache.set(spotName, imageUrl);
-                        return imageUrl;
-                    }
-                }
-            }
-
-            return null;
-        } catch (error) {
-            console.warn('Wikimedia image fetch error for', spotName, error);
-            return null;
+        // 2. Check LocalStorage Cache
+        const cacheKey = `img_cache_${spotName}`;
+        const lsValue = localStorage.getItem(cacheKey);
+        if (lsValue) {
+            this.cache.set(spotName, lsValue);
+            return lsValue;
         }
+
+        // 3. NO API FALLBACK (Offline Mode)
+        // User requested to rely strictly on prebuild/local data
+        // console.warn(`[WikimediaService] Image not found locally: ${spotName}`);
+        return null;
     }
 
     // Batch fetch images for multiple spots

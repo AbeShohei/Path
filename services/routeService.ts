@@ -112,47 +112,106 @@ class RouteService {
         return R * c * 1000;
     }
 
-    // Get walking path using OSRM with caching
+    // Get walking path using OSRM with persistent caching
+    // Get walking path using OSRM with persistent caching
     private async getWalkingPath(
         startLat: number, startLng: number,
         endLat: number, endLng: number
     ): Promise<{ lat: number; lng: number }[]> {
-        // Round coordinates to reduce cache misses (10m precision)
+        // Round coordinates to ~11m precision to increase cache hit rate and reduce excessive granularity
         const roundCoord = (n: number) => Math.round(n * 10000) / 10000;
-        const key = `${roundCoord(startLat)},${roundCoord(startLng)}-${roundCoord(endLat)},${roundCoord(endLng)}`;
+        const key = `foot_${roundCoord(startLat)},${roundCoord(startLng)}-${roundCoord(endLat)},${roundCoord(endLng)}`;
 
-        // Check cache first
+        // 0. Check Static Prebuilt Cache (Loaded in constructor hopefully, or fetch now if needed)
+        // Since constructor is async-hostile, we can try to fetch synchronously from a memory object if loaded.
+        // Or simple lazy load:
+        if (!this.staticRoutes) {
+            try {
+                const res = await fetch('/data/static_routes.json');
+                if (res.ok) {
+                    this.staticRoutes = await res.json();
+                } else {
+                    this.staticRoutes = {};
+                }
+            } catch (e) { this.staticRoutes = {}; }
+        }
+
+        if (this.staticRoutes && this.staticRoutes[key]) {
+            // console.log('Using static route for', key);
+            return this.staticRoutes[key];
+        }
+
+        // 1. Check in-memory cache
         if (this.walkingPathCache.has(key)) {
             return this.walkingPathCache.get(key)!;
         }
 
+        // 2. Check localStorage
         try {
-            const url = `https://router.project-osrm.org/route/v1/foot/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;
-
-            // Add timeout to avoid hanging requests
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeoutId);
-
-            if (!response.ok) throw new Error('OSRM failed');
-
-            const data = await response.json();
-            if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates) {
-                const path = data.routes[0].geometry.coordinates.map((c: [number, number]) => ({
-                    lat: c[1], lng: c[0]
-                }));
+            const cached = localStorage.getItem(key);
+            if (cached) {
+                const path = JSON.parse(cached);
                 this.walkingPathCache.set(key, path);
                 return path;
             }
-        } catch {
-            // Silent fail - use straight line
+        } catch (e) {
+            console.warn('LocalStorage read failed', e);
+        }
+
+        // 3. Fetch from API with robust retry logic
+        const maxRetries = 3;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                // Throttle: Slight random delay before first attempt to prevent bursts
+                if (attempt === 1) await new Promise(r => setTimeout(r, Math.random() * 500));
+
+                const url = `https://router.project-osrm.org/route/v1/foot/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    if (response.status === 429) {
+                        // Rate limit: Aggressive backoff (2s, 4s, 8s + random)
+                        const waitTime = (2000 * Math.pow(2, attempt - 1)) + (Math.random() * 1000);
+                        console.warn(`OSRM 429, waiting ${Math.round(waitTime)}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+                        continue;
+                    }
+                    throw new Error(`OSRM failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates) {
+                    const path = data.routes[0].geometry.coordinates.map((c: [number, number]) => ({
+                        lat: c[1], lng: c[0]
+                    }));
+
+                    // Save to memory and localStorage
+                    this.walkingPathCache.set(key, path);
+                    try {
+                        localStorage.setItem(key, JSON.stringify(path));
+                    } catch (e) {
+                        console.warn('Cache save failed (quota?)', e);
+                        // Optional: Clear old items if full
+                    }
+                    return path;
+                }
+            } catch (err) {
+                console.warn(`OSRM attempt ${attempt} failed:`, err);
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+                }
+            }
         }
 
         // Fallback: straight line
+        console.warn('OSRM failed after retries, using straight line fallback.');
         const fallback = [{ lat: startLat, lng: startLng }, { lat: endLat, lng: endLng }];
-        this.walkingPathCache.set(key, fallback);
+        this.walkingPathCache.set(key, fallback); // Cache failure/fallback too to prevent loop? (Maybe logic later)
         return fallback;
     }
 
@@ -257,18 +316,25 @@ class RouteService {
         timetable: RouteTimetable,
         startStopId: string,
         endStopId: string,
-        walkMinutes: number
+        walkMinutes: number,
+        date: Date = new Date()
     ): { departureTime: string; arrivalTime: string; waitMinutes: number; tripId: string; intermediateStops: { name: string; time: string }[] } | null {
-        const now = new Date();
-        const departureThreshold = new Date(now.getTime() + walkMinutes * 60000);
+        // Threshold: When can we arrive at the stop?
+        // If searching for "tomorrow", we assume we can start "early enough", blocking is just the schedule.
+        // But to be safe, let's strictly follow the provided date + walkMinutes.
+        const departureThreshold = new Date(date.getTime() + walkMinutes * 60000);
         const thresholdH = departureThreshold.getHours();
         const thresholdM = departureThreshold.getMinutes();
         const thresholdTimeVal = thresholdH * 60 + thresholdM;
 
-        const serviceType = this.getServiceType(now);
+        const serviceType = this.getServiceType(date);
         const trips = timetable[serviceType];
 
         if (!trips) return null;
+
+        // Sort trips by time to ensure we find the "First" one? 
+        // Typically GTFS is sorted, but let's assume order is chronological or verify.
+        // Usually provided json is sorted.
 
         for (const trip of trips) {
             // Find start and end stop indices in this trip
@@ -409,21 +475,55 @@ class RouteService {
 
             // Try to get real schedule
             const timetable = await this.getTimetable(routeId);
-            const realSchedule = timetable ? this.findNextBus(timetable, startStop.id, endStop.id, walkToMinutes) : null;
+            let realSchedule = timetable ? this.findNextBus(timetable, startStop.id, endStop.id, walkToMinutes) : null;
+            let isTomorrow = false;
+
+            // Fallback: Check tomorrow morning if no bus found today (e.g., end of service)
+            if (!realSchedule && timetable) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(4, 0, 0, 0); // Start checking from 4:00 AM next day
+
+                // Find first bus of tomorrow
+                realSchedule = this.findNextBus(timetable, startStop.id, endStop.id, 0, tomorrow);
+                if (realSchedule) {
+                    isTomorrow = true;
+                } else {
+                    // Even tomorrow no bus? Then broken or holiday schedule mismatch
+                    return null;
+                }
+            }
 
             if (realSchedule) {
                 busDepartureTimeStr = realSchedule.departureTime;
                 busArrivalTimeStr = realSchedule.arrivalTime;
-                estimatedWaitMinutes = realSchedule.waitMinutes;
+                estimatedWaitMinutes = realSchedule.waitMinutes; // Note: if tomorrow, this is relative to 4:00 AM
 
                 // Calculate ride minutes from schedule
                 const [depH, depM] = busDepartureTimeStr.split(':').map(Number);
                 const [arrH, arrM] = busArrivalTimeStr.split(':').map(Number);
                 rideMinutes = (arrH * 60 + arrM) - (depH * 60 + depM);
-                if (rideMinutes < 0) rideMinutes += 24 * 60; // Handle midnight crossover?
+                if (rideMinutes < 0) rideMinutes += 24 * 60;
+
+                // If tomorrow, recalculate correct "Wait from Now" for UI purposes
+                if (isTomorrow) {
+                    const now = new Date();
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    tomorrow.setHours(depH, depM, 0, 0); // Departure Time
+
+                    const departureTimestamp = tomorrow.getTime();
+                    const arrivalAtStopTimestamp = now.getTime() + walkToMinutes * 60000;
+
+                    // Wait = Departure - ArrivalAtStop
+                    estimatedWaitMinutes = Math.max(0, Math.floor((departureTimestamp - arrivalAtStopTimestamp) / 60000));
+
+                    // Add distinct visual marker for tomorrow
+                    busDepartureTimeStr = `(翌)${busDepartureTimeStr}`;
+                }
+
             } else if (timetable) {
-                // Timetable exists but no bus found (e.g. End of Service or Stop Mismatch).
-                // Do NOT fallback to simulated time for valid timetable routes.
+                // Should not happen due to fallback logic above, unless tomorrow also failed
                 return null;
             } else {
                 // FALLBACK: Simulated Logic (Only for routes without timetable, e.g. Subway or Missing Data)
@@ -462,8 +562,18 @@ class RouteService {
             if (realSchedule && estimatedWaitMinutes > 0) {
                 // Shift start time so that user arrives just in time (wait = 0)
                 // estimatedWaitMinutes was calculated as (BusDeparture - (Now + Walk))
+
+                // If isTomorrow, estimatedWaitMinutes is huge (e.g. 600 mins).
+                // We add this to startTimestamp.
                 startTimestamp += estimatedWaitMinutes * 60000;
-                estimatedWaitMinutes = 0; // Reduce wait time in UI since we shifted start
+
+                // We do NOT set estimatedWaitMinutes to 0 here because if it's "Tomorrow", 
+                // we arguably want to show the huge wait?
+                // Actually, standard behavior in map apps:
+                // "Depart at Tomorrow 8:00" -> Wait is effectively 0 at the time of departure.
+                // But the "Wait Minutes" segment in RouteOption usually implies "Wait at bus stop".
+                // If we shift the start time, the user leaves home LATER, so wait at bus stop is 0.
+                estimatedWaitMinutes = 0;
             }
 
             const totalDurationMinutes = walkToMinutes + estimatedWaitMinutes + rideMinutes + walkFromMinutes;
@@ -477,7 +587,7 @@ class RouteService {
             const endTimeStr = formatTime(endDate);
 
             const direction = "方面";
-            const busPath = this.getBusPath(routeId, routeInfo, startStop, endStop);
+            const segmentPath = this.getBusPath(routeId, routeInfo, startStop, endStop);
 
             // Get intermediate stops from GTFS timetable (real data)
             const intermediateStops = realSchedule?.intermediateStops || [];
@@ -508,7 +618,7 @@ class RouteService {
                         companyName: isSubway ? '京都市営地下鉄' : '京都市営バス',
                         lineName: routeInfo.short_name,
                         routeId: routeId,
-                        path: isSubway ? [] : busPath,
+                        path: segmentPath,
                         waitMinutes: estimatedWaitMinutes,
                         intermediateStops: intermediateStops
                     },

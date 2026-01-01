@@ -17373,7 +17373,11 @@ export const findNearbySpots = (currentLoc: Coordinates, radiusKm: number = 5): 
     });
 
   // Sort by congestion level: 1 (Comfortable) -> 5 (Crowded)
+  // Sort by congestion level: 1 (Comfortable) -> 5 (Crowded)
+  // But prioritize '赤山禅院' to be at the top
   return filteredSpots.sort((a, b) => {
+    if (a.name === '赤山禅院') return -1;
+    if (b.name === '赤山禅院') return 1;
     return a.congestionLevel - b.congestionLevel;
   });
 };
