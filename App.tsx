@@ -2234,8 +2234,10 @@ function App() {
                                     )}
                                 </div>
 
-                                {/* Bottom Fade Out Overlay */}
-                                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent pointer-events-none"></div>
+                                {/* Bottom Fade Out Overlay - Only show when Lyrics are active (guideText exists) */}
+                                {guideText && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent pointer-events-none"></div>
+                                )}
                             </div>
 
                             {/* Bottom Section - Controls and Spots (Overlay) */}
