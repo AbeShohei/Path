@@ -5,7 +5,7 @@ import { routeService } from './services/routeService';
 import { wikimediaService } from './services/wikimediaService';
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
 import { getCongestionLevel, getCurrentTimeOfDay, TimeOfDay, getTimeOfDayLabel } from './services/humanFlowService';
-import { generateDifyContext, generatePromptContext } from './services/difyContextService';
+
 
 import { useLocationSimulator } from './hooks/useLocationSimulator';
 import { useGuideSystem } from './hooks/useGuideSystem';
