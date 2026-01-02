@@ -584,7 +584,7 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
                 {isCompletionSlide && (
                     <div
                         className="absolute bottom-0 left-0 right-0 z-[50] w-full bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col rounded-t-[32px] overflow-hidden pointer-events-auto"
-                        style={{ height: '250px' }}
+                        style={{ height: '450px' }}
                     >
                         {/* Drag Handle */}
                         <div className="flex justify-center py-3">
@@ -592,7 +592,7 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
                         </div>
 
                         {/* Completion Content */}
-                        <div className="flex flex-col items-center justify-center flex-1 px-6 pb-6">
+                        <div className="flex flex-col items-center justify-center flex-1 px-6 pb-12">
                             <div className="text-4xl mb-4">🎉</div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">お疲れ様でした！</h3>
                             <p className="text-sm text-gray-500 mb-6 text-center">
@@ -610,7 +610,7 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
                             {/* Back Button */}
                             <button
                                 onClick={() => setCurrentIndex(totalCards - 1)}
-                                className="mt-3 text-sm text-gray-500 hover:text-gray-700"
+                                className="mt-6 text-sm text-gray-500 hover:text-gray-700 font-medium"
                             >
                                 ← 前のスポットに戻る
                             </button>

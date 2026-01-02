@@ -113,13 +113,11 @@ const LyricsReader: React.FC<LyricsReaderProps> = ({ text, isPlaying, duration, 
   let charCount = 0;
 
   return (
-    <div className="relative w-full h-full flex flex-col">
+    <div className="w-full">
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto px-6 py-10 space-y-8 text-center custom-scrollbar"
-        style={{ maskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)' }}
+        className="space-y-6 text-left"
       >
-        <div className="h-[20%]"></div> {/* Top spacer for centering */}
         {lines.map((line, i) => {
           const lineStart = charCount;
           const lineEnd = charCount + line.length;
@@ -139,13 +137,12 @@ const LyricsReader: React.FC<LyricsReaderProps> = ({ text, isPlaying, duration, 
             <p
               key={i}
               ref={el => { lineRefs.current[i] = el; }}
-              className={`text-xl md:text-3xl font-bold transition-all duration-500 leading-relaxed font-serif ${getTextStyles(status)}`}
+              className={`text-lg md:text-xl font-medium transition-all duration-500 leading-loose font-serif ${getTextStyles(status)}`}
             >
               {line}
             </p>
           );
         })}
-        <div className="h-[40%]"></div> {/* Bottom spacer for centering */}
       </div>
     </div>
   );

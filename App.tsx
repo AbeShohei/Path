@@ -24,7 +24,7 @@ const MuteIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg cla
 const PlayIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>;
 const RefreshIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
 const ArrowRightIcon = ({ className = "w-3 h-3 text-gray-400" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>;
-const SwapIcon = () => <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>;
+
 const ChevronLeftIcon = ({ className = "w-6 h-6" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>;
 const ChevronDownIcon = ({ className = "w-6 h-6" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>;
 const ChevronUpIcon = ({ className = "w-6 h-6" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
@@ -112,7 +112,7 @@ function App() {
 
     const [coords, setCoords] = useState<Coordinates | null>(null);
     const [spots, setSpots] = useState<Spot[]>([]);
-    const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
+    const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2]); // Default: Comfortable, Somewhat Comfortable
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
     const [devMode, setDevMode] = useState(false); // Developer mode for advanced features
@@ -1655,8 +1655,8 @@ function App() {
                                                         )}
 
                                                         {/* Congestion Icon (Top Right) */}
-                                                        <div className="absolute top-1 right-1 bg-white/80 backdrop-blur-sm rounded-full p-0.5 shadow-sm">
-                                                            <div className="scale-75 origin-center">
+                                                        <div className="absolute top-1 right-1">
+                                                            <div className="scale-75 origin-top-right">
                                                                 <CongestionLevelIcon level={spot.congestionLevel} />
                                                             </div>
                                                         </div>
@@ -1768,7 +1768,7 @@ function App() {
 
                                 {/* Header Content */}
                                 <div className="bg-white z-20 sticky top-0 pb-0 shrink-0">
-                                    <div className="p-4 pt-1 grid grid-cols-[auto_1fr_auto] gap-3 items-center border-b border-gray-100">
+                                    <div className="p-4 pt-1 grid grid-cols-[auto_1fr] gap-3 items-center border-b border-gray-100">
                                         <button onClick={goBackToPlanning} className="text-gray-400 hover:text-gray-800 transition-colors p-2 -ml-2 rounded-full hover:bg-gray-100">
                                             <ChevronLeftIcon />
                                         </button>
@@ -1785,12 +1785,7 @@ function App() {
                                                 <span className="text-gray-900 text-sm font-bold truncate leading-tight">{destinationSpot?.name}</span>
                                             </div>
                                         </div>
-
-                                        <div className="flex flex-col justify-center text-gray-400 pl-1">
-                                            <SwapIcon />
-                                        </div>
                                     </div>
-
                                 </div>
 
                                 {/* Route List */}
@@ -2069,7 +2064,7 @@ function App() {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </div >
                     )
                 }
 
@@ -2212,37 +2207,43 @@ function App() {
                             {/* Blurred Gray Overlay (Fallback / Additional Tint) */}
                             <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm z-0"></div>
 
-                            {/* Full Screen Lyrics Background */}
-                            <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
-                                <div className="w-full h-full flex items-center justify-center px-8 py-32">
+                            {/* Top Section - Arrival Info (Overlay) */}
+                            <div className="relative z-10 text-left pt-6 px-6 pb-2 shrink-0 bg-gradient-to-b from-gray-900 via-gray-900/80 to-transparent">
+                                <div className="inline-block px-3 py-1 bg-white/10 backdrop-blur rounded-full text-[10px] text-white/80 font-bold tracking-widest uppercase border border-white/10 mb-2">
+                                    到着
+                                </div>
+                                <h2 className="text-2xl font-bold text-white font-serif mb-4">{selectedSpot.name}</h2>
+                            </div>
+
+                            {/* Main Content - Guide Text / Description (Scrollable with Fade) */}
+                            <div className="relative z-10 flex-1 px-6 overflow-hidden">
+                                <div className="w-full h-full overflow-y-auto custom-scrollbar pb-32">
                                     {guideText ? (
-                                        <LyricsReader text={guideText} isPlaying={isPlaying} duration={audioDuration} theme="light" />
+                                        <div className="text-white/90 font-medium text-lg leading-loose font-serif">
+                                            <LyricsReader text={guideText} isPlaying={isPlaying} duration={audioDuration} theme="light" />
+                                        </div>
+                                    ) : selectedSpot.description ? (
+                                        <div className="text-white/90 font-medium text-lg leading-loose font-serif">
+                                            {selectedSpot.description}
+                                        </div>
                                     ) : (
-                                        <div className="flex items-center gap-2 text-white/60">
+                                        <div className="flex items-center gap-2 text-white/60 py-4">
                                             <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white/80 animate-spin"></div>
                                             <span className="text-sm">ガイドを読み込み中...</span>
                                         </div>
                                     )}
                                 </div>
-                            </div>
 
-                            {/* Top Section - Arrival Info (Overlay) */}
-                            <div className="relative z-10 text-center pt-6 pb-4 shrink-0 bg-gradient-to-b from-gray-900/90 to-transparent">
-                                <div className="inline-block px-3 py-1 bg-white/10 backdrop-blur rounded-full text-[10px] text-white/80 font-bold tracking-widest uppercase border border-white/10 mb-2">
-                                    到着
-                                </div>
-                                <h2 className="text-xl font-bold text-white font-serif">{selectedSpot.name}</h2>
+                                {/* Bottom Fade Out Overlay */}
+                                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent pointer-events-none"></div>
                             </div>
-
-                            {/* Spacer */}
-                            <div className="flex-1"></div>
 
                             {/* Bottom Section - Controls and Spots (Overlay) */}
-                            <div className="relative z-10 px-4 pb-4 shrink-0 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-transparent pt-8">
+                            <div className="relative z-10 px-4 pb-24 shrink-0 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-transparent pt-8">
                                 {/* Audio Control */}
-                                {guideText && (
+                                {(guideText || selectedSpot.description) && (
                                     <button
-                                        onClick={() => handlePlayAudio(guideText)}
+                                        onClick={() => handlePlayAudio(guideText || selectedSpot.description)}
                                         disabled={isPlaying}
                                         className="mx-auto mb-3 px-6 py-2 bg-white/10 hover:bg-white/20 disabled:bg-white/5 text-white rounded-full text-sm font-bold transition-all flex items-center gap-2 border border-white/20"
                                     >
@@ -2329,21 +2330,24 @@ function App() {
             </main >
 
             {/* Recenter Button (Global Overlay) */}
-            {mode !== AppMode.LANDING && mode !== AppMode.DESTINATION && (
-                <button
-                    onClick={() => setRecenterTrigger(prev => prev + 1)}
-                    className="absolute right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all border border-gray-200"
-                    style={{
-                        zIndex: 1000,
-                        top: (mode === AppMode.NAVIGATING || mode === AppMode.DESTINATION) ? '7rem' : '1rem'
-                    }}
-                    title="現在地に戻る"
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600 -translate-x-1 translate-y-1">
-                        <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-                    </svg>
-                </button>
-            )}
+            {
+                mode !== AppMode.LANDING && mode !== AppMode.DESTINATION && (
+                    <button
+                        onClick={() => setRecenterTrigger(prev => prev + 1)}
+                        className="absolute right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all border border-gray-200"
+                        style={{
+                            zIndex: 1000,
+                            top: (mode === AppMode.NAVIGATING || mode === AppMode.DESTINATION) ? '7rem' : '1rem'
+                        }}
+                        title="現在地に戻る"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="8" fill="#3B82F6" stroke="white" strokeWidth="2" />
+                            <circle cx="12" cy="12" r="11" stroke="#3B82F6" strokeWidth="1.5" className="opacity-30" />
+                        </svg>
+                    </button>
+                )
+            }
         </div >
     );
 }
