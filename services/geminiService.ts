@@ -158,7 +158,7 @@ export const generateGuideContent = async (
         // Fallback: Use static spot description with a polite prefix
         return {
             id: `guide-${spot.id}-${Date.now()}`,
-            text: `（通信状況のため、基本情報を表示します）\n\n${spot.description}`,
+            text: spot.description,
             spotId: spot.id,
             spotName: spot.name,
             direction: relativeDirection
