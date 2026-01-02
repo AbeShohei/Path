@@ -83,22 +83,106 @@ export function getMeshPopulation(meshCode: string, timeOfDay: TimeOfDay): numbe
 }
 
 /**
- * Calculate congestion level (1-5) from population
+ * Calculate congestion level (1-5) from population using DEVIATION SCORE (偏差値)
+ * 
+ * This distributes spots across all 5 levels based on relative population.
+ * - Level 1 (快適): Bottom 20% (deviation < 42)
+ * - Level 2 (やや快適): 20-40% (deviation 42-48)
+ * - Level 3 (通常): 40-60% (deviation 48-52)
+ * - Level 4 (やや混雑): 60-80% (deviation 52-58)
+ * - Level 5 (混雑): Top 20% (deviation >= 58)
  */
+
+// Population stats calculated from SPOT LOCATIONS ONLY
+let populationStats: { mean: number; stdDev: number } | null = null;
+let registeredSpotLocations: { lat: number; lng: number }[] = [];
+
+/**
+ * Register spot locations to calculate stats from spots only
+ * Call this from spotService after loading spots
+ */
+export function registerSpotLocations(locations: { lat: number; lng: number }[]) {
+    registeredSpotLocations = locations;
+    populationStats = null; // Reset to recalculate
+    console.log('[HumanFlow] Registered', locations.length, 'spot locations for stats calculation');
+}
+
+// Initialize population statistics from SPOT MESHES ONLY
+function initPopulationStats() {
+    if (populationStats !== null) return;
+
+    const spotPopulations: number[] = [];
+    const seenMeshes = new Set<string>();
+
+    // If no spots registered, use all meshes as fallback
+    if (registeredSpotLocations.length === 0) {
+        console.log('[HumanFlow] No spots registered, using all mesh data');
+        for (const meshCode of Object.keys(MESH_POPULATIONS)) {
+            const data = MESH_POPULATIONS[meshCode];
+            if (data) {
+                if (data.morning > 0) spotPopulations.push(data.morning);
+                if (data.noon > 0) spotPopulations.push(data.noon);
+                if (data.evening > 0) spotPopulations.push(data.evening);
+            }
+        }
+    } else {
+        // Collect population data ONLY from meshes where spots exist
+        for (const loc of registeredSpotLocations) {
+            const meshCode = latLonToMesh1km(loc.lat, loc.lng);
+            if (seenMeshes.has(meshCode)) continue;
+            seenMeshes.add(meshCode);
+
+            const data = MESH_POPULATIONS[meshCode];
+            if (data) {
+                if (data.morning > 0) spotPopulations.push(data.morning);
+                if (data.noon > 0) spotPopulations.push(data.noon);
+                if (data.evening > 0) spotPopulations.push(data.evening);
+            }
+        }
+        console.log('[HumanFlow] Using', seenMeshes.size, 'unique spot meshes for stats');
+    }
+
+    if (spotPopulations.length === 0) {
+        populationStats = { mean: 1000, stdDev: 500 };
+        return;
+    }
+
+    // Calculate mean
+    const sum = spotPopulations.reduce((a, b) => a + b, 0);
+    const mean = sum / spotPopulations.length;
+
+    // Calculate standard deviation
+    const squareDiffs = spotPopulations.map(v => Math.pow(v - mean, 2));
+    const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / spotPopulations.length;
+    const stdDev = Math.sqrt(avgSquareDiff);
+
+    populationStats = { mean, stdDev };
+    console.log('[HumanFlow] Spot-based stats:', { mean: mean.toFixed(0), stdDev: stdDev.toFixed(0), samples: spotPopulations.length });
+}
+
 function populationToCongestionLevel(
     population: number,
     region: Region,
     timeOfDay: TimeOfDay
 ): CongestionLevel {
-    const thresholds = region === 'city'
-        ? THRESHOLDS.kyotoCity[timeOfDay]
-        : THRESHOLDS.outside[timeOfDay];
+    // Initialize stats if not done
+    initPopulationStats();
 
-    if (population <= thresholds.level1Max) return 1;
-    if (population <= thresholds.level2Max) return 2;
-    if (population <= thresholds.level3Max) return 3;
-    if (population <= thresholds.level4Max) return 4;
-    return 5;
+    if (!populationStats || populationStats.stdDev === 0) {
+        // Fallback if stats not available
+        return 3;
+    }
+
+    // Calculate deviation score (偏差値): 50 + 10 * (value - mean) / stdDev
+    const deviationScore = 50 + 10 * (population - populationStats.mean) / populationStats.stdDev;
+
+    // Map deviation score to congestion level (1-5)
+    // Using 20% percentile thresholds
+    if (deviationScore < 42) return 1;      // Bottom 20%: 快適
+    if (deviationScore < 48) return 2;      // 20-40%: やや快適
+    if (deviationScore < 52) return 3;      // 40-60%: 通常
+    if (deviationScore < 58) return 4;      // 60-80%: やや混雑
+    return 5;                                // Top 20%: 混雑
 }
 
 /**

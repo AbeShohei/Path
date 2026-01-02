@@ -115,6 +115,7 @@ function App() {
     const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
+    const [devMode, setDevMode] = useState(false); // Developer mode for advanced features
     const [recenterTrigger, setRecenterTrigger] = useState(0); // Trigger to recenter map
 
     // Selection State
@@ -1469,6 +1470,18 @@ function App() {
                                 <div className="mt-4 text-center">
                                     <p className="text-[10px] text-white/50">Images provided by Wikimedia Commons (CC-BY-SA)</p>
                                 </div>
+
+                                {/* Developer Mode Toggle */}
+                                <button
+                                    onClick={() => setDevMode(prev => !prev)}
+                                    className={`mt-2 text-[10px] px-3 py-1 rounded-full transition-all ${
+                                        devMode 
+                                            ? 'bg-indigo-500 text-white' 
+                                            : 'bg-white/10 text-white/40 hover:text-white/60'
+                                    }`}
+                                >
+                                    {devMode ? '開発者モード ON' : '開発者モード'}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1564,21 +1577,23 @@ function App() {
                                             </button>
                                         </div>
 
-                                        {/* Time Filter */}
-                                        <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
-                                            {(['morning', 'noon', 'evening'] as TimeOfDay[]).map((t) => (
-                                                <button
-                                                    key={t}
-                                                    onClick={() => setSelectedTime(t)}
-                                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedTime === t
-                                                        ? 'bg-white text-indigo-600 shadow-sm'
-                                                        : 'text-gray-400 hover:text-gray-600'
-                                                        }`}
-                                                >
-                                                    {t === 'morning' ? '朝' : t === 'noon' ? '昼' : '夕'}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        {/* Time Filter (Dev Mode Only) */}
+                                        {devMode && (
+                                            <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
+                                                {(['morning', 'noon', 'evening'] as TimeOfDay[]).map((t) => (
+                                                    <button
+                                                        key={t}
+                                                        onClick={() => setSelectedTime(t)}
+                                                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedTime === t
+                                                            ? 'bg-white text-indigo-600 shadow-sm'
+                                                            : 'text-gray-400 hover:text-gray-600'
+                                                            }`}
+                                                    >
+                                                        {t === 'morning' ? '朝' : t === 'noon' ? '昼' : '夕'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -1953,7 +1968,7 @@ function App() {
                                                             {route.segments.map((seg, i) => {
                                                                 const isTransit = ['BUS', 'SUBWAY', 'TRAIN'].includes(seg.type);
                                                                 const hasDetails = isTransit && (seg.intermediateStops?.length || seg.departureTime || seg.arrivalTime);
-                                                                
+
                                                                 return (
                                                                     <div key={i} className="flex flex-col">
                                                                         <div className="flex items-center gap-3 text-xs text-gray-700">
@@ -1998,7 +2013,7 @@ function App() {
                                                                                 )}
                                                                             </div>
                                                                         </div>
-                                                                        
+
                                                                         {/* Accordion Content: Intermediate Stops */}
                                                                         {hasDetails && seg.intermediateStops && seg.intermediateStops.length > 0 && (
                                                                             <details className="ml-[52px] mt-1">
@@ -2058,97 +2073,99 @@ function App() {
                 {
                     mode === AppMode.NAVIGATING && selectedRoute && (
                         <>
-                            {/* Location Simulator Control Panel (Draggable) */}
-                            <div
-                                className="absolute z-50 bg-white/95 backdrop-blur-md rounded-xl shadow-lg px-3 py-2 border border-gray-200 select-none"
-                                style={{ left: simulatorPos.x, top: simulatorPos.y }}
-                            >
-                                {/* Drag Handle */}
+                            {/* Location Simulator Control Panel (Dev Mode Only) */}
+                            {devMode && (
                                 <div
-                                    className="text-[10px] font-bold text-gray-500 mb-1.5 cursor-grab active:cursor-grabbing flex items-center gap-2"
-                                    onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        handleSimulatorDragStart(e.clientX, e.clientY);
-                                        const onMove = (ev: MouseEvent) => handleSimulatorDragMove(ev.clientX, ev.clientY);
-                                        const onUp = () => {
-                                            handleSimulatorDragEnd();
-                                            document.removeEventListener('mousemove', onMove);
-                                            document.removeEventListener('mouseup', onUp);
-                                        };
-                                        document.addEventListener('mousemove', onMove);
-                                        document.addEventListener('mouseup', onUp);
-                                    }}
-                                    onTouchStart={(e) => {
-                                        handleSimulatorDragStart(e.touches[0].clientX, e.touches[0].clientY);
-                                    }}
-                                    onTouchMove={(e) => {
-                                        handleSimulatorDragMove(e.touches[0].clientX, e.touches[0].clientY);
-                                    }}
-                                    onTouchEnd={handleSimulatorDragEnd}
+                                    className="absolute z-50 bg-white/95 backdrop-blur-md rounded-xl shadow-lg px-3 py-2 border border-gray-200 select-none"
+                                    style={{ left: simulatorPos.x, top: simulatorPos.y }}
                                 >
-                                    <span className="text-gray-400">⋮⋮</span>
-                                    位置シミュレーター
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {!locationSimulator.state.isRunning ? (
-                                        <button
-                                            onClick={startLocationSimulation}
-                                            className="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1"
-                                        >
-                                            <PlayIcon className="w-3 h-3" /> 開始
-                                        </button>
-                                    ) : (
-                                        <>
+                                    {/* Drag Handle */}
+                                    <div
+                                        className="text-[10px] font-bold text-gray-500 mb-1.5 cursor-grab active:cursor-grabbing flex items-center gap-2"
+                                        onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            handleSimulatorDragStart(e.clientX, e.clientY);
+                                            const onMove = (ev: MouseEvent) => handleSimulatorDragMove(ev.clientX, ev.clientY);
+                                            const onUp = () => {
+                                                handleSimulatorDragEnd();
+                                                document.removeEventListener('mousemove', onMove);
+                                                document.removeEventListener('mouseup', onUp);
+                                            };
+                                            document.addEventListener('mousemove', onMove);
+                                            document.addEventListener('mouseup', onUp);
+                                        }}
+                                        onTouchStart={(e) => {
+                                            handleSimulatorDragStart(e.touches[0].clientX, e.touches[0].clientY);
+                                        }}
+                                        onTouchMove={(e) => {
+                                            handleSimulatorDragMove(e.touches[0].clientX, e.touches[0].clientY);
+                                        }}
+                                        onTouchEnd={handleSimulatorDragEnd}
+                                    >
+                                        <span className="text-gray-400">⋮⋮</span>
+                                        位置シミュレーター
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {!locationSimulator.state.isRunning ? (
                                             <button
-                                                onClick={locationSimulator.pause}
-                                                className="px-2 py-1.5 bg-yellow-500 text-white text-xs font-bold rounded-lg hover:bg-yellow-600 transition-colors"
+                                                onClick={startLocationSimulation}
+                                                className="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1"
                                             >
-                                                ⏸
+                                                <PlayIcon className="w-3 h-3" /> 開始
                                             </button>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    onClick={locationSimulator.pause}
+                                                    className="px-2 py-1.5 bg-yellow-500 text-white text-xs font-bold rounded-lg hover:bg-yellow-600 transition-colors"
+                                                >
+                                                    ⏸
+                                                </button>
+                                                <button
+                                                    onClick={locationSimulator.stop}
+                                                    className="px-2 py-1.5 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors"
+                                                >
+                                                    ⏹
+                                                </button>
+                                            </>
+                                        )}
+                                        <div className="flex items-center gap-1 ml-1">
                                             <button
-                                                onClick={locationSimulator.stop}
-                                                className="px-2 py-1.5 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors"
-                                            >
-                                                ⏹
-                                            </button>
-                                        </>
+                                                onClick={() => locationSimulator.setSpeed(locationSimulator.state.speed / 2)}
+                                                className="w-6 h-6 bg-gray-200 text-gray-700 text-xs font-bold rounded hover:bg-gray-300"
+                                            >−</button>
+                                            <span className="text-[10px] font-mono w-8 text-center">{locationSimulator.state.speed}x</span>
+                                            <button
+                                                onClick={() => locationSimulator.setSpeed(locationSimulator.state.speed * 2)}
+                                                className="w-6 h-6 bg-gray-200 text-gray-700 text-xs font-bold rounded hover:bg-gray-300"
+                                            >+</button>
+                                        </div>
+                                    </div>
+                                    {locationSimulator.state.isRunning && (
+                                        <div className="mt-1.5">
+                                            <div className="w-full bg-gray-200 rounded-full h-1">
+                                                <div
+                                                    className="bg-indigo-500 h-1 rounded-full transition-all duration-100"
+                                                    style={{ width: `${locationSimulator.state.progress}%` }}
+                                                ></div>
+                                            </div>
+                                            <div className="text-[9px] text-gray-500 mt-0.5 flex justify-between items-center">
+                                                <span className={`px-1.5 py-0.5 rounded text-white font-bold ${locationSimulator.state.currentTransportMode === 'TRAIN' ? 'bg-blue-500' :
+                                                    locationSimulator.state.currentTransportMode === 'SUBWAY' ? 'bg-purple-500' :
+                                                        locationSimulator.state.currentTransportMode === 'BUS' ? 'bg-green-500' :
+                                                            'bg-gray-500'
+                                                    }`}>
+                                                    {locationSimulator.state.currentTransportMode === 'TRAIN' ? '🚃 電車' :
+                                                        locationSimulator.state.currentTransportMode === 'SUBWAY' ? '🚇 地下鉄' :
+                                                            locationSimulator.state.currentTransportMode === 'BUS' ? '🚌 バス' :
+                                                                '🚶 徒歩'}
+                                                </span>
+                                                <span>{Math.round(locationSimulator.state.progress)}%</span>
+                                            </div>
+                                        </div>
                                     )}
-                                    <div className="flex items-center gap-1 ml-1">
-                                        <button
-                                            onClick={() => locationSimulator.setSpeed(locationSimulator.state.speed / 2)}
-                                            className="w-6 h-6 bg-gray-200 text-gray-700 text-xs font-bold rounded hover:bg-gray-300"
-                                        >−</button>
-                                        <span className="text-[10px] font-mono w-8 text-center">{locationSimulator.state.speed}x</span>
-                                        <button
-                                            onClick={() => locationSimulator.setSpeed(locationSimulator.state.speed * 2)}
-                                            className="w-6 h-6 bg-gray-200 text-gray-700 text-xs font-bold rounded hover:bg-gray-300"
-                                        >+</button>
-                                    </div>
                                 </div>
-                                {locationSimulator.state.isRunning && (
-                                    <div className="mt-1.5">
-                                        <div className="w-full bg-gray-200 rounded-full h-1">
-                                            <div
-                                                className="bg-indigo-500 h-1 rounded-full transition-all duration-100"
-                                                style={{ width: `${locationSimulator.state.progress}%` }}
-                                            ></div>
-                                        </div>
-                                        <div className="text-[9px] text-gray-500 mt-0.5 flex justify-between items-center">
-                                            <span className={`px-1.5 py-0.5 rounded text-white font-bold ${locationSimulator.state.currentTransportMode === 'TRAIN' ? 'bg-blue-500' :
-                                                locationSimulator.state.currentTransportMode === 'SUBWAY' ? 'bg-purple-500' :
-                                                    locationSimulator.state.currentTransportMode === 'BUS' ? 'bg-green-500' :
-                                                        'bg-gray-500'
-                                                }`}>
-                                                {locationSimulator.state.currentTransportMode === 'TRAIN' ? '🚃 電車' :
-                                                    locationSimulator.state.currentTransportMode === 'SUBWAY' ? '🚇 地下鉄' :
-                                                        locationSimulator.state.currentTransportMode === 'BUS' ? '🚌 バス' :
-                                                            '🚶 徒歩'}
-                                            </span>
-                                            <span>{Math.round(locationSimulator.state.progress)}%</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            )}
 
 
 

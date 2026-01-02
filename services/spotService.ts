@@ -1,5 +1,5 @@
 import { Spot, Coordinates } from '../types';
-import { getCongestionLevel } from './humanFlowService';
+import { getCongestionLevel, registerSpotLocations } from './humanFlowService';
 
 // 京都府観光施設データ
 // 混雑度: 全エリアで偏差値(対数正規分布T-score)基準を採用
@@ -17298,9 +17298,31 @@ const isWithinKyotoCity = (lat: number, lon: number): boolean => {
     lon >= KYOTO_CITY_BOUNDS.minLon && lon <= KYOTO_CITY_BOUNDS.maxLon;
 };
 
-const KYOTO_SPOTS = Array.from(uniqueSpotsMap.values()).filter(spot =>
-  isWithinKyotoCity(spot.location.latitude, spot.location.longitude)
-);
+// Spots to exclude (per user request)
+const EXCLUDED_SPOTS = new Set([
+  'あだしのまゆ村',
+  '橋本の香',
+  'ゆどうふ竹仙',
+  'そば菓子処澤正・そば茶寮',
+  '亀の井',
+  'SUNRISE TOURS JTB',
+  '京料理　道楽',
+  '佐々木酒造株式会社',
+  '近為',
+  '下鴨茶寮',
+  'おめん',
+  '齊藤酒造株式会社'
+]);
+
+const KYOTO_SPOTS = Array.from(uniqueSpotsMap.values())
+  .filter(spot => isWithinKyotoCity(spot.location.latitude, spot.location.longitude))
+  .filter(spot => !EXCLUDED_SPOTS.has(spot.name));
+
+// Register spot locations for deviation-based congestion calculation
+registerSpotLocations(KYOTO_SPOTS.map(spot => ({
+  lat: spot.location.latitude,
+  lng: spot.location.longitude
+})));
 
 // Calculate distance using Haversine formula
 export function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
