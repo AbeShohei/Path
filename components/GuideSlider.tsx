@@ -114,6 +114,8 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
     // Multi-state expansion: 'full' | 'normal' | 'compact' | 'collapsed'
     const [viewState, setViewState] = useState<'full' | 'normal' | 'compact' | 'collapsed'>('normal');
     const [titleColor, setTitleColor] = useState<'white' | 'black'>('white');
+    // Auto-Scroll Toggle State
+    const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
     const textRef = useRef<HTMLDivElement>(null);
 
     // Touch drag state
@@ -149,7 +151,19 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
     }, [guides, activeGuide, isGlobalPlaying]);
     const totalCards = displayGuides.length;
     const totalSlides = totalCards + 1; // +1 for completion slide
-    const isCompletionSlide = showCompletion || currentIndex >= totalCards;
+    const isCompletionSlide = (showCompletion && autoScrollEnabled) || (totalCards > 0 && currentIndex >= totalCards);
+
+    // DEBUG LOG
+    // useEffect(() => {
+    //     console.log('[GuideSlider] State Update:', { 
+    //         showCompletion, 
+    //         autoScrollEnabled, 
+    //         currentIndex, 
+    //         totalCards, 
+    //         isCompletionSlide,
+    //         isGlobalPlaying 
+    //     });
+    // }, [showCompletion, autoScrollEnabled, currentIndex, totalCards, isCompletionSlide, isGlobalPlaying]);
     const currentGuide = isCompletionSlide ? null : displayGuides[currentIndex];
 
     // Height configuration for each state (in pixels for calculation)
@@ -181,8 +195,7 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
     // Track previous guides to handle updates synchronously (preventing flicker)
     const prevDisplayGuides = useRef(displayGuides);
 
-    // Auto-Scroll Toggle State
-    const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+
 
 
 
@@ -192,10 +205,18 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
 
         const oldGuides = prevDisplayGuides.current;
         const currentGuide = oldGuides[currentIndex];
+        const wasOnCompletion = oldGuides.length > 0 && currentIndex >= oldGuides.length;
 
         prevDisplayGuides.current = displayGuides;
 
-        if (!showCompletion) {
+        // If we were on the completion slide, ensure we STAY on the completion slide (adjust for new length)
+        if (wasOnCompletion) {
+            const newTotal = displayGuides.length;
+            if (currentIndex !== newTotal) {
+                setCurrentIndex(newTotal);
+            }
+        }
+        else if (!showCompletion) {
             let newIndex = 0; // Default behavior: snap to nearest (index 0)
 
             // If audio is playing, RELENTLESSLY track that card (Priority 1)
@@ -232,10 +253,10 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
 
     // Force completion state
     useEffect(() => {
-        if (showCompletion) {
+        if (showCompletion && autoScrollEnabled) {
             setViewState('normal');
         }
-    }, [showCompletion]);
+    }, [showCompletion, autoScrollEnabled]);
 
     // Preload images for smooth transition
     useEffect(() => {
@@ -363,17 +384,14 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
             {/* Card Container - individual cards have pointer-events-auto */}
             <div className="relative w-full h-full">
                 {/* Skeleton Loader */}
+                {/* Skeleton Loader - Show when loading and no guides, OR when implicitly waiting */}
                 {loading && guides.length === 0 && (
-                    <div className="w-full mx-4 h-[250px] rounded-xl bg-white shadow-sm overflow-hidden border border-gray-100 flex flex-col">
-                        <div className="h-32 bg-gray-200 animate-pulse w-full" />
-                        <div className="p-4 flex-1 space-y-3">
-                            <div className="h-5 bg-gray-200 rounded w-3/4 animate-pulse" />
-                            <div className="space-y-1.5">
-                                <div className="h-3 bg-gray-200 rounded w-full animate-pulse" />
-                                <div className="h-3 bg-gray-200 rounded w-5/6 animate-pulse" />
-                                <div className="h-3 bg-gray-200 rounded w-4/6 animate-pulse" />
-                            </div>
-                        </div>
+                    <div className="w-full mx-4 h-[250px] rounded-xl bg-white shadow-sm overflow-hidden border border-gray-100 flex flex-col items-center justify-center animate-pulse">
+                        <div className="w-full h-32 bg-gray-200 mb-4" />
+                        <div className="w-3/4 h-4 bg-gray-200 rounded mb-2" />
+                        <div className="w-1/2 h-4 bg-gray-200 rounded mb-2" />
+                        <div className="w-full h-8 bg-gray-100 mt-2" />
+                        <div className="text-gray-400 text-sm mt-2 font-bold">AIガイド生成中...</div>
                     </div>
                 )}
 
@@ -484,13 +502,27 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
 
                                 {/* Text (show in all non-collapsed states) */}
                                 {(viewState === 'full' || viewState === 'normal' || viewState === 'compact') && (
-                                    <div className={`text-xs text-gray-600 leading-relaxed ${viewState === 'full' ? 'flex-1 overflow-y-auto mb-4 pr-2 custom-scrollbar' :
-                                        viewState === 'compact' ? 'line-clamp-2 mb-2' : 'line-clamp-3 mb-2'
-                                        }`}>
-                                        <div ref={textRef}>
-                                            {currentGuide.text}
+                                    <>
+                                        <div className={`text-xs text-gray-600 leading-relaxed ${viewState === 'full' ? 'flex-1 overflow-y-auto mb-4 pr-2 custom-scrollbar' :
+                                            viewState === 'compact' ? 'line-clamp-2 mb-2' : 'line-clamp-5 mb-1'
+                                            }`}>
+                                            <div ref={textRef}>
+                                                {currentGuide.text}
+                                            </div>
                                         </div>
-                                    </div>
+                                        {/* Read More Button for Normal View */}
+                                        {viewState === 'normal' && currentGuide.text.length > 100 && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setViewState('full');
+                                                }}
+                                                className="mb-3 text-xs font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors self-start"
+                                            >
+                                                続きを見る <span className="text-[10px]">▼</span>
+                                            </button>
+                                        )}
+                                    </>
                                 )}
 
                                 {/* Action Row: Left Arrow + Play Button + Right Arrow */}

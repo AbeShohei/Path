@@ -19,15 +19,9 @@
 
 /* Leaflet Tweaks */
 .leaflet-popup-content-wrapper {
-    padding: 0;
-    overflow: hidden;
     border-radius: 12px;
 }
-.leaflet-popup-content {
-    margin: 0;
-    width: 100% !important;
-}
+
 .custom-popup .leaflet-popup-tip {
     background: white;
 }
-

@@ -6,7 +6,7 @@ import { wikimediaService } from './wikimediaService';
 // Re-export GuideContent from geminiService to ensure consistency
 export type { GuideContent } from './geminiService';
 
-const GUIDE_CACHE_KEY = 'kyoto_guide_cache_v1';
+const GUIDE_CACHE_KEY = 'kyoto_guide_cache_v5__prompt_debug';
 
 interface GuideCache {
     [spotId: string]: GuideContent;
@@ -91,23 +91,29 @@ export async function fetchSpotGuide(
     if (cache[spot.id]) {
         const cachedGuide = cache[spot.id];
 
-        // Dynamic Context Update (Direction)
-        if (currentLocation && nextLocation) {
-            cachedGuide.direction = calculateRelativeDirection(currentLocation, nextLocation, spot.location);
-        }
-
-        // Image Recovery: If image is missing, try to fetch it (it might be in spot_images.json now)
-        if (!cachedGuide.imageUrl) {
-            const img = await wikimediaService.getSpotImage(spot.name);
-            if (img) {
-                cachedGuide.imageUrl = img;
-                // Update cache with new image
-                cache[spot.id] = cachedGuide;
-                saveCache(cache);
+        // Invalid Cache Check: If it contains the fallback error message, treat as missing
+        if (cachedGuide.text.includes('申し訳ありませんが') || cachedGuide.text.includes('ガイド情報を生成できませんでした')) {
+            console.log('Found cached error message, refreshing:', spot.name);
+            // Fall through to fetch
+        } else {
+            // Dynamic Context Update (Direction)
+            if (currentLocation && nextLocation) {
+                cachedGuide.direction = calculateRelativeDirection(currentLocation, nextLocation, spot.location);
             }
-        }
 
-        return cachedGuide;
+            // Image Recovery: If image is missing, try to fetch it (it might be in spot_images.json now)
+            if (!cachedGuide.imageUrl) {
+                const img = await wikimediaService.getSpotImage(spot.name);
+                if (img) {
+                    cachedGuide.imageUrl = img;
+                    // Update cache with new image
+                    cache[spot.id] = cachedGuide;
+                    saveCache(cache);
+                }
+            }
+
+            return cachedGuide;
+        }
     }
 
     // 2. Prepare Context

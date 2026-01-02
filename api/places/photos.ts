@@ -64,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         const candidate = searchData.candidates[0];
                         // fallback types if missing (shouldn't happen with correct fields)
                         const photoResult = { url: '', types: candidate.types || [] };
-                        console.log(`Fetched data for ${name}:`, photoResult.types); // Debug log
+
 
                         if (candidate.photos?.[0]) {
                             const photoRef = candidate.photos[0].photo_reference;

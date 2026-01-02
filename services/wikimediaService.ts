@@ -24,7 +24,7 @@ class WikimediaService {
                 Object.entries(data).forEach(([key, value]) => {
                     this.cache.set(key, value as string);
                 });
-                console.log('[WikimediaService] Loaded static spot images:', Object.keys(data).length);
+
             }
         } catch (e) {
             console.warn('[WikimediaService] Failed to load static spot images', e);

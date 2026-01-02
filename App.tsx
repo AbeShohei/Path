@@ -243,55 +243,45 @@ function App() {
         const boardingStation = intermediateStops.length > 0
             ? intermediateStops[0].name
             : (transitSeg.platform || transitSeg.text || '乗車駅');
-
         // Check if we're currently IN the transit segment or before/after
         const currentSegIndex = simState.currentSegmentIndex;
         const transitSegIndex = selectedRoute.segments.findIndex(s => s === transitSeg);
 
-        // DEBUG: Log the extracted data
-        console.log('[TransitInfo]', {
-            transitSegType: transitSeg.type,
-            lineName: transitSeg.lineName,
-            intermediateStopsCount: intermediateStops.length,
-            totalStops,
-            alightingStation,
-            boardingStation,
-            departureTime: transitSeg.departureTime,
-            currentSegIndex,
-            transitSegIndex
-        });
-
-        // Determine position relative to transit
         if (currentSegIndex < transitSegIndex) {
             // Still walking TO the transit stop - show full stop count
-            setTransitInfo({
+            const newInfo: TransitUpdate = {
                 status: 'ON_TIME',
                 stopsAway: totalStops,
                 currentLocation: boardingStation,
                 nextBusTime: transitSeg.departureTime || '',
                 message: `${transitSeg.lineName || transitSeg.text} 乗車前`
-            });
+            };
+            setTransitInfo(prev => JSON.stringify(prev) !== JSON.stringify(newInfo) ? newInfo : prev);
+
         } else if (currentSegIndex === transitSegIndex) {
             // Currently ON the transit - calculate remaining
             const progressRatio = simState.progress / 100;
             const estimatedRemaining = Math.max(1, Math.round(totalStops * (1 - progressRatio)));
 
-            setTransitInfo({
+            const newInfo: TransitUpdate = {
                 status: 'ON_TIME',
                 stopsAway: estimatedRemaining,
                 currentLocation: alightingStation,
                 nextBusTime: descTime(estimatedRemaining),
                 message: `${transitSeg.lineName || transitSeg.text} 乗車中`
-            });
+            };
+            setTransitInfo(prev => JSON.stringify(prev) !== JSON.stringify(newInfo) ? newInfo : prev);
+
         } else {
             // Already past the transit segment - walking to destination
-            setTransitInfo({
+            const newInfo: TransitUpdate = {
                 status: 'ON_TIME',
                 stopsAway: 0,
                 currentLocation: alightingStation,
                 nextBusTime: '',
                 message: '下車済み・目的地へ徒歩'
-            });
+            };
+            setTransitInfo(prev => JSON.stringify(prev) !== JSON.stringify(newInfo) ? newInfo : prev);
         }
     }, [simulatedPosition, coords, simState.currentSegmentIndex, simState.progress, mode, selectedRoute]);
 
@@ -352,48 +342,63 @@ function App() {
 
     // 2. Fetch Spots (Using predefined data)
     const fetchSpots = async (pos: Coordinates) => {
-        setLoading(true);
+        try {
+            setLoading(true);
 
-        // Fetch all spots
-        const nearbySpots = findNearbySpots(pos, 9999);
+            // Fetch all spots
+            const nearbySpots = findNearbySpots(pos, 9999);
 
-        // Filter to only show spots near bus stops (within 3km of a bus stop)
-        // Parallelize checks for performance
-        const accessChecks = await Promise.all(nearbySpots.map(async (spot) => {
-            const hasAccess = await routeService.hasNearbyBusStops(
-                spot.location.latitude,
-                spot.location.longitude,
-                5000 // 5km radius
-            );
-            return hasAccess ? spot : null;
-        }));
-
-        const accessibleSpots = accessChecks.filter(s => s !== null) as Spot[];
-
-        // Fetch Wikimedia images for spots without images (async, non-blocking)
-        const spotsNeedingImages = accessibleSpots.filter(s => !s.imageUrl);
-        if (spotsNeedingImages.length > 0) {
-            // Fetch in background, update state when done
-            (async () => {
-                const imageMap = await wikimediaService.getSpotImages(
-                    spotsNeedingImages.map(s => s.name)
-                );
-                if (imageMap.size > 0) {
-                    setSpots(prev => prev.map(spot => {
-                        const wikiImage = imageMap.get(spot.name);
-                        if (wikiImage && !spot.imageUrl) {
-                            return { ...spot, imageUrl: wikiImage };
-                        }
-                        return spot;
-                    }));
+            // Filter to only show spots near bus stops (within 3km of a bus stop)
+            // Use smaller batches or sequential for stability if needed, 
+            // but for now just ensure error safety.
+            const accessChecks = await Promise.all(nearbySpots.map(async (spot) => {
+                try {
+                    const hasAccess = await routeService.hasNearbyBusStops(
+                        spot.location.latitude,
+                        spot.location.longitude,
+                        5000 // 5km radius
+                    );
+                    return hasAccess ? spot : null;
+                } catch (e) {
+                    console.warn(`Access check failed for ${spot.name}`, e);
+                    return spot; // Fallback to including it
                 }
-            })();
-        }
+            }));
 
-        setSpots(accessibleSpots);
-        setMode(AppMode.PLANNING);
-        setSheetHeight(Math.floor(window.innerHeight * 0.45));
-        setLoading(false);
+            const accessibleSpots = accessChecks.filter(s => s !== null) as Spot[];
+
+            // Fetch Wikimedia images for spots without images (async, non-blocking)
+            const spotsNeedingImages = accessibleSpots.filter(s => !s.imageUrl);
+            if (spotsNeedingImages.length > 0) {
+                // Fetch in background, update state when done
+                (async () => {
+                    try {
+                        const imageMap = await wikimediaService.getSpotImages(
+                            spotsNeedingImages.map(s => s.name)
+                        );
+                        if (imageMap.size > 0) {
+                            setSpots(prev => prev.map(spot => {
+                                const wikiImage = imageMap.get(spot.name);
+                                if (wikiImage && !spot.imageUrl) {
+                                    return { ...spot, imageUrl: wikiImage };
+                                }
+                                return spot;
+                            }));
+                        }
+                    } catch (e) {
+                        console.warn('Background image fetch failed:', e);
+                    }
+                })();
+            }
+
+            setSpots(accessibleSpots);
+            setMode(AppMode.PLANNING);
+            setSheetHeight(Math.floor(window.innerHeight * 0.45));
+        } catch (error) {
+            console.error('Fetch spots failed:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Handle congestion toggle
@@ -1474,11 +1479,10 @@ function App() {
                                 {/* Developer Mode Toggle */}
                                 <button
                                     onClick={() => setDevMode(prev => !prev)}
-                                    className={`mt-2 text-[10px] px-3 py-1 rounded-full transition-all ${
-                                        devMode 
-                                            ? 'bg-indigo-500 text-white' 
-                                            : 'bg-white/10 text-white/40 hover:text-white/60'
-                                    }`}
+                                    className={`mt-2 text-[10px] px-3 py-1 rounded-full transition-all ${devMode
+                                        ? 'bg-indigo-500 text-white'
+                                        : 'bg-white/10 text-white/40 hover:text-white/60'
+                                        }`}
                                 >
                                     {devMode ? '開発者モード ON' : '開発者モード'}
                                 </button>

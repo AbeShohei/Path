@@ -1,11 +1,19 @@
 import { Spot, TransitUpdate } from "../types";
 
-// Google Gemini API Configuration (Direct Free Tier)
-// Uses VITE_GOOGLE_API_KEY or VITE_GEMINI_API_KEY
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || '';
-// Using Gemini 2.0 Flash Exp (Free Preview) or 1.5 Flash
-const MODEL_NAME = 'gemini-2.0-flash-exp';
-const BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
+// OpenRouter Configuration (Free Tier)
+// Prioritizes OpenRouter Key, then Google/Gemini keys as fallback
+const API_KEY = ((import.meta as any).env?.VITE_OPENROUTER_API_KEY ||
+    (import.meta as any).env?.VITE_GOOGLE_API_KEY ||
+    (import.meta as any).env?.VITE_GEMINI_API_KEY ||
+    (typeof process !== 'undefined' ? (process as any).env?.OPENROUTER_API_KEY || (process as any).env?.GEMINI_API_KEY || (process as any).env?.API_KEY : ''));
+
+// Priority List of Free Models to try in order
+const FREE_MODELS = [
+    'xiaomi/mimo-v2-flash:free',       // User Request (Primary)
+    'z-ai/glm-4.5-air:free',           // User Request (Fallback)
+];
+
+const BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // --- SERVICE INTERFACES ---
 
@@ -20,40 +28,87 @@ export interface GuideContent {
 
 // --- API CALLER ---
 
-async function callGoogleGenAI(prompt: string): Promise<any> {
-    try {
-        if (!GOOGLE_API_KEY) throw new Error('API Key not configured (VITE_GOOGLE_API_KEY)');
+async function callAI(prompt: string): Promise<any> {
+    if (!API_KEY) throw new Error('API Key not configured (VITE_OPENROUTER_API_KEY or compatible)');
 
-        const requestBody = {
-            contents: [{
-                parts: [{ text: prompt }]
-            }],
-            generationConfig: {
-                response_mime_type: "application/json"
+    let lastError: any;
+
+    for (const model of FREE_MODELS) {
+        try {
+            // console.log(`Attempting generation with model: ${model}`);
+
+            const requestBody = {
+                model: model,
+                messages: [
+                    { role: 'user', content: prompt }
+                ],
+                // temperature: 0.7 
+            };
+
+            const response = await fetch(BASE_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': 'http://localhost:3000',
+                    'X-Title': 'Kyoto Guide App'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                // If 429 (Rate Limit) or 5xx (Server Error), try next model
+                if (response.status === 429 || response.status >= 500) {
+                    const errText = await response.text();
+                    console.warn(`Model ${model} failed (${response.status}): ${errText}. Switching to next model in 5s...`);
+                    lastError = new Error(`OpenRouter API error (${model}): ${response.status} - ${errText}`);
+                    // Wait 5 seconds before trying the next model to avoid burst rate limits
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    continue; // Try next model
+                }
+                // For other errors (e.g. 400 Bad Request), throw immediately
+                const errText = await response.text();
+                throw new Error(`OpenRouter API error: ${response.status} - ${errText}`);
             }
-        };
 
-        const response = await fetch(`${BASE_URL}?key=${GOOGLE_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
+            const data = await response.json();
 
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Google API error: ${response.status} - ${errText}`);
+            // Extract content from OpenAI-compatible response
+            let contentText = data.choices?.[0]?.message?.content || '{}';
+
+            // Robust JSON extraction: Find the first '{' and the last '}'
+            const jsonMatch = contentText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                contentText = jsonMatch[0];
+            } else {
+                // If no JSON object found, wrap it manually if it looks like plain text
+                console.warn(`Model ${model} returned non-JSON. Attempting manual wrap.`);
+                // Escape quotes if needed and wrap
+                contentText = JSON.stringify({ text: contentText });
+            }
+
+            try {
+                const parsed = JSON.parse(contentText);
+                // console.log(`Success with model: ${model}`);
+                return parsed;
+            } catch (e) {
+                console.error(`JSON Parse Error for model ${model}:`, e);
+                console.error('Raw content:', contentText);
+                throw new Error(`Invalid JSON from model ${model}`);
+            }
+
+        } catch (error) {
+            console.warn(`Error with model ${model}:`, error);
+            lastError = error;
+            // Wait 5 seconds before trying the next model
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            // Continue to next model loop
         }
-
-        const data = await response.json();
-        // Extract JSON text from response
-        const contentText = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-        return JSON.parse(contentText);
-    } catch (error) {
-        console.error('Google API Error:', error);
-        throw error;
     }
+
+    // If loop finishes without success
+    console.error('All free models failed.');
+    throw lastError || new Error('All free models failed to generate content.');
 }
 
 // --- GUIDE GENERATION ---
@@ -63,37 +118,56 @@ export const generateGuideContent = async (
     relativeDirection?: 'LEFT' | 'RIGHT' | 'FRONT' | 'BACK'
 ): Promise<GuideContent> => {
 
-    // MOCK MODE: Bypass AI API for speed and robustness
-    const directionText = relativeDirection === 'LEFT' ? '左手' :
-        relativeDirection === 'RIGHT' ? '右手' :
-            relativeDirection === 'FRONT' ? '正面' : '近く';
+    const directionTextFull = relativeDirection === 'LEFT' ? '左手' :
+        relativeDirection === 'RIGHT' ? '右手' : '近く';
 
-    // Simple template-based mock generation
-    const mockText = `${directionText}をご覧ください。こちらは${spot.name}です。${spot.description}`;
+    // console.log('Generating guide for:', spot.name);
 
-    // Return immediate result
-    return Promise.resolve({
-        id: `guide-${spot.id}-${Date.now()}`,
-        text: mockText.substring(0, 150), // Truncate if too long
-        spotId: spot.id,
-        spotName: spot.name,
-        direction: relativeDirection
-    });
+    const prompt = `あなたは京都の歴史と文化を知り尽くしたベテラン観光ガイドです。
+現在、ユーザーはバスや徒歩で移動中です。${directionTextFull}に見える「${spot.name}」について、移動中の風景がより輝いて見えるような、魅力的な語りをお願いします。
 
-    /* 
-    // OLD AI LOGIC (Disabled)
-    const directionTextFull = relativeDirection === 'LEFT' ? '進行方向左手' : ...
-    const prompt = ...
+【スポット情報】
+名称: ${spot.name}
+元の説明: ${spot.description}
+
+【執筆のルール】
+1. 200文字程度の日本語で、情緒豊かに語ってください。
+2. 「左手をご覧ください」といった定型句から始める必要はありません。自然な語り口で始めてください。
+3. 土地の歴史的背景、地名の由来、または季節の情景など、ガイドブックにはない「生きた情報」を一味加えてください。
+4. 親しみやすく、かつ丁寧な言葉遣い（です・ます調）で。
+5. 出力は以下のJSON形式のみとし、Markdownの装飾は一切含めないでください。
+{"text": "ガイドの語り内容"}
+`;
+
+    console.log('------ PROMPT START ------');
+    console.log(prompt);
+    console.log('------ PROMPT END ------');
+
     try {
-        const result = await callGoogleGenAI(prompt);
-        return ...
-    } catch (e) { ... }
-    */
+        const result = await callAI(prompt);
+        // console.log('Gemini Success:', result);
+        return {
+            id: `guide-${spot.id}-${Date.now()}`,
+            text: result.text || result.content || 'ガイド情報を生成できませんでした。',
+            spotId: spot.id,
+            spotName: spot.name,
+            direction: relativeDirection
+        };
+    } catch (error) {
+        console.error('Gemini API Error:', error);
+        // Fallback: Use static spot description with a polite prefix
+        return {
+            id: `guide-${spot.id}-${Date.now()}`,
+            text: `（通信状況のため、基本情報を表示します）\n\n${spot.description}`,
+            spotId: spot.id,
+            spotName: spot.name,
+            direction: relativeDirection
+        };
+    }
 }
 
 // --- TRANSIT INFO (Legacy Support) ---
 export const getTransitInfo = async (query: string): Promise<TransitUpdate | null> => {
-    // ... (Keep existing if needed, or simplify)
     return {
         status: 'ON_TIME',
         stopsAway: -1,

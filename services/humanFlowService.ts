@@ -104,7 +104,7 @@ let registeredSpotLocations: { lat: number; lng: number }[] = [];
 export function registerSpotLocations(locations: { lat: number; lng: number }[]) {
     registeredSpotLocations = locations;
     populationStats = null; // Reset to recalculate
-    console.log('[HumanFlow] Registered', locations.length, 'spot locations for stats calculation');
+
 }
 
 // Initialize population statistics from SPOT MESHES ONLY
@@ -116,7 +116,7 @@ function initPopulationStats() {
 
     // If no spots registered, use all meshes as fallback
     if (registeredSpotLocations.length === 0) {
-        console.log('[HumanFlow] No spots registered, using all mesh data');
+
         for (const meshCode of Object.keys(MESH_POPULATIONS)) {
             const data = MESH_POPULATIONS[meshCode];
             if (data) {
@@ -139,7 +139,7 @@ function initPopulationStats() {
                 if (data.evening > 0) spotPopulations.push(data.evening);
             }
         }
-        console.log('[HumanFlow] Using', seenMeshes.size, 'unique spot meshes for stats');
+
     }
 
     if (spotPopulations.length === 0) {
@@ -157,7 +157,7 @@ function initPopulationStats() {
     const stdDev = Math.sqrt(avgSquareDiff);
 
     populationStats = { mean, stdDev };
-    console.log('[HumanFlow] Spot-based stats:', { mean: mean.toFixed(0), stdDev: stdDev.toFixed(0), samples: spotPopulations.length });
+
 }
 
 function populationToCongestionLevel(
