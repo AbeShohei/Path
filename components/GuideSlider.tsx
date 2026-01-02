@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { GuideContent } from '../services/guideService';
 
 interface GuideSliderProps {
@@ -10,6 +10,7 @@ interface GuideSliderProps {
     onSelectGuide?: (guide: GuideContent) => void;
     onCurrentGuideChange?: (guide: GuideContent | null) => void;
     onComplete?: () => void; // Called when user taps completion button
+    showCompletion?: boolean;
 }
 
 // Simple Icons
@@ -105,7 +106,8 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
     isPlaying: isGlobalPlaying,
     onSelectGuide,
     onCurrentGuideChange,
-    onComplete
+    onComplete,
+    showCompletion = false
 }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [playingId, setPlayingId] = useState<string | null>(null);
@@ -116,21 +118,46 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
 
     // Touch drag state
     const dragStartY = useRef<number | null>(null);
+    const dragOffsetRef = useRef(0); // Ref for closure access in mouse handlers
     const [dragOffset, setDragOffset] = useState(0); // Real-time drag offset in pixels
 
+    // Persist the currently playing guide so it doesn't disappear if specific props change
+    const [activeGuide, setActiveGuide] = useState<GuideContent | null>(null);
+
+    // Sync activeGuide: if playing, keep it updated with latest data, or hold onto old data
+    useEffect(() => {
+        if (playingId) {
+            const found = guides.find(g => g.id === playingId);
+            if (found) {
+                setActiveGuide(found);
+            }
+        } else {
+            setActiveGuide(null);
+        }
+    }, [playingId, guides]);
+
     // Only show guides that have a photo
-    const displayGuides = guides.filter(g => g.imageUrl).slice(0, 15);
+    // Use useMemo to ensure stability and inject activeGuide if needed
+    const displayGuides = useMemo(() => {
+        const list = guides.filter(g => g.imageUrl).slice(0, 15);
+
+        // If audio is playing and the playing guide is NOT in the list, inject it at the start
+        if (isGlobalPlaying && activeGuide && activeGuide.imageUrl && !list.find(g => g.id === activeGuide.id)) {
+            return [activeGuide, ...list];
+        }
+        return list;
+    }, [guides, activeGuide, isGlobalPlaying]);
     const totalCards = displayGuides.length;
     const totalSlides = totalCards + 1; // +1 for completion slide
-    const isCompletionSlide = currentIndex >= totalCards;
+    const isCompletionSlide = showCompletion || currentIndex >= totalCards;
     const currentGuide = isCompletionSlide ? null : displayGuides[currentIndex];
 
     // Height configuration for each state (in pixels for calculation)
     const getHeightPx = (state: 'full' | 'normal' | 'compact' | 'collapsed'): number => {
         switch (state) {
             case 'full': return window.innerHeight * 0.85;
-            case 'normal': return 380;
-            case 'compact': return 180; // Increased to fit description
+            case 'normal': return 420; // Increased for Auto-Scroll Header
+            case 'compact': return 220; // Increased for Auto-Scroll Header
             case 'collapsed': return 48;
         }
     };
@@ -151,16 +178,64 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
     }, [currentGuide?.id, onCurrentGuideChange]);
 
     // Reset index when guides change
-    useEffect(() => {
-        setCurrentIndex(0);
-        setViewState('normal');
-    }, [guides.length]);
+    // Track previous guides to handle updates synchronously (preventing flicker)
+    const prevDisplayGuides = useRef(displayGuides);
+
+    // Auto-Scroll Toggle State
+    const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+
+
+
+    // Render-phase state update (Derived State pattern)
+    // This allows us to adjust the index BEFORE the browser paints, eliminating the flicker
+    if (prevDisplayGuides.current !== displayGuides) {
+
+        const oldGuides = prevDisplayGuides.current;
+        const currentGuide = oldGuides[currentIndex];
+
+        prevDisplayGuides.current = displayGuides;
+
+        if (!showCompletion) {
+            let newIndex = 0; // Default behavior: snap to nearest (index 0)
+
+            // If audio is playing, RELENTLESSLY track that card (Priority 1)
+            if (isGlobalPlaying && playingId) {
+                const foundIdx = displayGuides.findIndex(g => g.id === playingId);
+                if (foundIdx > -1) {
+                    newIndex = foundIdx;
+                }
+            }
+            // If Auto-Scroll is OFF, try to stay on the same guide (Priority 2)
+            else if (!autoScrollEnabled && currentGuide) {
+                const foundIdx = displayGuides.findIndex(g => g.id === currentGuide.id);
+                if (foundIdx > -1) {
+                    newIndex = foundIdx;
+                }
+            }
+
+            // Only update if different to avoid redundant re-renders (though React handles bailouts)
+            if (currentIndex !== newIndex) {
+                setCurrentIndex(newIndex);
+                // If we are resetting to 0 (auto-transition because NOT playing), also reset view state
+                if (newIndex === 0 && !playingId && autoScrollEnabled) {
+                    setViewState('normal');
+                }
+            }
+        }
+    }
 
     useEffect(() => {
         if (!isGlobalPlaying) {
             setPlayingId(null);
         }
     }, [isGlobalPlaying]);
+
+    // Force completion state
+    useEffect(() => {
+        if (showCompletion) {
+            setViewState('normal');
+        }
+    }, [showCompletion]);
 
     // Preload images for smooth transition
     useEffect(() => {
@@ -205,6 +280,46 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
         setDragOffset(0);
     };
 
+    // Mouse handlers for PC drag support
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        dragStartY.current = e.clientY;
+        dragOffsetRef.current = 0;
+        setDragOffset(0);
+
+        const handleMouseMove = (ev: MouseEvent) => {
+            if (dragStartY.current !== null) {
+                const delta = dragStartY.current - ev.clientY;
+                dragOffsetRef.current = delta; // Update ref for closure access
+                setDragOffset(delta);
+            }
+        };
+
+        const handleMouseUp = () => {
+            if (dragStartY.current !== null) {
+                const threshold = 50;
+                const currentOffset = dragOffsetRef.current; // Use ref for accurate value
+
+                if (Math.abs(currentOffset) > threshold) {
+                    const currentStateIndex = stateOrder.indexOf(viewState);
+                    if (currentOffset > 0 && currentStateIndex < stateOrder.length - 1) {
+                        setViewState(stateOrder[currentStateIndex + 1]);
+                    } else if (currentOffset < 0 && currentStateIndex > 0) {
+                        setViewState(stateOrder[currentStateIndex - 1]);
+                    }
+                }
+            }
+            dragStartY.current = null;
+            dragOffsetRef.current = 0;
+            setDragOffset(0);
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    };
+
     // Click handler for drag handle (cycles through states)
     const handleDragHandleClick = () => {
         const currentStateIndex = stateOrder.indexOf(viewState);
@@ -223,6 +338,7 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
             setPlayingId(null);
         } else {
             setPlayingId(guide.id);
+            setActiveGuide(guide); // Sync update to prevent flickering/loss of guide
             onPlayAudio(guide);
         }
     };
@@ -240,12 +356,12 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
     };
 
     // Safe render condition
-    if (!loading && guides.length === 0) return null;
+    if (!loading && !showCompletion && guides.length === 0) return null;
 
     return (
-        <div className={`w-full flex flex-col items-center pb-4 pt-2 transition-all duration-300 pointer-events-none`}>
-            {/* Card Container - pointer-events-auto needed because parent has none */}
-            <div className="relative w-full flex justify-center pointer-events-auto">
+        <div className="relative w-full h-full pointer-events-none">
+            {/* Card Container - individual cards have pointer-events-auto */}
+            <div className="relative w-full h-full">
                 {/* Skeleton Loader */}
                 {loading && guides.length === 0 && (
                     <div className="w-full mx-4 h-[250px] rounded-xl bg-white shadow-sm overflow-hidden border border-gray-100 flex flex-col">
@@ -265,21 +381,24 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
                 {currentGuide && (
                     <div
                         className={`
-                            fixed bottom-0 left-0 right-0 z-[50] bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col 
-                            rounded-t-[32px] overflow-hidden
+                            absolute bottom-0 left-0 right-0 z-[50] w-full bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col 
+                            rounded-t-[32px] overflow-hidden pointer-events-auto
                         `}
                         style={{
                             height: `${Math.max(48, Math.min(window.innerHeight * 0.85, getHeightPx(viewState) + dragOffset))}px`,
                             transition: dragOffset !== 0 ? 'none' : 'height 300ms cubic-bezier(0.25, 0.1, 0.25, 1.0)'
                         }}
                     >
+
+
                         {/* Drag Handle (Overlay) */}
                         <div
-                            className="absolute top-0 left-0 right-0 z-40 flex justify-center py-3 cursor-grab active:cursor-grabbing"
+                            className="absolute top-0 left-0 right-0 z-40 flex justify-center py-3 cursor-grab active:cursor-grabbing select-none"
                             onClick={handleDragHandleClick}
                             onTouchStart={handleTouchStart}
                             onTouchMove={handleTouchMove}
                             onTouchEnd={handleTouchEnd}
+                            onMouseDown={handleMouseDown}
                         >
                             <div className="w-10 h-1 bg-gray-600 rounded-full shadow-md"></div>
                         </div>
@@ -327,10 +446,41 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
                         {/* Content Section (show in 'full', 'normal', and 'compact' but NOT 'collapsed') */}
                         {viewState !== 'collapsed' && (
                             <div className="flex flex-col bg-white px-6 w-full flex-1 min-h-0 pb-6 pt-3">
-                                {/* Title (show only in compact mode where image is hidden) */}
-                                {viewState === 'compact' && (
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{currentGuide.spotName}</h3>
-                                )}
+                                {/* Header Row: Title (Compact only) + Auto-Scroll Toggle */}
+                                <div className="flex justify-between items-start mb-2 shrink-0">
+                                    {/* Title (show only in compact mode where image is hidden) */}
+                                    {viewState === 'compact' ? (
+                                        <h3 className="text-lg font-bold text-gray-900 mr-2 leading-tight">{currentGuide.spotName}</h3>
+                                    ) : (
+                                        <div className="flex-1" /> // Spacer
+                                    )}
+
+                                    {/* Auto Scroll Toggle */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setAutoScrollEnabled(!autoScrollEnabled);
+                                        }}
+                                        className={`
+                                            px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm transition-all flex items-center gap-1 shrink-0 border
+                                            ${autoScrollEnabled
+                                                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                                                : 'bg-gray-50 border-gray-200 text-gray-500'}
+                                        `}
+                                    >
+                                        {autoScrollEnabled ? (
+                                            <>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                                                自動切替 ON
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                                手動 (固定)
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
 
                                 {/* Text (show in all non-collapsed states) */}
                                 {(viewState === 'full' || viewState === 'normal' || viewState === 'compact') && (
@@ -399,9 +549,9 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
                 )}
 
                 {/* Completion Slide */}
-                {isCompletionSlide && totalCards > 0 && (
+                {isCompletionSlide && (
                     <div
-                        className="fixed bottom-0 left-0 right-0 z-[50] bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col rounded-t-[32px] overflow-hidden"
+                        className="absolute bottom-0 left-0 right-0 z-[50] w-full bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col rounded-t-[32px] overflow-hidden pointer-events-auto"
                         style={{ height: '250px' }}
                     >
                         {/* Drag Handle */}

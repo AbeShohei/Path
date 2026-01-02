@@ -46,9 +46,10 @@ interface MapProps {
     subwayRoutes?: BusRoute[];
     highlightedRouteIds?: string[];
     highlightedGuideSpotId?: string | null;
+    recenterTrigger?: number; // Increment to trigger recenter to current location
 }
 
-const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigating, lastFocusedSpotId, disableSmartPan, selectedRoute }: {
+const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigating, lastFocusedSpotId, disableSmartPan, selectedRoute, recenterTrigger }: {
     center: Coordinates,
     selectedSpotId?: string,
     focusedSpotId?: string,
@@ -56,7 +57,8 @@ const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigat
     isNavigating?: boolean,
     lastFocusedSpotId: React.MutableRefObject<string | undefined>,
     disableSmartPan?: boolean,
-    selectedRoute?: RouteOption | null
+    selectedRoute?: RouteOption | null,
+    recenterTrigger?: number
 }) => {
     const map = useMap();
     const isNavigatingRef = useRef(isNavigating);
@@ -86,6 +88,8 @@ const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigat
         }
     }, [focusedSpotId, map, spots, lastFocusedSpotId, disableSmartPan]);
 
+
+
     // Handle Route Selection - Fit bounds
     const lastRouteIdRef = useRef<string | undefined>(undefined);
     useEffect(() => {
@@ -109,10 +113,19 @@ const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigat
         }
     }, [selectedRoute, map]);
 
+    // Handle Recenter Trigger
+    const lastRecenterTrigger = useRef(recenterTrigger);
+    useEffect(() => {
+        if (recenterTrigger && recenterTrigger !== lastRecenterTrigger.current) {
+            lastRecenterTrigger.current = recenterTrigger;
+            map.flyTo([center.latitude, center.longitude], 15, { duration: 0.8 });
+        }
+    }, [recenterTrigger, map, center]);
+
     return null;
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false, showBusRoutes = false, busRoutes = [], subwayRoutes = [], highlightedRouteIds = [], highlightedGuideSpotId }) => {
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false, showBusRoutes = false, busRoutes = [], subwayRoutes = [], highlightedRouteIds = [], highlightedGuideSpotId, recenterTrigger }) => {
     const [activeSpot, setActiveSpot] = useState<Spot | null>(null);
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
     const lastFocusedSpotId = useRef<string | undefined>(undefined);
@@ -146,25 +159,6 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
             Object.values(markerRefs.current).forEach(marker => marker?.closePopup());
         }
     }, [selectedRoute?.id]);
-
-    const RecenterButton = () => {
-        const map = useMap();
-        return (
-            <button
-                onClick={() => {
-                    map.flyTo([center.latitude, center.longitude], 15);
-                }}
-                className="absolute top-[80px] right-4 z-[400] bg-white p-3 rounded-full shadow-lg text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
-                title="現在地に戻る"
-                onMouseDown={(e) => e.stopPropagation()}
-                onDoubleClick={(e) => e.stopPropagation()}
-            >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-                </svg>
-            </button>
-        );
-    };
 
     const CongestionLevelIcon = ({ level, className = "" }: { level: number, className?: string }) => {
         const commonClasses = `flex items-center justify-center text-white text-[10px] shadow-sm rounded ${className}`;
@@ -234,8 +228,7 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
         <MapContainer center={[center.latitude, center.longitude]} zoom={15} style={{ width: '100%', height: '100%', pointerEvents: isSheetDragging ? 'none' : 'auto' }} zoomControl={false}>
             <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <MapClickHandler />
-            <MapController center={center} selectedSpotId={selectedSpotId} focusedSpotId={focusedSpotId} spots={spots} isNavigating={isNavigating} lastFocusedSpotId={lastFocusedSpotId} disableSmartPan={disableSmartPan} selectedRoute={selectedRoute} />
-            <RecenterButton />
+            <MapController center={center} selectedSpotId={selectedSpotId} focusedSpotId={focusedSpotId} spots={spots} isNavigating={isNavigating} lastFocusedSpotId={lastFocusedSpotId} disableSmartPan={disableSmartPan} selectedRoute={selectedRoute} recenterTrigger={recenterTrigger} />
 
             {/* Subway Routes Layer */}
             {subwayRoutes && subwayRoutes.map((route) => {
@@ -274,11 +267,6 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
                 const opacity = isDimmed ? 0.1 : 0.6;
                 const weight = isHighlighted ? 6 : (isDimmed ? 2 : 3);
                 const color = isHighlighted ? '#ef4444' : route.color;
-
-                // Ensure highlighted routes are on top
-                const zIndex = isHighlighted ? 1000 : 1;
-                // React-leaflet Polyline doesn't support zIndex directly in typical Leaflet fashion without pane, 
-                // but order of rendering matters. Highlighted ones should be rendered last or we rely on map.fitBounds to show them.
 
                 return (
                     <Polyline key={`bus-${route.routeId}`} positions={route.coordinates} pathOptions={{ color: color, weight: weight, opacity: opacity }}>

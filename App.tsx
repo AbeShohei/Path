@@ -115,6 +115,7 @@ function App() {
     const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
+    const [recenterTrigger, setRecenterTrigger] = useState(0); // Trigger to recenter map
 
     // Selection State
     const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
@@ -163,20 +164,135 @@ function App() {
     const lyricsDragStartY = useRef(0);
     const lyricsStartHeight = useRef(0);
 
+    // Simulator Panel Drag State
+    const [simulatorPos, setSimulatorPos] = useState({ x: 16, y: 80 }); // Initial: left-4 top-20
+    const [isSimulatorDragging, setIsSimulatorDragging] = useState(false);
+    const simulatorDragStart = useRef({ x: 0, y: 0 });
+    const simulatorPosStart = useRef({ x: 0, y: 0 });
+
+
     // Navigation State
     const [navStage, setNavStage] = useState<NavigationStage>('TO_STOP');
     const [stopsAway, setStopsAway] = useState(5); // Simulation state
     const [remainingSeconds, setRemainingSeconds] = useState(0); // Countdown timer
     const [toastMessage, setToastMessage] = useState<string | null>(null); // Visual notification for stage change
 
+    // Location Simulator for testing navigation (Moved up for dependencies)
+    const locationSimulator = useLocationSimulator();
+    const { state: simState } = locationSimulator;
+    const simulatedPosition = simState.currentPosition;
+
+    // Helper helper for distances (moved here to have access to types)
+    const getDistance = (p1: { lat?: number, lng?: number, latitude?: number, longitude?: number }, p2: { lat?: number, lng?: number, latitude?: number, longitude?: number }) => {
+        const lat1 = p1.lat ?? p1.latitude ?? 0;
+        const lng1 = p1.lng ?? p1.longitude ?? 0;
+        const lat2 = p2.lat ?? p2.latitude ?? 0;
+        const lng2 = p2.lng ?? p2.longitude ?? 0;
+
+        const R = 6371e3; // metres
+        const φ1 = lat1 * Math.PI / 180;
+        const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lng2 - lng1) * Math.PI / 180;
+
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+    const descTime = (stops: number) => {
+        return `${stops * 2}分`;
+    }
+
+    // Transit Info State
+    const [isArrived, setIsArrived] = useState(false); // Track arrival state for GuideSlider completion
     const [loading, setLoading] = useState(false);
     const [guideText, setGuideText] = useState("");
     const [transitInfo, setTransitInfo] = useState<TransitUpdate | null>(null);
 
+    // Dynamic Transit Info Accuracy Logic
+    useEffect(() => {
+        // Only run if navigating and we have data
+        if (mode !== AppMode.NAVIGATING || !selectedRoute) {
+            if (transitInfo) setTransitInfo(null);
+            return;
+        }
 
+        // Find the FIRST transit segment in the route (not just current segment)
+        const transitSeg = selectedRoute.segments.find(s => ['BUS', 'SUBWAY', 'TRAIN'].includes(s.type));
 
-    // Location Simulator for testing navigation
-    const locationSimulator = useLocationSimulator();
+        if (!transitSeg) {
+            // No transit segment in this route (walking only)
+            if (transitInfo) setTransitInfo(null);
+            return;
+        }
+
+        // Get the transit segment's info from ROUTE DATA
+        // Use intermediateStops (has name, time, lat, lng) or fallback to stopCount
+        const intermediateStops = transitSeg.intermediateStops || [];
+        const totalStops = transitSeg.stopCount || intermediateStops.length || 5;
+
+        // Extract alighting station: last intermediate stop, or parse from direction/text
+        const alightingStation = intermediateStops.length > 0
+            ? intermediateStops[intermediateStops.length - 1].name
+            : (transitSeg.direction || transitSeg.text || '目的地');
+
+        // Extract boarding station: first intermediate stop, or from platform/text
+        const boardingStation = intermediateStops.length > 0
+            ? intermediateStops[0].name
+            : (transitSeg.platform || transitSeg.text || '乗車駅');
+
+        // Check if we're currently IN the transit segment or before/after
+        const currentSegIndex = simState.currentSegmentIndex;
+        const transitSegIndex = selectedRoute.segments.findIndex(s => s === transitSeg);
+
+        // DEBUG: Log the extracted data
+        console.log('[TransitInfo]', {
+            transitSegType: transitSeg.type,
+            lineName: transitSeg.lineName,
+            intermediateStopsCount: intermediateStops.length,
+            totalStops,
+            alightingStation,
+            boardingStation,
+            departureTime: transitSeg.departureTime,
+            currentSegIndex,
+            transitSegIndex
+        });
+
+        // Determine position relative to transit
+        if (currentSegIndex < transitSegIndex) {
+            // Still walking TO the transit stop - show full stop count
+            setTransitInfo({
+                status: 'ON_TIME',
+                stopsAway: totalStops,
+                currentLocation: boardingStation,
+                nextBusTime: transitSeg.departureTime || '',
+                message: `${transitSeg.lineName || transitSeg.text} 乗車前`
+            });
+        } else if (currentSegIndex === transitSegIndex) {
+            // Currently ON the transit - calculate remaining
+            const progressRatio = simState.progress / 100;
+            const estimatedRemaining = Math.max(1, Math.round(totalStops * (1 - progressRatio)));
+
+            setTransitInfo({
+                status: 'ON_TIME',
+                stopsAway: estimatedRemaining,
+                currentLocation: alightingStation,
+                nextBusTime: descTime(estimatedRemaining),
+                message: `${transitSeg.lineName || transitSeg.text} 乗車中`
+            });
+        } else {
+            // Already past the transit segment - walking to destination
+            setTransitInfo({
+                status: 'ON_TIME',
+                stopsAway: 0,
+                currentLocation: alightingStation,
+                nextBusTime: '',
+                message: '下車済み・目的地へ徒歩'
+            });
+        }
+    }, [simulatedPosition, coords, simState.currentSegmentIndex, simState.progress, mode, selectedRoute]);
 
     // Audio Player State
     const [isPlaying, setIsPlaying] = useState(false);
@@ -338,8 +454,7 @@ function App() {
     //     console.log('Current SpotDetails:', spotDetails);
     // }, [spotDetails]);
 
-    // Get simulated position for display (no useEffect needed, just read from state)
-    const simulatedPosition = locationSimulator.state.currentPosition;
+
 
     // Start simulation when navigation begins
     const startLocationSimulation = () => {
@@ -588,13 +703,17 @@ function App() {
 
     // 5. End Navigation (Transition to destination tourism guide)
     const handleEndNavigation = () => {
+        locationSimulator.stop();
+        stopCurrentAudio();
+
+        setIsArrived(false);
         setMode(AppMode.DESTINATION);
         setSelectedSpot(destinationSpot); // Show destination tourism guide
         setSelectedRoute(null);
         setNavStage('TO_STOP');
         setGuideText("");
         setTransitInfo(null);
-        stopCurrentAudio();
+        setRemainingSeconds(0);
     };
 
     // Confirm and start
@@ -632,6 +751,9 @@ function App() {
 
     // Stop current audio helper
     const stopCurrentAudio = () => {
+        // Invalidate any pending play requests
+        audioRequestId.current++;
+
         if (currentAudioController.current) {
             currentAudioController.current.stop();
             currentAudioController.current = null;
@@ -680,7 +802,11 @@ function App() {
         const interval = setInterval(() => {
             // Decrease timer
             setRemainingSeconds(prev => {
-                const next = prev - 1;
+                // Decrease timer by speed factor to match simulator visual progress
+                const speed = locationSimulator.state.speed || 1;
+                const next = prev - speed;
+
+                // (Arrival check moved to dedicated useEffect)
 
                 // Check for transition
                 if (next <= 0) {
@@ -702,6 +828,7 @@ function App() {
                         return getSegmentDurationForStage('TO_DEST');
                     } else if (navStage === 'TO_DEST') {
                         // Stay at 0
+                        handleArrive();
                         return 0;
                     }
                 }
@@ -753,6 +880,21 @@ function App() {
 
         return () => clearInterval(interval);
     }, [mode, navStage, selectedRoute]); // Removed dependencies that change too often to avoid reset
+
+    // --- ARRIVAL DETECTION (Fix for Stale Closure) ---
+    // --- ARRIVAL DETECTION (Fix for Stale Closure & Stage Mismatch) ---
+    useEffect(() => {
+        if (mode === AppMode.NAVIGATING && !isArrived) {
+            // Check if simulator has finished or is very close to end
+            // We removed 'navStage === TO_DEST' check because simulator might finish faster than the timer-based stages
+            const state = locationSimulator.state;
+            const isFinished = state.progress >= 98.0 || (state.isRunning === false && state.progress > 90.0);
+
+            if (isFinished) {
+                handleArrive();
+            }
+        }
+    }, [mode, isArrived, locationSimulator.state.progress, locationSimulator.state.isRunning]);
 
     // --- ADJUST TIMER IF AUDIO IS LONG ---
     useEffect(() => {
@@ -878,10 +1020,17 @@ function App() {
     // 5. Gemini Actions (Legacy removed)
     // New GuideSlider handles guide generation and playback.
 
+    // Audio Request ID to prevent race conditions
+    const audioRequestId = useRef(0);
+
     const handlePlayAudio = async (text: string) => {
         if (!text) return;
 
-        stopCurrentAudio(); // Double safety
+        // 1. Stop currently playing audio immediately
+        stopCurrentAudio();
+
+        // 2. Start new request scope
+        const myId = ++audioRequestId.current;
 
         // If muted, we simulate playback for visual guide aka "Karaoke Mode"
         if (isMuted) {
@@ -894,23 +1043,39 @@ function App() {
 
             // Auto reset playing state
             setTimeout(() => {
-                setIsPlaying(false);
+                // Only reset if this is still the active request
+                if (myId === audioRequestId.current) {
+                    setIsPlaying(false);
+                }
             }, estimatedDuration * 1000 + 500);
 
             return;
         }
 
         setIsPlaying(true);
+
+        // 3. Start fetching audio (async)
+        // Note: playTextToSpeech might take time. By the time it returns, another play might have started.
         const { duration, stop } = await playTextToSpeech(text);
 
+        // 4. Check if we are still the active request
+        if (myId !== audioRequestId.current) {
+            // Stale request - stop immediately and do nothing else
+            stop();
+            return;
+        }
+
+        // 5. We are valid - store controller
         currentAudioController.current = { stop };
         setAudioDuration(duration);
 
         // Auto reset playing state
         setTimeout(() => {
-            setIsPlaying(false);
-            if (currentAudioController.current?.stop === stop) {
-                currentAudioController.current = null;
+            if (myId === audioRequestId.current) {
+                setIsPlaying(false);
+                if (currentAudioController.current?.stop === stop) {
+                    currentAudioController.current = null;
+                }
             }
         }, duration * 1000 + 500);
     };
@@ -924,8 +1089,18 @@ function App() {
 
     const handleArrive = () => {
         stopCurrentAudio();
-        setMode(AppMode.DESTINATION);
-        // handleGenerateDestinationGuide(true); // Removed legacy call
+        // Trigger completion slide in GuideSlider
+        setIsArrived(true);
+
+        // Ensure we show the destination details
+        if (destinationSpot) {
+            setSelectedSpot(destinationSpot);
+            // Set guide text to description to prevent infinite loading spinner
+            if (!guideText) {
+                setGuideText(destinationSpot.description || `${destinationSpot.name}に到着しました。`);
+            }
+        }
+        // setMode(AppMode.DESTINATION); // DELAYED until user clicks "Finish"
     };
 
     const goBackToPlanning = () => {
@@ -995,6 +1170,27 @@ function App() {
             setSheetHeight(finalHeight);
             sheetRef.current.style.height = `${finalHeight}px`;
         }
+    };
+
+    // Simulator Panel Drag Handlers
+    const handleSimulatorDragStart = (clientX: number, clientY: number) => {
+        setIsSimulatorDragging(true);
+        simulatorDragStart.current = { x: clientX, y: clientY };
+        simulatorPosStart.current = { x: simulatorPos.x, y: simulatorPos.y };
+    };
+
+    const handleSimulatorDragMove = (clientX: number, clientY: number) => {
+        if (!isSimulatorDragging) return;
+        const deltaX = clientX - simulatorDragStart.current.x;
+        const deltaY = clientY - simulatorDragStart.current.y;
+        setSimulatorPos({
+            x: Math.max(0, Math.min(window.innerWidth - 200, simulatorPosStart.current.x + deltaX)),
+            y: Math.max(60, Math.min(window.innerHeight - 100, simulatorPosStart.current.y + deltaY))
+        });
+    };
+
+    const handleSimulatorDragEnd = () => {
+        setIsSimulatorDragging(false);
     };
 
     // Helper to calculate arrival time dynamically
@@ -1131,17 +1327,49 @@ function App() {
                         <button onClick={goBackToPlanning} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors shrink-0">
                             <ChevronLeftIcon />
                         </button>
-                        <div className="truncate flex-1">
-                            <h1 className="text-sm font-bold opacity-90 tracking-wide uppercase">Path</h1>
-                            {selectedSpot && (
-                                <div className="text-base font-bold truncate leading-tight">{selectedSpot.name}</div>
-                            )}
-                        </div>
-                        {(mode === AppMode.NAVIGATING || mode === AppMode.DESTINATION) && (
-                            <button onClick={toggleMute} className={`p-2 rounded-full hover:bg-white/10 transition-colors ${isMuted ? 'text-red-300' : 'text-white'}`}>
-                                {isMuted ? <MuteIcon /> : <SpeakerIcon />}
-                            </button>
+
+                        {/* Traffic Info Display for Navigation */}
+                        {(mode === AppMode.NAVIGATING && selectedRoute) ? (
+                            <div className="flex-1 flex flex-col items-start min-w-0">
+                                {/* Status message (e.g., "205 乗車前", "205 乗車中") */}
+                                <div className="text-[10px] text-white/60 font-bold tracking-wider uppercase leading-none mb-0.5">
+                                    {transitInfo?.message || 'NAVIGATION'}
+                                </div>
+                                {/* Boarding → Alighting Station Display */}
+                                {(() => {
+                                    const transitSeg = selectedRoute.segments.find(s => ['BUS', 'SUBWAY', 'TRAIN'].includes(s.type));
+                                    if (!transitSeg) return <span className="text-lg font-bold">{selectedSpot?.name || '目的地'}</span>;
+
+                                    // Use explicit boardingStop/alightingStop fields from route data
+                                    const boardingStation = transitSeg.boardingStop || transitSeg.platform || '乗車駅';
+                                    const alightingStation = transitSeg.alightingStop || transitSeg.direction || '降車駅';
+
+                                    return (
+                                        <div className="flex items-center gap-1 w-full text-base font-bold">
+                                            <span className="truncate max-w-[40%]">{boardingStation}</span>
+                                            <span className="text-indigo-300 shrink-0">→</span>
+                                            <span className="truncate max-w-[40%]">{alightingStation}</span>
+                                            {/* Remaining stops badge */}
+                                            {transitInfo && transitInfo.stopsAway > 0 && (
+                                                <span className="text-xs font-medium text-indigo-200 shrink-0 bg-indigo-800/50 px-1.5 py-0.5 rounded ml-auto">
+                                                    あと{transitInfo.stopsAway}駅
+                                                </span>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        ) : (
+                            /* Default Header for Destination Mode / Other */
+                            <div className="truncate flex-1">
+                                <h1 className="text-sm font-bold opacity-90 tracking-wide uppercase">Path</h1>
+                                {selectedSpot && (
+                                    <div className="text-base font-bold truncate leading-tight">{selectedSpot.name}</div>
+                                )}
+                            </div>
                         )}
+
+                        {/* Audio Button Removed per user request */}
                     </div>
                 </header>
             )}
@@ -1162,15 +1390,15 @@ function App() {
                             // During navigation, only show nearby spots (instantly available)
                             const isInNavMode = mode === AppMode.NAVIGATING;
 
-                            const baseSpots = isInNavMode
-                                ? visibleSpots.filter(s => nearbySpotIds.has(s.id))
-                                : visibleSpots;
+                            // Show all relevant spots (filtered by route), not just "nearby" ones for audio
+                            const baseSpots = visibleSpots;
 
-                            // Filter by distance from current position
-                            const cur = simulatedPosition
-                                ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
-                                : (coords || { latitude: 34.9858, longitude: 135.7588 });
-                            return baseSpots.filter(s => getDistance(cur, s.location) > 50);
+                            // Filter by distance from current position - REMOVED to show all spots
+                            // const cur = simulatedPosition
+                            //     ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
+                            //     : (coords || { latitude: 34.9858, longitude: 135.7588 });
+                            // return baseSpots.filter(s => getDistance(cur, s.location) > 50);
+                            return baseSpots;
                         })()}
                         onSelectSpot={handleSpotSelect}
                         onViewRoute={handleRouteSearch}
@@ -1187,7 +1415,10 @@ function App() {
                         busRoutes={busRoutes}
                         subwayRoutes={subwayRoutes}
                         highlightedGuideSpotId={highlightedGuideSpotId}
+                        recenterTrigger={recenterTrigger}
                     />
+
+
 
                 </div>
 
@@ -1719,29 +1950,75 @@ function App() {
 
                                                         {/* Visual Timeline (Icons) */}
                                                         <div className="flex flex-col gap-2 mb-3 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
-                                                            {route.segments.map((seg, i) => (
-                                                                <div key={i} className="flex items-center gap-3 text-xs text-gray-700">
-                                                                    {/* Left: Duration */}
-                                                                    <div className="w-10 text-right font-bold text-gray-900 shrink-0">
-                                                                        {seg.duration}
-                                                                    </div>
+                                                            {route.segments.map((seg, i) => {
+                                                                const isTransit = ['BUS', 'SUBWAY', 'TRAIN'].includes(seg.type);
+                                                                const hasDetails = isTransit && (seg.intermediateStops?.length || seg.departureTime || seg.arrivalTime);
+                                                                
+                                                                return (
+                                                                    <div key={i} className="flex flex-col">
+                                                                        <div className="flex items-center gap-3 text-xs text-gray-700">
+                                                                            {/* Left: Duration */}
+                                                                            <div className="w-10 text-right font-bold text-gray-900 shrink-0">
+                                                                                {seg.duration}
+                                                                            </div>
 
-                                                                    {/* Center: Icon */}
-                                                                    <div className={`
-                                                                    flex items-center justify-center w-5 h-5 rounded-full shrink-0
-                                                                    ${seg.type === 'WALK' ? 'bg-white border border-gray-200 text-gray-400' :
-                                                                            seg.type === 'BUS' ? 'bg-blue-500 text-white' :
-                                                                                'bg-green-500 text-white'}
-                                                                `}>
-                                                                        <SegmentIcon type={seg.type} className="w-3 h-3" />
-                                                                    </div>
+                                                                            {/* Center: Icon */}
+                                                                            <div className={`
+                                                                                flex items-center justify-center w-5 h-5 rounded-full shrink-0
+                                                                                ${seg.type === 'WALK' ? 'bg-white border border-gray-200 text-gray-400' :
+                                                                                    seg.type === 'BUS' ? 'bg-blue-500 text-white' :
+                                                                                        'bg-green-500 text-white'}
+                                                                            `}>
+                                                                                <SegmentIcon type={seg.type} className="w-3 h-3" />
+                                                                            </div>
 
-                                                                    {/* Right: Text Info */}
-                                                                    <div className="flex-1 font-bold truncate">
-                                                                        {seg.type === 'WALK' ? '徒歩' : seg.text}
+                                                                            {/* Right: Text Info */}
+                                                                            <div className="flex-1 truncate">
+                                                                                {seg.type === 'WALK' ? (
+                                                                                    <span className="font-bold">徒歩</span>
+                                                                                ) : (
+                                                                                    <div className="flex flex-col">
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <span className="font-bold">{seg.text}</span>
+                                                                                            {seg.departureTime && seg.arrivalTime && (
+                                                                                                <span className="text-[10px] text-gray-500">
+                                                                                                    {seg.departureTime} - {seg.arrivalTime}
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                        {/* Boarding → Alighting Station */}
+                                                                                        {(seg.boardingStop || seg.alightingStop) && (
+                                                                                            <span className="text-[10px] text-gray-500 truncate">
+                                                                                                {seg.boardingStop || '乗車'}
+                                                                                                <span className="mx-0.5">→</span>
+                                                                                                {seg.alightingStop || '降車'}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        {/* Accordion Content: Intermediate Stops */}
+                                                                        {hasDetails && seg.intermediateStops && seg.intermediateStops.length > 0 && (
+                                                                            <details className="ml-[52px] mt-1">
+                                                                                <summary className="text-[10px] text-indigo-600 cursor-pointer hover:text-indigo-800 list-none">
+                                                                                    途中 {seg.intermediateStops.length} 駅を表示
+                                                                                </summary>
+                                                                                <div className="mt-1 pl-2 border-l-2 border-gray-200 space-y-0.5">
+                                                                                    {seg.intermediateStops.map((stop, stopIdx) => (
+                                                                                        <div key={stopIdx} className="text-[10px] text-gray-500 flex items-center gap-1">
+                                                                                            <span className="w-1 h-1 bg-gray-300 rounded-full shrink-0"></span>
+                                                                                            <span className="truncate">{stop.name}</span>
+                                                                                            {stop.time && <span className="text-gray-400 shrink-0">{stop.time}</span>}
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </details>
+                                                                        )}
                                                                     </div>
-                                                                </div>
-                                                            ))}
+                                                                );
+                                                            })}
                                                         </div>
 
                                                         {/* Footer: Tags & Button */}
@@ -1781,9 +2058,37 @@ function App() {
                 {
                     mode === AppMode.NAVIGATING && selectedRoute && (
                         <>
-                            {/* Location Simulator Control Panel */}
-                            <div className="absolute top-20 left-4 z-50 bg-white/95 backdrop-blur-md rounded-xl shadow-lg px-3 py-2 border border-gray-200">
-                                <div className="text-[10px] font-bold text-gray-500 mb-1.5">位置シミュレーター</div>
+                            {/* Location Simulator Control Panel (Draggable) */}
+                            <div
+                                className="absolute z-50 bg-white/95 backdrop-blur-md rounded-xl shadow-lg px-3 py-2 border border-gray-200 select-none"
+                                style={{ left: simulatorPos.x, top: simulatorPos.y }}
+                            >
+                                {/* Drag Handle */}
+                                <div
+                                    className="text-[10px] font-bold text-gray-500 mb-1.5 cursor-grab active:cursor-grabbing flex items-center gap-2"
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        handleSimulatorDragStart(e.clientX, e.clientY);
+                                        const onMove = (ev: MouseEvent) => handleSimulatorDragMove(ev.clientX, ev.clientY);
+                                        const onUp = () => {
+                                            handleSimulatorDragEnd();
+                                            document.removeEventListener('mousemove', onMove);
+                                            document.removeEventListener('mouseup', onUp);
+                                        };
+                                        document.addEventListener('mousemove', onMove);
+                                        document.addEventListener('mouseup', onUp);
+                                    }}
+                                    onTouchStart={(e) => {
+                                        handleSimulatorDragStart(e.touches[0].clientX, e.touches[0].clientY);
+                                    }}
+                                    onTouchMove={(e) => {
+                                        handleSimulatorDragMove(e.touches[0].clientX, e.touches[0].clientY);
+                                    }}
+                                    onTouchEnd={handleSimulatorDragEnd}
+                                >
+                                    <span className="text-gray-400">⋮⋮</span>
+                                    位置シミュレーター
+                                </div>
                                 <div className="flex items-center gap-2">
                                     {!locationSimulator.state.isRunning ? (
                                         <button
@@ -1845,18 +2150,21 @@ function App() {
                                 )}
                             </div>
 
+
+
                             {/* Guide Slider UI (Always Visible) */}
                             {/* Guide Slider UI (Bottom Sheet) */}
-                            <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
-                                <div className="pointer-events-auto">
+                            <div className="absolute inset-0 z-20 pointer-events-none">
+                                <div className="relative w-full h-full">
                                     <GuideSlider
                                         guides={nearbyGuides}
                                         loading={loading}
-                                        onPlayAudio={handlePlayAudio}
+                                        onPlayAudio={(guide) => handlePlayAudio(guide.text)}
                                         onStopAudio={stopCurrentAudio}
                                         isPlaying={isPlaying}
                                         onCurrentGuideChange={(guide) => setHighlightedGuideSpotId(guide?.spotId || null)}
                                         onComplete={handleEndNavigation}
+                                        showCompletion={isArrived}
                                     />
                                 </div>
                             </div>
@@ -1868,8 +2176,20 @@ function App() {
                 {
                     mode === AppMode.DESTINATION && selectedSpot && (
                         <div className="absolute inset-0 z-30 flex flex-col overflow-hidden">
-                            {/* Blurred Gray Overlay */}
-                            <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-md"></div>
+                            {/* Blurred Background Image */}
+                            {selectedSpot.imageUrl && (
+                                <div className="absolute inset-0 z-0">
+                                    <img
+                                        src={selectedSpot.imageUrl}
+                                        alt=""
+                                        className="w-full h-full object-cover blur-md scale-110"
+                                    />
+                                    <div className="absolute inset-0 bg-gray-900/60" />
+                                </div>
+                            )}
+
+                            {/* Blurred Gray Overlay (Fallback / Additional Tint) */}
+                            <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm z-0"></div>
 
                             {/* Full Screen Lyrics Background */}
                             <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
@@ -1986,6 +2306,23 @@ function App() {
                 }
 
             </main >
+
+            {/* Recenter Button (Global Overlay) */}
+            {mode !== AppMode.LANDING && mode !== AppMode.DESTINATION && (
+                <button
+                    onClick={() => setRecenterTrigger(prev => prev + 1)}
+                    className="absolute right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all border border-gray-200"
+                    style={{
+                        zIndex: 1000,
+                        top: (mode === AppMode.NAVIGATING || mode === AppMode.DESTINATION) ? '7rem' : '1rem'
+                    }}
+                    title="現在地に戻る"
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600 -translate-x-1 translate-y-1">
+                        <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                    </svg>
+                </button>
+            )}
         </div >
     );
 }

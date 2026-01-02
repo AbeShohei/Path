@@ -59,6 +59,7 @@ class RouteService {
     private walkingPathCache: Map<string, { lat: number; lng: number }[]> = new Map();
     private isInitialized = false;
     private initializationPromise: Promise<void> | null = null;
+    private staticRoutes: Record<string, { lat: number; lng: number }[]> | null = null;
 
     constructor() { }
 
@@ -269,13 +270,18 @@ class RouteService {
                 }
             }
 
-            // Ensure startIdx < endIdx (route goes in correct direction)
-            if (startIdx > endIdx) {
-                [startIdx, endIdx] = [endIdx, startIdx];
-            }
+            // FIXED: Detect direction. If startIdx > endIdx, we are moving "upstream" relative to the shape points.
+            // In that case, we need to slice (end -> start) and then REVERSE the result.
+            let trimmedPath: { lat: number, lng: number }[];
 
-            // Extract the segment (no extra stop points - walking segments handle connection)
-            const trimmedPath = fullPath.slice(startIdx, endIdx + 1);
+            if (startIdx <= endIdx) {
+                // Normal direction
+                trimmedPath = fullPath.slice(startIdx, endIdx + 1);
+            } else {
+                // Reverse direction (Destination comes before Origin in the shape file)
+                // Slice from min(end) to max(start), then reverse to get Start -> End
+                trimmedPath = fullPath.slice(endIdx, startIdx + 1).reverse();
+            }
 
             return trimmedPath;
         }
@@ -365,7 +371,9 @@ class RouteService {
                         const stopNode = this.graphData?.stops[stopId];
                         intermediateStops.push({
                             name: stopNode?.name || stopId,
-                            time: trip.st[i].t
+                            time: trip.st[i].t,
+                            lat: stopNode?.lat,
+                            lng: stopNode?.lng
                         });
                     }
 
@@ -620,7 +628,9 @@ class RouteService {
                         routeId: routeId,
                         path: segmentPath,
                         waitMinutes: estimatedWaitMinutes,
-                        intermediateStops: intermediateStops
+                        intermediateStops: intermediateStops,
+                        boardingStop: startStop.name,   // Boarding station name
+                        alightingStop: endStop.name     // Alighting station name
                     },
                     {
                         type: 'WALK',

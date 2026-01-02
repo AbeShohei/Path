@@ -50,6 +50,8 @@ export interface RouteSegment {
   lineName?: string;      // Legacy: Line name string
   waitMinutes?: number;   // Estimated wait time in minutes
   intermediateStops?: { name: string; time?: string; lat?: number; lng?: number }[]; // Stops between boarding and alighting
+  boardingStop?: string;   // Name of the boarding station
+  alightingStop?: string;  // Name of the alighting station
 }
 
 export interface RouteOption {

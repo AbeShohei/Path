@@ -76,123 +76,152 @@ export function useLocationSimulator() {
     });
 
     // All internal state uses refs (no re-renders)
+    // State for global distance tracking
     const pathRef = useRef<Coordinate[]>([]);
     const segmentsRef = useRef<RouteSegment[]>([]);
-    const currentIndexRef = useRef(0);
-    const distanceInSegmentRef = useRef(0);
+    const pathDistancesRef = useRef<number[]>([]); // Cumulative distance at each point
+    const totalDistanceRef = useRef(0);
+    const travelledDistanceRef = useRef(0); // Current progress in meters
     const speedRef = useRef(1);
     const isRunningRef = useRef(false);
     const intervalRef = useRef<number | null>(null);
     const lastUIUpdateRef = useRef(0);
+    const lastTickRef = useRef(0);
 
-    const UPDATE_INTERVAL_MS = 100;
-    const UI_UPDATE_INTERVAL_MS = 500; // Only update React state every 500ms
+    const UPDATE_INTERVAL_MS = 50; // Faster tick for smoother high speed
+    const UI_UPDATE_INTERVAL_MS = 200;
 
     const updatePosition = useCallback(() => {
         if (!isRunningRef.current) return;
 
+        const now = Date.now();
+        const deltaMs = now - lastTickRef.current;
+        lastTickRef.current = now;
+
         const path = pathRef.current;
-        const segments = segmentsRef.current;
+        const dists = pathDistancesRef.current;
+        const total = totalDistanceRef.current;
+
         if (path.length < 2) return;
 
-        let currentIndex = currentIndexRef.current;
-        let distanceTraveled = distanceInSegmentRef.current;
+        // Calculate distance to travel this tick
+        const tickDist = (speedRef.current * (deltaMs / 1000));
+        travelledDistanceRef.current += tickDist;
 
-        // Get current transport mode and speed
-        const segment = findSegmentForIndex(segments, currentIndex);
-        const transportMode = segment?.type || 'WALK';
-        const baseSpeed = SPEED_BY_MODE[transportMode] || SPEED_BY_MODE.WALK;
-
-        // Calculate distance to travel
-        const distanceThisTick = (baseSpeed * speedRef.current * UPDATE_INTERVAL_MS) / 1000;
-        distanceTraveled += distanceThisTick;
-
-        // Check if reached end
-        if (currentIndex >= path.length - 1) {
+        // Check end condition
+        if (travelledDistanceRef.current >= total) {
+            travelledDistanceRef.current = total;
             isRunningRef.current = false;
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
+            // Final update
             setDisplayState({
                 isRunning: false,
                 currentPosition: path[path.length - 1],
                 progress: 100,
-                currentTransportMode: transportMode,
+                currentTransportMode: 'WALK', // Or retrieve from segment
                 speed: speedRef.current,
-                currentSegmentIndex: segments.length - 1
+                currentSegmentIndex: segmentsRef.current.length - 1
             });
             return;
         }
 
-        // Move through segments
-        const segmentStart = path[currentIndex];
-        const segmentEnd = path[currentIndex + 1];
-        let segmentDistance = getDistanceInMeters(segmentStart, segmentEnd);
-
-        while (distanceTraveled >= segmentDistance && currentIndex < path.length - 2) {
-            distanceTraveled -= segmentDistance;
-            currentIndex++;
-            if (currentIndex < path.length - 1) {
-                segmentDistance = getDistanceInMeters(path[currentIndex], path[currentIndex + 1]);
-            }
+        // Find current segment using cumulative distances
+        // dists[i] <= travelled < dists[i+1]
+        let idx = 0;
+        // Optimization: Start search from last known index to save time? 
+        // For now, simple loop is fast enough for <1000 points.
+        // Or binary search if needed. Linear scan is robust.
+        while (idx < dists.length - 2 && travelledDistanceRef.current >= dists[idx + 1]) {
+            idx++;
         }
 
-        currentIndexRef.current = currentIndex;
-        distanceInSegmentRef.current = distanceTraveled;
+        const segmentStartDist = dists[idx];
+        const segmentEndDist = dists[idx + 1];
+        const segmentLen = segmentEndDist - segmentStartDist;
 
-        // Calculate position
-        const startPoint = path[currentIndex];
-        const endPoint = path[currentIndex + 1] || path[currentIndex];
-        const currentSegmentDistance = getDistanceInMeters(startPoint, endPoint);
-        const t = currentSegmentDistance > 0 ? Math.min(distanceTraveled / currentSegmentDistance, 1) : 0;
+        // Normalize t (0..1)
+        const distInSegment = travelledDistanceRef.current - segmentStartDist;
+        const t = segmentLen > 0 ? Math.min(Math.max(distInSegment / segmentLen, 0), 1) : 0;
+
+        const startPoint = path[idx];
+        const endPoint = path[idx + 1];
         const newPosition = interpolate(startPoint, endPoint, t);
 
-        // Calculate progress
-        const progress = Math.min(100, ((currentIndex + t) / (path.length - 1)) * 100);
+        // Find route segment index
+        // This maps the localized path index 'idx' back to the route segment
+        const segmentIndex = findSegmentIndexForGlobalIndex(segmentsRef.current, idx);
+        const currentSeg = segmentsRef.current[segmentIndex];
 
-        // Update React state only every UI_UPDATE_INTERVAL_MS
-        const now = Date.now();
+        // UI Update
         if (now - lastUIUpdateRef.current >= UI_UPDATE_INTERVAL_MS) {
             lastUIUpdateRef.current = now;
-            const currentSeg = findSegmentForIndex(segments, currentIndex);
-            const currentSegIndex = findSegmentIndexForGlobalIndex(segments, currentIndex);
             setDisplayState({
                 isRunning: true,
                 currentPosition: newPosition,
-                progress,
+                progress: (travelledDistanceRef.current / total) * 100,
                 currentTransportMode: currentSeg?.type || 'WALK',
                 speed: speedRef.current,
-                currentSegmentIndex: currentSegIndex
+                currentSegmentIndex: segmentIndex
             });
         }
+
     }, []);
 
     const start = useCallback((segments: RouteSegment[]) => {
-        // Build full path
+        // Build full path and cumulative distances
         const fullPath: Coordinate[] = [];
+        const dists: number[] = [0];
+        let runningTotal = 0;
+
         for (const segment of segments) {
             if (segment.path && segment.path.length > 0) {
-                fullPath.push(...segment.path);
+                // If connecting from previous segment, ensure continuity?
+                // Usually segment.path is standalone. We concat.
+                // But duplicate points (end of A == start of B) should be handled.
+                // Ideally we filter duplicates, but for now we just concat.
+                // The linear scan handles 0-length segments fine (skips them).
+                for (let i = 0; i < segment.path.length; i++) {
+                    const coord = segment.path[i];
+                    // Avoid duplicate adjacent point if we essentially appended
+                    if (fullPath.length > 0) {
+                        const last = fullPath[fullPath.length - 1];
+                        let d = getDistanceInMeters(last, coord);
+                        // Only add distance if it's a new point or > 0 distance
+                        // If d is 0, we can still add the point, but distance doesn't increase.
+
+                        // FIX: If this is the start of a new segment (i === 0), do not add distance.
+                        // This prevents "flying" between the end of one segment and the start of another
+                        // if they are not perfectly connected. We want instant snap.
+                        if (i === 0) {
+                            d = 0;
+                        }
+
+                        runningTotal += d;
+                        dists.push(runningTotal);
+                    }
+                    fullPath.push(coord);
+                }
             }
         }
 
         if (fullPath.length < 2) return;
 
-        // Stop existing
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-        }
+        // Reset state
+        if (intervalRef.current) clearInterval(intervalRef.current);
 
-        // Initialize refs
         pathRef.current = fullPath;
+        pathDistancesRef.current = dists;
+        totalDistanceRef.current = runningTotal;
         segmentsRef.current = segments;
-        currentIndexRef.current = 0;
-        distanceInSegmentRef.current = 0;
+        travelledDistanceRef.current = 0;
+        speedRef.current = speedRef.current || 1; // Preserve speed or default
         isRunningRef.current = true;
-        lastUIUpdateRef.current = Date.now();
+        lastTickRef.current = Date.now();
+        lastUIUpdateRef.current = 0;
 
-        // Set initial state
         setDisplayState({
             isRunning: true,
             currentPosition: fullPath[0],
@@ -202,7 +231,6 @@ export function useLocationSimulator() {
             currentSegmentIndex: 0
         });
 
-        // Start loop
         intervalRef.current = window.setInterval(updatePosition, UPDATE_INTERVAL_MS);
     }, [updatePosition]);
 
@@ -233,7 +261,7 @@ export function useLocationSimulator() {
     }, []);
 
     const setSpeed = useCallback((speed: number) => {
-        speedRef.current = Math.max(0.5, Math.min(10, speed));
+        speedRef.current = Math.max(0.5, Math.min(100, speed));
         setDisplayState(prev => ({ ...prev, speed: speedRef.current }));
     }, []);
 
