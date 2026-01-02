@@ -583,8 +583,7 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
                 {/* Completion Slide */}
                 {isCompletionSlide && (
                     <div
-                        className="absolute bottom-0 left-0 right-0 z-[50] w-full bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col rounded-t-[32px] overflow-hidden pointer-events-auto"
-                        style={{ height: '450px' }}
+                        className="absolute bottom-0 left-0 right-0 z-[50] w-full bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col rounded-t-[32px] overflow-hidden pointer-events-auto max-h-[85dvh]"
                     >
                         {/* Drag Handle */}
                         <div className="flex justify-center py-3">

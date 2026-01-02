@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global Layout Fix for Mobile Viewports */
+html,
+body,
+#root {
+    height: 100dvh;
+    /* Use dynamic viewport height */
+    width: 100%;
+    overflow: hidden;
+    /* Prevent global scrollbar */
+    margin: 0;
+    padding: 0;
+}
+
 /* Custom Scrollbar Styles (migrated from index.html if needed, but Tailwind handles most) */
 ::-webkit-scrollbar {
     width: 4px;
