@@ -351,7 +351,7 @@ npm run preview
 |:---|:---|:---|
 | 京都市バス GTFSデータ | CC BY 4.0 | 京都市交通局 |
 | 京都市営地下鉄 GTFSデータ | CC BY 4.0 | 京都市交通局 |
-| KDDI 人流データ | CC BY 4.0 | 京都市オープンデータ |
+| KDDI 人流データ | CC BY 4.0 | G空間情報センター |
 | 京都府観光施設一覧 | CC BY 4.0 | 京都府オープンデータ |
 | OpenStreetMap | ODbL | OpenStreetMap Foundation |
 | Wikimedia Commons 画像 | CC BY-SA | Wikimedia Foundation |
@@ -366,7 +366,7 @@ npm run preview
 
 ### 開発者
 
-- **作成者**: 安部翔平
+- **作成者**: ABE SHOHEI
 - **連絡先**: [GitHub](https://github.com/AbeShohei)
 
 ---
