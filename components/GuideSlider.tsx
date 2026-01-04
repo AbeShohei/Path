@@ -268,70 +268,108 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
         });
     }, [displayGuides]);
 
-    // Touch handlers for drag gesture with real-time feedback
+    // Touch handlers for drag gesture using absolute screen position
     const handleTouchStart = (e: React.TouchEvent) => {
-        dragStartY.current = e.touches[0].clientY;
         setDragOffset(0);
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
-        if (dragStartY.current !== null) {
-            const currentY = e.touches[0].clientY;
-            const delta = dragStartY.current - currentY; // Positive = drag up (expand)
-            setDragOffset(delta);
+        const currentY = e.touches[0].clientY;
+
+        // Calculate absolute height from bottom of screen
+        const absoluteHeight = window.innerHeight - currentY;
+        const currentBaseHeight = getHeightPx(viewState);
+
+        // Update visual drag offset so slider follows finger
+        setDragOffset(absoluteHeight - currentBaseHeight);
+
+        // Determine new state based on absolute height
+        // - collapsed: < 100px
+        // - full: > 80% screen height
+        // - normal/compact: defined ranges
+        let newState: typeof viewState = viewState;
+        const heights = stateOrder.map(s => getHeightPx(s));
+        // heights[0]=collapsed, heights[1]=compact, heights[2]=normal, heights[3]=full
+
+        if (absoluteHeight <= 100) {
+            newState = 'collapsed';
+        } else if (absoluteHeight >= window.innerHeight * 0.8) {
+            newState = 'full';
+        } else if (absoluteHeight >= heights[2] - 50 && absoluteHeight < window.innerHeight * 0.8) {
+            newState = 'normal';
+        } else if (absoluteHeight >= heights[1] - 50 && absoluteHeight < heights[2] - 50) {
+            newState = 'compact';
+        } else {
+            // Fallback logic for gaps (snap to nearest)
+            if (absoluteHeight < heights[1]) newState = 'collapsed';
+            else if (absoluteHeight < heights[2]) newState = 'compact';
+            else newState = 'normal';
+        }
+
+        // Update state if changed
+        if (newState !== viewState) {
+            setViewState(newState);
+            // When state changes, we need to adjust dragOffset to prevent jumping
+            // The absolute position hasn't changed, but the base height has
+            // New offset = absoluteHeight - newBaseHeight
+            setDragOffset(absoluteHeight - getHeightPx(newState));
         }
     };
 
     const handleTouchEnd = () => {
-        if (dragStartY.current !== null) {
-            const threshold = 50; // Minimum drag distance to trigger state change
-
-            if (Math.abs(dragOffset) > threshold) {
-                const currentStateIndex = stateOrder.indexOf(viewState);
-                if (dragOffset > 0 && currentStateIndex < stateOrder.length - 1) {
-                    // Drag up -> expand
-                    setViewState(stateOrder[currentStateIndex + 1]);
-                } else if (dragOffset < 0 && currentStateIndex > 0) {
-                    // Drag down -> collapse
-                    setViewState(stateOrder[currentStateIndex - 1]);
-                }
-            }
-        }
-        dragStartY.current = null;
         setDragOffset(0);
     };
 
-    // Mouse handlers for PC drag support
+    // Mouse handlers for PC drag support using absolute screen position
+    const viewStateRef = useRef(viewState);
+    viewStateRef.current = viewState; // Keep ref in sync
+
     const handleMouseDown = (e: React.MouseEvent) => {
         e.preventDefault();
-        dragStartY.current = e.clientY;
-        dragOffsetRef.current = 0;
         setDragOffset(0);
 
         const handleMouseMove = (ev: MouseEvent) => {
-            if (dragStartY.current !== null) {
-                const delta = dragStartY.current - ev.clientY;
-                dragOffsetRef.current = delta; // Update ref for closure access
-                setDragOffset(delta);
+            const currentY = ev.clientY;
+
+            // Calculate absolute height from bottom of screen
+            const absoluteHeight = window.innerHeight - currentY;
+            const currentBaseHeight = getHeightPx(viewStateRef.current);
+
+            // Update visual drag offset so slider follows pointer
+            setDragOffset(absoluteHeight - currentBaseHeight);
+
+            // Determine new state based on absolute height
+            // - collapsed: < 100px
+            // - full: > 80% screen height
+            // - normal/compact: defined ranges
+            let newState: typeof viewState = viewStateRef.current;
+            const heights = stateOrder.map(s => getHeightPx(s));
+            // heights[0]=collapsed, heights[1]=compact, heights[2]=normal, heights[3]=full
+
+            if (absoluteHeight <= 100) {
+                newState = 'collapsed';
+            } else if (absoluteHeight >= window.innerHeight * 0.8) {
+                newState = 'full';
+            } else if (absoluteHeight >= heights[2] - 50 && absoluteHeight < window.innerHeight * 0.8) {
+                newState = 'normal';
+            } else if (absoluteHeight >= heights[1] - 50 && absoluteHeight < heights[2] - 50) {
+                newState = 'compact';
+            } else {
+                // Fallback logic for gaps (snap to nearest)
+                if (absoluteHeight < heights[1]) newState = 'collapsed';
+                else if (absoluteHeight < heights[2]) newState = 'compact';
+                else newState = 'normal';
+            }
+
+            // Update state if changed
+            if (newState !== viewStateRef.current) {
+                setViewState(newState);
+                // When state changes, we need to adjust dragOffset to prevent jumping
+                setDragOffset(absoluteHeight - getHeightPx(newState));
             }
         };
 
         const handleMouseUp = () => {
-            if (dragStartY.current !== null) {
-                const threshold = 50;
-                const currentOffset = dragOffsetRef.current; // Use ref for accurate value
-
-                if (Math.abs(currentOffset) > threshold) {
-                    const currentStateIndex = stateOrder.indexOf(viewState);
-                    if (currentOffset > 0 && currentStateIndex < stateOrder.length - 1) {
-                        setViewState(stateOrder[currentStateIndex + 1]);
-                    } else if (currentOffset < 0 && currentStateIndex > 0) {
-                        setViewState(stateOrder[currentStateIndex - 1]);
-                    }
-                }
-            }
-            dragStartY.current = null;
-            dragOffsetRef.current = 0;
             setDragOffset(0);
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);

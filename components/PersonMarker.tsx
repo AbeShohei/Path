@@ -6,6 +6,7 @@ import { ModelProps } from '../types';
 interface PersonMarkerProps extends ModelProps {
   color?: string;
   isMoving?: boolean;
+  isStatic?: boolean;
 }
 
 export const PersonMarker = React.forwardRef<Group, PersonMarkerProps>(({
@@ -14,12 +15,15 @@ export const PersonMarker = React.forwardRef<Group, PersonMarkerProps>(({
   scale = 1,
   color = '#EF4444',
   isMoving = false,
+  isStatic = false,
 }, ref) => {
   const internalRef = useRef<Group>(null);
   const leftArmRef = useRef<Group>(null);
   const rightArmRef = useRef<Group>(null);
 
   useFrame((state) => {
+    if (isStatic) return;
+
     const t = state.clock.getElapsedTime();
 
     if (internalRef.current) {
@@ -28,7 +32,7 @@ export const PersonMarker = React.forwardRef<Group, PersonMarkerProps>(({
         // Faster bobbing for running
         const yOffset = Math.sin(t * 15) * 0.15;
         internalRef.current.position.y = Math.max(0, yOffset);
-        
+
         // Side-to-side waddle
         internalRef.current.rotation.z = Math.sin(t * 15) * 0.1;
       } else {
@@ -36,7 +40,7 @@ export const PersonMarker = React.forwardRef<Group, PersonMarkerProps>(({
         // Gentle bob
         const yOffset = Math.sin(t * 3) * 0.05;
         internalRef.current.position.y = Math.max(0, yOffset);
-        
+
         // Reset rotations
         internalRef.current.rotation.x = 0;
         internalRef.current.rotation.z = 0;
@@ -89,30 +93,30 @@ export const PersonMarker = React.forwardRef<Group, PersonMarkerProps>(({
         {/* Arms - Pivot at shoulders */}
         {/* Right Arm */}
         <group ref={rightArmRef} position={[0.32, 0.55, 0]}>
-           {/* Sleeve / Arm */}
-           <mesh position={[0, -0.12, 0]} castShadow>
-              <cylinderGeometry args={[0.07, 0.06, 0.25, 8]} />
-              <meshStandardMaterial color={color} />
-           </mesh>
-           {/* Hand */}
-           <mesh position={[0, -0.28, 0]} castShadow>
-              <sphereGeometry args={[0.09, 16, 16]} />
-              <meshStandardMaterial color="#FCA5A5" />
-           </mesh>
+          {/* Sleeve / Arm */}
+          <mesh position={[0, -0.12, 0]} castShadow>
+            <cylinderGeometry args={[0.07, 0.06, 0.25, 8]} />
+            <meshStandardMaterial color={color} />
+          </mesh>
+          {/* Hand */}
+          <mesh position={[0, -0.28, 0]} castShadow>
+            <sphereGeometry args={[0.09, 16, 16]} />
+            <meshStandardMaterial color="#FCA5A5" />
+          </mesh>
         </group>
 
         {/* Left Arm */}
         <group ref={leftArmRef} position={[-0.32, 0.55, 0]}>
-           {/* Sleeve / Arm */}
-           <mesh position={[0, -0.12, 0]} castShadow>
-              <cylinderGeometry args={[0.07, 0.06, 0.25, 8]} />
-              <meshStandardMaterial color={color} />
-           </mesh>
-           {/* Hand */}
-           <mesh position={[0, -0.28, 0]} castShadow>
-              <sphereGeometry args={[0.09, 16, 16]} />
-              <meshStandardMaterial color="#FCA5A5" />
-           </mesh>
+          {/* Sleeve / Arm */}
+          <mesh position={[0, -0.12, 0]} castShadow>
+            <cylinderGeometry args={[0.07, 0.06, 0.25, 8]} />
+            <meshStandardMaterial color={color} />
+          </mesh>
+          {/* Hand */}
+          <mesh position={[0, -0.28, 0]} castShadow>
+            <sphereGeometry args={[0.09, 16, 16]} />
+            <meshStandardMaterial color="#FCA5A5" />
+          </mesh>
         </group>
       </group>
     </group>

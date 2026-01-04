@@ -86,7 +86,7 @@ export function useLocationSimulator() {
         currentPosition: null,
         progress: 0,
         currentTransportMode: 'WALK',
-        speed: 1,
+        speed: 10,
         currentSegmentIndex: 0,
         bearing: 0
     });
@@ -98,7 +98,7 @@ export function useLocationSimulator() {
     const pathDistancesRef = useRef<number[]>([]); // Cumulative distance at each point
     const totalDistanceRef = useRef(0);
     const travelledDistanceRef = useRef(0); // Current progress in meters
-    const speedRef = useRef(1);
+    const speedRef = useRef(10);
     const isRunningRef = useRef(false);
     const intervalRef = useRef<number | null>(null);
     const lastUIUpdateRef = useRef(0);
@@ -156,8 +156,31 @@ export function useLocationSimulator() {
 
         if (path.length < 2) return;
 
+        // Determine current mode for speed calculation
+        // Find rough current index based on distance (reuse previous frame's index for performance or quick search)
+        // Since we need it before update, we can use the last known segment or quickly re-calculate
+
+        let currentSpeedMultiplier = 1;
+        // Fast lookup: check if we are still in the same segment as last time
+        // (Simplified: just use last known segment index if available, or search)
+
+        // Accurate way:
+        let searchIdx = 0;
+        const currentDist = travelledDistanceRef.current;
+        while (searchIdx < dists.length - 2 && currentDist >= dists[searchIdx + 1]) {
+            searchIdx++;
+        }
+        const segIdx = findSegmentIndexForGlobalIndex(segmentsRef.current, searchIdx);
+        const activeSeg = segmentsRef.current[segIdx];
+
+        const modeBaseSpeed = activeSeg && SPEED_BY_MODE[activeSeg.type]
+            ? SPEED_BY_MODE[activeSeg.type]
+            : SPEED_BY_MODE['WALK'];
+
         // Calculate distance to travel this tick
-        const tickDist = (speedRef.current * (deltaMs / 1000));
+        // speedRef.current is the Multiplier (e.g., 20)
+        // modeBaseSpeed is the base m/s (e.g., 1.3 or 8)
+        const tickDist = (modeBaseSpeed * speedRef.current * (deltaMs / 1000));
         travelledDistanceRef.current += tickDist;
 
         // Check end condition

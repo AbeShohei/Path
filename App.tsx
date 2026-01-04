@@ -11,8 +11,11 @@ import { useLocationSimulator } from './hooks/useLocationSimulator';
 import { useGuideSystem } from './hooks/useGuideSystem';
 import { getDistance } from './services/guideService';
 import Map from './components/Map';
+
 import { GuideSlider } from './components/GuideSlider';
 import LyricsReader from './components/LyricsReader';
+import { Canvas } from '@react-three/fiber';
+import { PersonMarker } from './components/PersonMarker';
 
 // SVG Icons
 const MapPinIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
@@ -1308,11 +1311,16 @@ function App() {
                         {/* Traffic Info Display for Navigation */}
                         {(mode === AppMode.NAVIGATING && selectedRoute) ? (
                             <div className="flex-1 flex flex-col items-start min-w-0">
-                                {/* Status message (e.g., "205 乗車前", "205 乗車中") */}
-                                <div className="text-[10px] text-white/60 font-bold tracking-wider uppercase leading-none mb-0.5">
-                                    {transitInfo?.message || 'NAVIGATION'}
+                                {/* Status message (e.g., "205 乗車前", "205 乗車中") + Destination Arrival Time */}
+                                <div className="w-full flex justify-between items-baseline mb-0.5">
+                                    <div className="text-[10px] text-white/60 font-bold tracking-wider uppercase leading-none">
+                                        {transitInfo?.message || 'NAVIGATION'}
+                                    </div>
+                                    <div className="text-[10px] text-white/90 font-bold tracking-wider">
+                                        目的地到着予定: <span className="text-white text-xs">{selectedRoute.endTime}</span>
+                                    </div>
                                 </div>
-                                {/* Boarding → Alighting Station Display */}
+                                {/* Boarding → Alighting Station Display with Times */}
                                 {(() => {
                                     const transitSeg = selectedRoute.segments.find(s => ['BUS', 'SUBWAY', 'TRAIN'].includes(s.type));
                                     if (!transitSeg) return <span className="text-lg font-bold">{selectedSpot?.name || '目的地'}</span>;
@@ -1321,11 +1329,26 @@ function App() {
                                     const boardingStation = transitSeg.boardingStop || transitSeg.platform || '乗車駅';
                                     const alightingStation = transitSeg.alightingStop || transitSeg.direction || '降車駅';
 
+                                    // Extract times
+                                    const departureTime = transitSeg.departureTime || '';
+                                    const arrivalTime = transitSeg.arrivalTime || '';
+
                                     return (
                                         <div className="flex items-center gap-1 w-full text-base font-bold">
-                                            <span className="truncate max-w-[40%]">{boardingStation}</span>
+                                            {/* Boarding */}
+                                            <div className="flex items-baseline gap-1 truncate max-w-[40%]">
+                                                <span>{boardingStation}</span>
+                                                {departureTime && <span className="text-xs text-white/70 font-mono font-medium">{departureTime}</span>}
+                                            </div>
+
                                             <span className="text-indigo-300 shrink-0">→</span>
-                                            <span className="truncate max-w-[40%]">{alightingStation}</span>
+
+                                            {/* Alighting */}
+                                            <div className="flex items-baseline gap-1 truncate max-w-[40%]">
+                                                <span>{alightingStation}</span>
+                                                {arrivalTime && <span className="text-xs text-white/70 font-mono font-medium">{arrivalTime}</span>}
+                                            </div>
+
                                             {/* Remaining stops badge */}
                                             {transitInfo && transitInfo.stopsAway > 0 && (
                                                 <span className="text-xs font-medium text-indigo-200 shrink-0 bg-indigo-800/50 px-1.5 py-0.5 rounded ml-auto">
@@ -2333,18 +2356,25 @@ function App() {
             {
                 mode !== AppMode.LANDING && mode !== AppMode.DESTINATION && (
                     <button
+
                         onClick={() => setRecenterTrigger(prev => prev + 1)}
-                        className="absolute right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all border border-gray-200"
+                        className="absolute right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all border border-gray-200 overflow-hidden"
                         style={{
                             zIndex: 10,
-                            top: (mode === AppMode.NAVIGATING || mode === AppMode.DESTINATION) ? '7rem' : '1rem'
+                            top: (mode === AppMode.NAVIGATING) ? '7rem' : '1rem'
                         }}
                         title="現在地に戻る"
                     >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="8" fill="#3B82F6" stroke="white" strokeWidth="2" />
-                            <circle cx="12" cy="12" r="11" stroke="#3B82F6" strokeWidth="1.5" className="opacity-30" />
-                        </svg>
+                        <div className="w-full h-full">
+                            <Canvas
+                                camera={{ position: [0, 1.5, 3], fov: 45 }}
+                                gl={{ alpha: true, antialias: true }}
+                            >
+                                <ambientLight intensity={1.5} />
+                                <directionalLight position={[5, 10, 5]} intensity={2} />
+                                <PersonMarker position={[0, -0.8, 0]} scale={1.5} isStatic={true} />
+                            </Canvas>
+                        </div>
                     </button>
                 )
             }
