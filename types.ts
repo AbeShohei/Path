@@ -103,3 +103,9 @@ export interface GroundingChunk {
     }
   };
 }
+
+export interface ModelProps {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: number;
+}

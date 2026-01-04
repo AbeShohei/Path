@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Coordinates, AppMode, Spot, TransportMode, GroundingChunk, RouteOption, RouteSegment, TransitUpdate } from './types';
-import { getTransitInfo, generateGuideContent, playTextToSpeech } from './services/geminiService';
+import { getTransitInfo, generateGuideContent, playTextToSpeech, isAIAvailable } from './services/geminiService';
 import { routeService } from './services/routeService';
 import { wikimediaService } from './services/wikimediaService';
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
@@ -327,6 +327,10 @@ function App() {
 
     // 1. Get Location
     const requestLocation = () => {
+        // Check API key availability at startup
+        const aiAvailable = isAIAvailable();
+        console.log(`[App] AI Guide ${aiAvailable ? 'ENABLED' : 'DISABLED (using basic info)'}`);
+
         setLoading(true);
         // Demo: Hardcoded Kyoto Station coordinates
         const kyotoStationCoords = {
@@ -1418,6 +1422,8 @@ function App() {
                         isSheetDragging={isDragging}
                         disableSmartPan={mode === AppMode.NAVIGATING}
                         showBusRoutes={showBusRoutes}
+                        transportMode={simState.currentTransportMode}
+                        bearing={simState.bearing || 0}
                         busRoutes={busRoutes}
                         subwayRoutes={subwayRoutes}
                         highlightedGuideSpotId={highlightedGuideSpotId}
@@ -2338,7 +2344,7 @@ function App() {
                         onClick={() => setRecenterTrigger(prev => prev + 1)}
                         className="absolute right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all border border-gray-200"
                         style={{
-                            zIndex: 1000,
+                            zIndex: 10,
                             top: (mode === AppMode.NAVIGATING || mode === AppMode.DESTINATION) ? '7rem' : '1rem'
                         }}
                         title="現在地に戻る"

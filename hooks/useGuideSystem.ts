@@ -5,6 +5,7 @@ import {
     getDistance,
     GuideContent
 } from '../services/guideService';
+import { isAIAvailable } from '../services/geminiService';
 
 interface UseGuideSystemProps {
     coords: Coordinates | null;
@@ -101,37 +102,46 @@ export function useGuideSystem({
                     !guideCache.current.has(s.id) && !failedSpots.current.has(s.id)
                 );
 
-                // console.log('Checking proximity...', closeSpots.length, 'spots nearby');
-
-                // 4. Rate Limited Fetching
-                // Only proceed if enough time has passed since last fetch (10000ms strict global limit)
                 const now = Date.now();
-                if (spotsNeedingFetch.length > 0 && now - lastFetchTime.current >= 10000) {
-                    // console.log('Spots needing fetch:', spotsNeedingFetch.map(s => s.name));
-                    setLoading(true);
+                const aiAvailable = isAIAvailable();
 
-                    // Take strictly 1 spot
-                    const spot = spotsNeedingFetch[0];
-                    // console.log(`Processing 1 spot: ${spot.name}`);
+                // 4. Fetching Strategy
+                if (spotsNeedingFetch.length > 0) {
+                    if (!aiAvailable) {
+                        // NO AI: Process ALL spots INSTANTLY with basic info
+                        // No rate limiting, no waiting
+                        for (const spot of spotsNeedingFetch) {
+                            try {
+                                const guide = await fetchSpotGuide(spot, currentCoords, nextPoint);
+                                guideCache.current.set(spot.id, guide);
+                            } catch (e) {
+                                // Should not fail for basic info, but log just in case
+                                console.warn("Basic guide failed:", spot.name, e);
+                            }
+                        }
+                        // All spots processed, no more loading
+                        setLoading(false);
+                    } else {
+                        // AI AVAILABLE: Use rate limiting (10s between API calls)
+                        if (now - lastFetchTime.current >= 10000) {
+                            setLoading(true);
+                            const spot = spotsNeedingFetch[0];
+                            lastFetchTime.current = Date.now();
 
-                    lastFetchTime.current = Date.now(); // Mark time BEFORE fetch to prevent parallel starts
-
-                    try {
-                        const guide = await fetchSpotGuide(spot, currentCoords, nextPoint);
-                        guideCache.current.set(spot.id, guide);
-                        // Clear from failed spots if it succeeds (in case it was there somehow)
-                        failedSpots.current.delete(spot.id);
-                    } catch (e) {
-                        console.warn("Guide generation failed, backing off:", spot.name);
-                        // Add to failed spots to prevent immediate retry
-                        failedSpots.current.add(spot.id);
-                        // Remove from blacklist after 2 minutes to retry
-                        setTimeout(() => {
-                            failedSpots.current.delete(spot.id);
-                        }, 120000);
+                            try {
+                                const guide = await fetchSpotGuide(spot, currentCoords, nextPoint);
+                                guideCache.current.set(spot.id, guide);
+                                failedSpots.current.delete(spot.id);
+                            } catch (e) {
+                                console.warn("Guide generation failed, backing off:", spot.name);
+                                failedSpots.current.add(spot.id);
+                                setTimeout(() => {
+                                    failedSpots.current.delete(spot.id);
+                                }, 120000);
+                            }
+                        }
+                        setLoading(spotsNeedingFetch.length > 0);
                     }
-                } else if (spotsNeedingFetch.length > 0) {
-                    // console.log(`Waiting for rate limit cooldown... (${10000 - (now - lastFetchTime.current)}ms remaining)`);
                 }
 
                 // 5. Update State
@@ -139,9 +149,6 @@ export function useGuideSystem({
                     .map(s => guideCache.current.get(s.id))
                     .filter((g): g is GuideContent => !!g);
                 setNearbyGuides(currentGuides);
-
-                // Loading is only true if we are actively waiting on the queue
-                setLoading(spotsNeedingFetch.length > 0);
 
             } finally {
                 isProcessing.current = false;

@@ -7,6 +7,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { RouteSegment } from '../types';
 
+
 interface Coordinate {
     lat: number;
     lng: number;
@@ -19,6 +20,7 @@ export interface SimulatorState {
     currentTransportMode: string;
     speed: number;
     currentSegmentIndex: number;
+    bearing: number; // Add bearing capability
 }
 
 // Speed constants in m/s
@@ -38,6 +40,19 @@ function getDistanceInMeters(coord1: Coordinate, coord2: Coordinate): number {
         Math.cos(coord1.lat * Math.PI / 180) * Math.cos(coord2.lat * Math.PI / 180) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Calculate bearing (heading) between two coordinates in degrees
+function getBearing(coord1: Coordinate, coord2: Coordinate): number {
+    const dLon = (coord2.lng - coord1.lng) * Math.PI / 180;
+    const lat1 = coord1.lat * Math.PI / 180;
+    const lat2 = coord2.lat * Math.PI / 180;
+
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) -
+        Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+    let brng = Math.atan2(y, x);
+    return (brng * 180 / Math.PI + 360) % 360; // Normalize to 0-360
 }
 
 function interpolate(coord1: Coordinate, coord2: Coordinate, t: number): Coordinate {
@@ -72,7 +87,8 @@ export function useLocationSimulator() {
         progress: 0,
         currentTransportMode: 'WALK',
         speed: 1,
-        currentSegmentIndex: 0
+        currentSegmentIndex: 0,
+        bearing: 0
     });
 
     // All internal state uses refs (no re-renders)
@@ -87,14 +103,50 @@ export function useLocationSimulator() {
     const intervalRef = useRef<number | null>(null);
     const lastUIUpdateRef = useRef(0);
     const lastTickRef = useRef(0);
+    const currentBearingRef = useRef(0); // To smooth out bearing changes if needed
+    const lastPathIdxRef = useRef(0); // Track last path index to detect corners
+    const cornerPauseUntilRef = useRef(0); // Timestamp until which we pause at corner
 
     const UPDATE_INTERVAL_MS = 50; // Faster tick for smoother high speed
     const UI_UPDATE_INTERVAL_MS = 200;
+    const CORNER_PAUSE_MS = 300; // Pause duration at corners for turn-on-spot (increased for visibility)
 
     const updatePosition = useCallback(() => {
         if (!isRunningRef.current) return;
 
         const now = Date.now();
+
+        // CHECK CORNER PAUSE FIRST - before updating any distance
+        // This ensures the marker stays completely still during turns
+        if (now < cornerPauseUntilRef.current) {
+            // During pause: only update UI with current corner position and new bearing
+            const path = pathRef.current;
+            const dists = pathDistancesRef.current;
+            const total = totalDistanceRef.current;
+            const idx = lastPathIdxRef.current;
+
+            if (path.length > idx + 1) {
+                const cornerPoint = path[idx];
+                const nextPoint = path[idx + 1];
+                const bearing = getBearing(cornerPoint, nextPoint);
+                currentBearingRef.current = bearing;
+
+                const segmentIndex = findSegmentIndexForGlobalIndex(segmentsRef.current, idx);
+                const currentSeg = segmentsRef.current[segmentIndex];
+
+                setDisplayState({
+                    isRunning: true,
+                    currentPosition: cornerPoint,
+                    progress: (dists[idx] / total) * 100,
+                    currentTransportMode: currentSeg?.type || 'WALK',
+                    speed: speedRef.current,
+                    currentSegmentIndex: segmentIndex,
+                    bearing: bearing
+                });
+            }
+            return; // Don't update lastTickRef or distance during pause
+        }
+
         const deltaMs = now - lastTickRef.current;
         lastTickRef.current = now;
 
@@ -123,7 +175,8 @@ export function useLocationSimulator() {
                 progress: 100,
                 currentTransportMode: 'WALK', // Or retrieve from segment
                 speed: speedRef.current,
-                currentSegmentIndex: segmentsRef.current.length - 1
+                currentSegmentIndex: segmentsRef.current.length - 1,
+                bearing: currentBearingRef.current
             });
             return;
         }
@@ -131,11 +184,32 @@ export function useLocationSimulator() {
         // Find current segment using cumulative distances
         // dists[i] <= travelled < dists[i+1]
         let idx = 0;
-        // Optimization: Start search from last known index to save time? 
-        // For now, simple loop is fast enough for <1000 points.
-        // Or binary search if needed. Linear scan is robust.
         while (idx < dists.length - 2 && travelledDistanceRef.current >= dists[idx + 1]) {
             idx++;
+        }
+
+        // Corner pause trigger: detect when we transition to a new path segment
+        // AND the bearing changes significantly (> 30 degrees = actual turn)
+        const isNewSegment = idx !== lastPathIdxRef.current;
+        if (isNewSegment) {
+            lastPathIdxRef.current = idx;
+
+            // Calculate bearing for the new segment
+            const newBearing = getBearing(path[idx], path[idx + 1]);
+
+            // Check if this is a significant turn (not just continuing straight)
+            let bearingDiff = Math.abs(newBearing - currentBearingRef.current);
+            if (bearingDiff > 180) bearingDiff = 360 - bearingDiff;
+
+            const isSignificantTurn = bearingDiff > 30;
+
+            if (isSignificantTurn) {
+                // Start corner pause - will be handled at the start of next tick
+                cornerPauseUntilRef.current = now + CORNER_PAUSE_MS;
+                // Rewind to corner point
+                travelledDistanceRef.current = dists[idx];
+                return; // Exit immediately to start the pause
+            }
         }
 
         const segmentStartDist = dists[idx];
@@ -149,6 +223,10 @@ export function useLocationSimulator() {
         const startPoint = path[idx];
         const endPoint = path[idx + 1];
         const newPosition = interpolate(startPoint, endPoint, t);
+
+        // Calculate bearing using look-ahead
+        const bearing = getBearing(newPosition, endPoint);
+        currentBearingRef.current = bearing;
 
         // Find route segment index
         // This maps the localized path index 'idx' back to the route segment
@@ -164,7 +242,8 @@ export function useLocationSimulator() {
                 progress: (travelledDistanceRef.current / total) * 100,
                 currentTransportMode: currentSeg?.type || 'WALK',
                 speed: speedRef.current,
-                currentSegmentIndex: segmentIndex
+                currentSegmentIndex: segmentIndex,
+                bearing: bearing
             });
         }
 
@@ -222,13 +301,18 @@ export function useLocationSimulator() {
         lastTickRef.current = Date.now();
         lastUIUpdateRef.current = 0;
 
+        // Initial bearing
+        const initialBearing = getBearing(fullPath[0], fullPath[1]);
+        currentBearingRef.current = initialBearing;
+
         setDisplayState({
             isRunning: true,
             currentPosition: fullPath[0],
             progress: 0,
             currentTransportMode: segments[0]?.type || 'WALK',
             speed: speedRef.current,
-            currentSegmentIndex: 0
+            currentSegmentIndex: 0,
+            bearing: initialBearing
         });
 
         intervalRef.current = window.setInterval(updatePosition, UPDATE_INTERVAL_MS);
@@ -246,7 +330,8 @@ export function useLocationSimulator() {
             progress: 0,
             currentTransportMode: 'WALK',
             speed: 1,
-            currentSegmentIndex: 0
+            currentSegmentIndex: 0,
+            bearing: 0
         });
     }, []);
 

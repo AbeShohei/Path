@@ -15,6 +15,9 @@ const FREE_MODELS = [
 
 const BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
+// Export function to check if API key is configured (for early detection)
+export const isAIAvailable = (): boolean => !!API_KEY;
+
 // --- SERVICE INTERFACES ---
 
 export interface GuideContent {
@@ -117,6 +120,18 @@ export const generateGuideContent = async (
     spot: Spot,
     relativeDirection?: 'LEFT' | 'RIGHT' | 'FRONT' | 'BACK'
 ): Promise<GuideContent> => {
+
+    // Early check: If API key is not configured, immediately return basic info
+    if (!API_KEY) {
+        console.log(`API Key not configured. Using basic info for: ${spot.name}`);
+        return {
+            id: `guide-${spot.id}-${Date.now()}`,
+            text: spot.description,
+            spotId: spot.id,
+            spotName: spot.name,
+            direction: relativeDirection
+        };
+    }
 
     const directionTextFull = relativeDirection === 'LEFT' ? '左手' :
         relativeDirection === 'RIGHT' ? '右手' : '近く';

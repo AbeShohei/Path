@@ -3,6 +3,9 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, Tooltip
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Spot, Coordinates, RouteOption } from '../types';
+import { Canvas } from '@react-three/fiber';
+import { PersonMarker } from './PersonMarker';
+import { BusModel } from './BusModel';
 
 // Bus route data type
 interface BusRoute {
@@ -47,7 +50,66 @@ interface MapProps {
     highlightedRouteIds?: string[];
     highlightedGuideSpotId?: string | null;
     recenterTrigger?: number; // Increment to trigger recenter to current location
+    transportMode?: string; // 'WALK' | 'BUS' | etc
+    bearing?: number;
 }
+
+const LocationMarker3D = ({ position, mode, isMoving, bearing = 0 }: { position: Coordinates, mode: string, isMoving: boolean, bearing?: number }) => {
+    const map = useMap();
+    const posRef = useRef<HTMLDivElement>(null);
+
+    // Convert bearing (0=North on map) to 3D rotation (radians)
+    // Add PI to flip the model so it faces the correct direction
+    const modelRotationY = (-bearing * Math.PI / 180) + Math.PI;
+
+    // Efficiently update position without React re-renders
+    useEffect(() => {
+        const updatePos = () => {
+            if (posRef.current) {
+                const p = map.latLngToContainerPoint([position.latitude, position.longitude]);
+                posRef.current.style.transform = `translate(${p.x}px, ${p.y}px)`;
+            }
+        };
+
+        updatePos();
+
+        map.on('move', updatePos);
+        map.on('zoom', updatePos);
+        map.on('viewreset', updatePos);
+
+        return () => {
+            map.off('move', updatePos);
+            map.off('zoom', updatePos);
+            map.off('viewreset', updatePos);
+        };
+    }, [map, position]);
+
+    return (
+        <div
+            ref={posRef}
+            className="pointer-events-none absolute z-[1000]"
+            style={{
+                left: 0, top: 0,
+                willChange: 'transform'
+            }}
+        >
+            <div style={{ width: '120px', height: '120px', transform: 'translate(-50%, -50%)' }}>
+                {/* 3D Canvas - camera fixed, model rotates based on bearing */}
+                <Canvas shadows camera={{ position: [0, 8, 6], fov: 35 }} gl={{ alpha: true }}>
+                    <ambientLight intensity={1.2} />
+                    <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow />
+
+                    {/* Model rotates on Y axis based on bearing */}
+                    {mode === 'BUS' ? (
+                        <BusModel scale={0.65} isMoving={isMoving} rotation={[0, modelRotationY, 0]} />
+                    ) : (
+                        <PersonMarker scale={1.3} isMoving={isMoving} rotation={[0, modelRotationY, 0]} />
+                    )}
+                </Canvas>
+            </div>
+        </div>
+    );
+};
 
 const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigating, lastFocusedSpotId, disableSmartPan, selectedRoute, recenterTrigger }: {
     center: Coordinates,
@@ -125,7 +187,7 @@ const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigat
     return null;
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false, showBusRoutes = false, busRoutes = [], subwayRoutes = [], highlightedRouteIds = [], highlightedGuideSpotId, recenterTrigger }) => {
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false, showBusRoutes = false, busRoutes = [], subwayRoutes = [], highlightedRouteIds = [], highlightedGuideSpotId, recenterTrigger, transportMode = 'WALK', bearing = 0 }) => {
     const [activeSpot, setActiveSpot] = useState<Spot | null>(null);
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
     const lastFocusedSpotId = useRef<string | undefined>(undefined);
@@ -198,19 +260,14 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
         const iconPath = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z";
 
         const svgHtml = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-                <path d="${iconPath}" fill="${color}" stroke="${isInNavMode && !isHighlighted ? '#9ca3af' : 'white'}" stroke-width="1.5" />
-                <circle cx="12" cy="9" r="3" fill="${isInNavMode && !isHighlighted ? '#9ca3af' : 'white'}" />
-            </svg>`;
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                    <path d="${iconPath}" fill="${color}" stroke="${isInNavMode && !isHighlighted ? '#9ca3af' : 'white'}" stroke-width="1.5" />
+                    <circle cx="12" cy="9" r="3" fill="${isInNavMode && !isHighlighted ? '#9ca3af' : 'white'}" />
+                </svg>`;
         return L.divIcon({ html: svgHtml, className: 'custom-marker-icon', iconSize: [size, size], iconAnchor: [size / 2, size], popupAnchor: [0, -size] });
     };
 
-    const currentLocationIcon = L.divIcon({
-        html: `<div style="width: 16px; height: 16px; background-color: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);"></div>`,
-        className: 'current-location-icon',
-        iconSize: [16, 16],
-        iconAnchor: [8, 8]
-    });
+    // (Previously currentLocationIcon was here, now replaced by LocationMarker3D)
 
     const MapClickHandler = () => {
         useMapEvents({
@@ -281,7 +338,8 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
                 )
             })}
 
-            <Marker position={[center.latitude, center.longitude]} icon={currentLocationIcon} />
+            {/* Current Location: Replaced static Marker with 3D Component */}
+            <LocationMarker3D position={center} mode={transportMode} isMoving={!!isNavigating} bearing={bearing} />
 
             {/* Spots */}
             {spots.map(spot => {
