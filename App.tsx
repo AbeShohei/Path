@@ -143,16 +143,10 @@ function App() {
         description: string;
         coordinates: [number, number][];
     }[]>([]);
-    const [subwayRoutes, setSubwayRoutes] = useState<{
-        routeId: string;
-        routeName: string;
-        routeShortName: string;
-        color: string;
-        description: string;
-        coordinates: [number, number][];
-    }[]>([]);
+
 
     const [highlightedRouteIds, setHighlightedRouteIds] = useState<string[]>([]);
+    const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
 
     // Sheet Drag State
     const [isDragging, setIsDragging] = useState(false);
@@ -314,15 +308,7 @@ function App() {
             })
             .catch(err => console.error('Failed to load bus routes:', err));
 
-        // Load Subway Routes
-        fetch('/data/kyoto-subway-routes.json')
-            .then(res => res.json())
-            .then(data => {
-                if (data.routes) {
-                    setSubwayRoutes(data.routes);
-                }
-            })
-            .catch(err => console.error('Failed to load subway routes:', err));
+
     }, []);
 
     // 1. Get Location
@@ -360,7 +346,7 @@ function App() {
                     const hasAccess = await routeService.hasNearbyBusStops(
                         spot.location.latitude,
                         spot.location.longitude,
-                        5000 // 5km radius
+                        3000 // 3km radius
                     );
                     return hasAccess ? spot : null;
                 } catch (e) {
@@ -625,31 +611,12 @@ function App() {
                 }
 
                 if (seg.type === 'SUBWAY') {
-                    if (seg.lineName) {
-                        const found = subwayRoutes.find(r => r.routeName === seg.lineName || r.routeShortName === seg.lineName);
-                        if (found) {
-                            idsToHighlight.push(found.routeId);
-                            return;
-                        }
-                    }
-                    if (seg.text) {
-                        const isKarasuma = seg.text.includes('烏丸');
-                        const isTozai = seg.text.includes('東西');
-
-                        if (isKarasuma) {
-                            const found = subwayRoutes.find(r => r.routeName.includes('烏丸'));
-                            if (found) idsToHighlight.push(found.routeId);
-                        }
-                        if (isTozai) {
-                            const found = subwayRoutes.find(r => r.routeName.includes('東西'));
-                            if (found) idsToHighlight.push(found.routeId);
-                        }
-                    }
+                    // Subway route highlighting removed - subway data no longer available
                 }
             });
         }
         setHighlightedRouteIds(idsToHighlight);
-    }, [selectedRoute, busRoutes, subwayRoutes]);
+    }, [selectedRoute, busRoutes]);
 
     // Auto-close popup when entering NAVIGATING mode
     useEffect(() => {
@@ -1425,7 +1392,7 @@ function App() {
                         transportMode={simState.currentTransportMode}
                         bearing={simState.bearing || 0}
                         busRoutes={busRoutes}
-                        subwayRoutes={subwayRoutes}
+                        subwayRoutes={[]}
                         highlightedGuideSpotId={highlightedGuideSpotId}
                         recenterTrigger={recenterTrigger}
                     />
@@ -1709,17 +1676,42 @@ function App() {
                                                         </div>
 
                                                         {/* Description */}
-                                                        <p
-                                                            className="text-xs text-gray-600 leading-relaxed"
-                                                            style={{
-                                                                display: '-webkit-box',
-                                                                WebkitBoxOrient: 'vertical',
-                                                                WebkitLineClamp: 2,
-                                                                overflow: 'hidden'
-                                                            }}
-                                                        >
-                                                            {spot.description}
-                                                        </p>
+                                                        {spot.description && spot.description.length > 60 ? (
+                                                            <div>
+                                                                <p
+                                                                    className="text-xs text-gray-600 leading-relaxed"
+                                                                    style={expandedDescriptions.has(spot.id) ? {} : {
+                                                                        display: '-webkit-box',
+                                                                        WebkitBoxOrient: 'vertical',
+                                                                        WebkitLineClamp: 2,
+                                                                        overflow: 'hidden'
+                                                                    }}
+                                                                >
+                                                                    {spot.description}
+                                                                </p>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setExpandedDescriptions(prev => {
+                                                                            const newSet = new Set(prev);
+                                                                            if (newSet.has(spot.id)) {
+                                                                                newSet.delete(spot.id);
+                                                                            } else {
+                                                                                newSet.add(spot.id);
+                                                                            }
+                                                                            return newSet;
+                                                                        });
+                                                                    }}
+                                                                    className="text-[10px] text-indigo-600 font-bold mt-0.5 hover:underline"
+                                                                >
+                                                                    {expandedDescriptions.has(spot.id) ? '閉じる' : '続きを読む'}
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-xs text-gray-600 leading-relaxed">
+                                                                {spot.description}
+                                                            </p>
+                                                        )}
 
                                                         {/* Metadata Footer */}
                                                         <div className="mt-1 flex flex-col gap-1">

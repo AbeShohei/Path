@@ -1,3 +1,0 @@
-office_id,office_name,office_url
-KAR,烏丸線,
-TOZ,東西線,

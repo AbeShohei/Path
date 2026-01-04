@@ -287,31 +287,6 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
             <MapClickHandler />
             <MapController center={center} selectedSpotId={selectedSpotId} focusedSpotId={focusedSpotId} spots={spots} isNavigating={isNavigating} lastFocusedSpotId={lastFocusedSpotId} disableSmartPan={disableSmartPan} selectedRoute={selectedRoute} recenterTrigger={recenterTrigger} />
 
-            {/* Subway Routes Layer */}
-            {subwayRoutes && subwayRoutes.map((route) => {
-                const isHighlighted = highlightedRouteIds.length > 0 && highlightedRouteIds.includes(route.routeId);
-
-                // If showBusRoutes is FALSE, ONLY show highlighted routes
-                if (!showBusRoutes && !isHighlighted) return null;
-
-                const isDimmed = highlightedRouteIds.length > 0 && !isHighlighted;
-                const opacity = isDimmed ? 0.1 : 0.9;
-                const weight = isHighlighted ? 8 : (isDimmed ? 3 : 5);
-
-                return (
-                    <React.Fragment key={`subway-${route.routeId}`}>
-                        <Polyline positions={route.coordinates} pathOptions={{ color: 'white', weight: weight + 3, opacity: opacity }} />
-                        <Polyline positions={route.coordinates} pathOptions={{ color: route.routeId === '2' ? '#f39c12' : '#2ecc71', weight: weight, opacity: opacity, dashArray: '10, 10' }}>
-                            <Popup>
-                                <div className="p-2 min-w-[150px]">
-                                    <h3 className="font-bold text-lg mb-1" style={{ color: route.color }}>{route.routeName}</h3>
-                                    <p className="text-gray-600 text-sm">{route.description}</p>
-                                </div>
-                            </Popup>
-                        </Polyline>
-                    </React.Fragment>
-                );
-            })}
 
             {/* Bus Routes Layer */}
             {busRoutes.map((route) => {
