@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Group, Mesh } from 'three';
 import { RoundedBox } from '@react-three/drei';
-import { ModelProps } from '../types';
+import { ModelProps } from '../../types';
 
 interface BusModelProps extends ModelProps {
   isMoving?: boolean;

@@ -15,72 +15,21 @@ import Map from './components/Map';
 import { GuideSlider } from './components/GuideSlider';
 import LyricsReader from './components/LyricsReader';
 import { Canvas } from '@react-three/fiber';
-import { PersonMarker } from './components/PersonMarker';
+import { PersonMarker } from './components/map/PersonMarker';
 
-// SVG Icons
-const MapPinIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
-const WalkIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2V8.9z" /></svg>;
-const BusIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h11v5z" /></svg>;
-const TrainIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2.23l2-2H14l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4zM7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm3.5-7H6V6h5v4zm2 0V6h5v4h-5zm3.5 7c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" /></svg>;
-const SpeakerIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>;
-const MuteIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>;
-const PlayIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>;
-const RefreshIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
-const ArrowRightIcon = ({ className = "w-3 h-3 text-gray-400" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>;
+// Icons
+import {
+    MapPinIcon, WalkIcon, BusIcon, TrainIcon,
+    SpeakerIcon, MuteIcon, PlayIcon, RefreshIcon,
+    ArrowRightIcon, ChevronLeftIcon, ChevronDownIcon, ChevronUpIcon,
+    ClockIcon, CameraIcon, CongestionLevelIcon
+} from './components/icons';
 
-const ChevronLeftIcon = ({ className = "w-6 h-6" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>;
-const ChevronDownIcon = ({ className = "w-6 h-6" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>;
-const ChevronUpIcon = ({ className = "w-6 h-6" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
-const ClockIcon = ({ className = "w-4 h-4" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
-const CameraIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+// Screens
+import { LandingPage } from './components/screens/LandingPage';
 
-const CongestionLevelIcon = ({ level, className = "" }: { level: number, className?: string }) => {
-    const commonClasses = `flex items-center justify-center text-white text-[10px] shadow-sm rounded ${className}`;
-    const PersonIcon = () => <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>;
-
-    if (level === 5) {
-        return (
-            <div className={`${commonClasses} bg-red-500 w-6 h-6`}>
-                <div className="flex -space-x-2">
-                    <PersonIcon /><PersonIcon /><PersonIcon /><PersonIcon />
-                </div>
-            </div>
-        );
-    }
-    if (level === 4) {
-        return (
-            <div className={`${commonClasses} bg-yellow-500 w-6 h-6`}>
-                <div className="flex -space-x-2">
-                    <PersonIcon /><PersonIcon /><PersonIcon />
-                </div>
-            </div>
-        );
-    }
-    if (level === 3) {
-        return (
-            <div className={`${commonClasses} bg-green-500 w-6 h-6`}>
-                <div className="flex -space-x-2">
-                    <PersonIcon /><PersonIcon />
-                </div>
-            </div>
-        );
-    }
-    if (level === 2) {
-        return (
-            <div className={`${commonClasses} bg-cyan-500 w-6 h-6`}>
-                <div className="flex -space-x-1">
-                    <PersonIcon />
-                </div>
-            </div>
-        );
-    }
-    // Level 1 (Default)
-    return (
-        <div className={`${commonClasses} bg-blue-500 w-6 h-6`}>
-            <PersonIcon />
-        </div>
-    );
-};
+// UI Components
+import { CongestionLegend, SegmentIcon } from './components/ui';
 
 // Navigation Stages
 type NavigationStage = 'TO_STOP' | 'ON_BUS' | 'ALIGHTING' | 'TO_DEST';
@@ -252,7 +201,7 @@ function App() {
                 stopsAway: totalStops,
                 currentLocation: boardingStation,
                 nextBusTime: transitSeg.departureTime || '',
-                message: `${transitSeg.lineName || transitSeg.text} 乗車前`
+                message: '乗車前'
             };
             setTransitInfo(prev => JSON.stringify(prev) !== JSON.stringify(newInfo) ? newInfo : prev);
 
@@ -1181,12 +1130,6 @@ function App() {
         return `${arrival.getHours()}:${arrival.getMinutes().toString().padStart(2, '0')}`;
     };
 
-    // Helper component for segment icon
-    const SegmentIcon = ({ type, className }: { type: string, className?: string }) => {
-        if (type === 'BUS') return <BusIcon className={className} />;
-        if (type === 'TRAIN' || type === 'SUBWAY') return <TrainIcon className={className} />;
-        return <WalkIcon className={className} />;
-    };
 
     // Helper to get time info for current stage
     const getStageTimeInfo = () => {
@@ -1450,92 +1393,20 @@ function App() {
 
                 {/* LANDING MODE */}
                 {mode === AppMode.LANDING && (
-                    <div className="relative h-full flex flex-col items-center justify-end pb-20 text-center">
-                        {/* Background Image */}
-                        <div className="absolute inset-0 z-0 bg-indigo-900">
-                            <img
-                                src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2000&auto=format&fit=crop"
-                                alt="Kyoto Street"
-                                className="w-full h-full object-cover"
-                                onLoad={() => setIsLandingImageLoaded(true)}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-indigo-900 via-indigo-900/40 to-transparent"></div>
-                        </div>
-
-                        <div className="relative z-10 w-full px-6 space-y-8 animate-fade-in-up">
-                            <div className="space-y-4">
-                                <p className="text-indigo-200 text-sm tracking-[0.2em] uppercase font-bold">スマートツーリズム</p>
-                                <h1 className="text-6xl font-bold text-white font-serif tracking-tighter drop-shadow-md">Path</h1>
-                                <p className="text-white/80 font-light text-lg tracking-widest">京都観光案内ガイド</p>
-                            </div>
-
-                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-left shadow-2xl">
-                                <p className="text-white text-sm leading-relaxed mb-6 opacity-90">
-                                    AIがあなただけのガイドに。<br />
-                                    現在地から最適な観光スポットとルートを提案し、その場の歴史を語ります。
-                                </p>
-                                <button
-                                    onClick={requestLocation}
-                                    disabled={loading}
-                                    className="w-full bg-white text-indigo-900 font-bold py-4 px-6 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
-                                >
-                                    {loading ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-4 h-4 border-2 border-indigo-900 border-t-transparent rounded-full animate-spin"></div>
-                                            <span>位置情報を取得中...</span>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <MapPinIcon className="w-5 h-5" />
-                                            <span>京都駅から始める</span>
-                                        </>
-                                    )}
-                                </button>
-
-                                {/* Credits */}
-                                <div className="mt-4 text-center">
-                                    <p className="text-[10px] text-white/50">Images provided by Wikimedia Commons (CC-BY-SA)<br />and Unsplash</p>
-                                </div>
-
-                                {/* Developer Mode Toggle */}
-                                <button
-                                    onClick={() => setDevMode(prev => !prev)}
-                                    className={`mt-2 text-[10px] px-3 py-1 rounded-full transition-all ${devMode
-                                        ? 'bg-indigo-500 text-white'
-                                        : 'bg-white/10 text-white/40 hover:text-white/60'
-                                        }`}
-                                >
-                                    {devMode ? '開発者モード ON' : '開発者モード'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <LandingPage
+                        loading={loading}
+                        devMode={devMode}
+                        onRequestLocation={requestLocation}
+                        onToggleDevMode={() => setDevMode(prev => !prev)}
+                        onImageLoad={() => setIsLandingImageLoaded(true)}
+                    />
                 )}
 
                 {/* PLANNING MODE UI */}
                 {mode === AppMode.PLANNING && coords && (
                     <div className="w-full h-full relative pointer-events-none">
-                        {/* Legend 5 Levels - Make pointer-events-auto */}
-                        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-2 shadow-lg z-[1] border border-gray-200/50 pointer-events-auto">
-                            <div className="font-bold mb-1.5 text-center text-gray-500 text-[9px] uppercase tracking-wider">混雑状況</div>
-                            <div className="flex gap-1.5">
-                                <div className="w-6 h-6 rounded bg-blue-500 flex items-center justify-center text-white text-[10px] shadow-sm">
-                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
-                                </div>
-                                <div className="w-6 h-6 rounded bg-cyan-500 flex items-center justify-center text-white text-[10px] shadow-sm">
-                                    <div className="flex -space-x-1"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg></div>
-                                </div>
-                                <div className="w-6 h-6 rounded bg-green-500 flex items-center justify-center text-white text-[10px] shadow-sm">
-                                    <div className="flex -space-x-2"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg></div>
-                                </div>
-                                <div className="w-6 h-6 rounded bg-yellow-500 flex items-center justify-center text-white text-[10px] shadow-sm">
-                                    <div className="flex -space-x-2"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg></div>
-                                </div>
-                                <div className="w-6 h-6 rounded bg-red-500 flex items-center justify-center text-white text-[10px] shadow-sm">
-                                    <div className="flex -space-x-2"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg></div>
-                                </div>
-                            </div>
-                        </div>
+                        {/* Legend 5 Levels */}
+                        <CongestionLegend />
 
                         {/* Invisible overlay behind sheet to block map events when sheet is expanded */}
                         {sheetHeight > 120 && (
@@ -2397,7 +2268,7 @@ function App() {
                             >
                                 <ambientLight intensity={1.5} />
                                 <directionalLight position={[5, 10, 5]} intensity={2} />
-                                <PersonMarker position={[0, -0.8, 0]} scale={1.5} isStatic={true} />
+                                <PersonMarker position={[0, -0.8, 0] as [number, number, number]} scale={1.5} isStatic={true} />
                             </Canvas>
                         </div>
                     </button>

@@ -4,8 +4,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Spot, Coordinates, RouteOption } from '../types';
 import { Canvas } from '@react-three/fiber';
-import { PersonMarker } from './PersonMarker';
-import { BusModel } from './BusModel';
+import { PersonMarker } from './map/PersonMarker';
+import { BusModel } from './map/BusModel';
 
 // Bus route data type
 interface BusRoute {

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Group } from 'three';
-import { ModelProps } from '../types';
+import { ModelProps } from '../../types';
 
 interface PersonMarkerProps extends ModelProps {
   color?: string;
