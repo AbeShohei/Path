@@ -6,10 +6,9 @@ import { wikimediaService } from './services/wikimediaService';
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
 import { getCongestionLevel, getCurrentTimeOfDay, TimeOfDay, getTimeOfDayLabel } from './services/humanFlowService';
 
-
 import { useLocationSimulator } from './hooks/useLocationSimulator';
 import { useGuideSystem } from './hooks/useGuideSystem';
-import { getDistance } from './services/guideService';
+import { getDistance, descTime, parseDurationStr, getDynamicArrivalTime } from './utils/geo';
 import Map from './components/Map';
 
 import { GuideSlider } from './components/GuideSlider';
@@ -29,7 +28,7 @@ import {
 import { LandingPage } from './components/screens/LandingPage';
 
 // UI Components
-import { CongestionLegend, SegmentIcon } from './components/ui';
+import { CongestionLegend, SegmentIcon, AudioPromptModal } from './components/ui';
 
 // Navigation Stages
 type NavigationStage = 'TO_STOP' | 'ON_BUS' | 'ALIGHTING' | 'TO_DEST';
@@ -40,17 +39,6 @@ const STAGE_DURATIONS = {
     ON_BUS: 45000,    // 45s
     ALIGHTING: 20000, // 20s
     TO_DEST: 30000    // 30s
-};
-
-// Helper to parse "X時間Y分" to seconds (e.g. "17分" -> 1020)
-const parseDurationStr = (str: string | undefined): number => {
-    if (!str) return 30;
-    let total = 0;
-    const hourMatch = str.match(/(\d+)時間/);
-    if (hourMatch) total += parseInt(hourMatch[1]) * 3600;
-    const minMatch = str.match(/(\d+)分/);
-    if (minMatch) total += parseInt(minMatch[1]) * 60;
-    return total > 0 ? total : 30; // Minimum 30s fallback
 };
 
 function App() {
@@ -1211,38 +1199,7 @@ function App() {
             )}
 
             {/* Audio Choice Modal */}
-            {showAudioPrompt && (
-                <div className="absolute inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl transform scale-100 transition-all">
-                        <div className="flex flex-col items-center text-center space-y-4">
-                            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
-                                <SpeakerIcon className="w-8 h-8" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-800">音声ガイドを利用しますか？</h3>
-                                <p className="text-gray-500 text-sm mt-2">
-                                    移動に合わせてAIが音声で案内します。<br />
-                                    音量は端末で調整してください。
-                                </p>
-                            </div>
-                            <div className="flex gap-3 w-full mt-2">
-                                <button
-                                    onClick={() => confirmNavigation(false)}
-                                    className="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors"
-                                >
-                                    オフにする
-                                </button>
-                                <button
-                                    onClick={() => confirmNavigation(true)}
-                                    className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-colors"
-                                >
-                                    オンにする
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {showAudioPrompt && <AudioPromptModal onConfirm={confirmNavigation} />}
 
             {/* Global Header */}
             {mode !== AppMode.LANDING && mode !== AppMode.ROUTE_SELECT && mode !== AppMode.PLANNING && (
@@ -1850,15 +1807,11 @@ function App() {
                                                 // Metadata Calculation
                                                 const durationNum = parseInt(route.duration) || 0;
 
-                                                // Determine if Cheapest/Fastest
-                                                const allCosts = routeOptions.map(r => parseInt(r.cost.replace(/[^0-9]/g, '')) || 0);
+                                                // Determine if Fastest
                                                 const allDurations = routeOptions.map(r => parseInt(r.duration) || 999);
-                                                const minCost = Math.min(...allCosts);
                                                 const minDuration = Math.min(...allDurations);
-                                                const currentCost = parseInt(route.cost.replace(/[^0-9]/g, '')) || 0;
 
                                                 const isFastest = durationNum === minDuration;
-                                                const isCheapest = currentCost === minCost && currentCost > 0;
                                                 const isSelected = selectedRoute?.id === route.id;
 
                                                 return (
@@ -1956,11 +1909,9 @@ function App() {
                                                         <div className="flex items-center justify-between mt-auto">
                                                             <div className="flex gap-2">
                                                                 {isFastest && <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded">最速</span>}
-                                                                {isCheapest && <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-[10px] font-bold rounded">最安</span>}
                                                                 {route.transportMode === TransportMode.WALKING &&
                                                                     <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold rounded">健康</span>
                                                                 }
-                                                                {isSelected && <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded">選択中</span>}
                                                             </div>
                                                             {isSelected && (
                                                                 <button
