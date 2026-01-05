@@ -153,17 +153,7 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
     const totalSlides = totalCards + 1; // +1 for completion slide
     const isCompletionSlide = (showCompletion && autoScrollEnabled) || (totalCards > 0 && currentIndex >= totalCards);
 
-    // DEBUG LOG
-    // useEffect(() => {
-    //     console.log('[GuideSlider] State Update:', { 
-    //         showCompletion, 
-    //         autoScrollEnabled, 
-    //         currentIndex, 
-    //         totalCards, 
-    //         isCompletionSlide,
-    //         isGlobalPlaying 
-    //     });
-    // }, [showCompletion, autoScrollEnabled, currentIndex, totalCards, isCompletionSlide, isGlobalPlaying]);
+
     const currentGuide = isCompletionSlide ? null : displayGuides[currentIndex];
 
     // Height configuration for each state (in pixels for calculation)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Coordinates, AppMode, Spot, TransportMode, GroundingChunk, RouteOption, RouteSegment, TransitUpdate } from './types';
-import { getTransitInfo, generateGuideContent, playTextToSpeech, isAIAvailable } from './services/geminiService';
+import { getTransitInfo, generateGuideContent, playTextToSpeech, isAIAvailable } from './services/aiService';
 import { routeService } from './services/routeService';
 import { wikimediaService } from './services/wikimediaService';
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
@@ -112,10 +112,11 @@ function App() {
     const [isNavWidgetMinimized, setIsNavWidgetMinimized] = useState(false); // Minimize AI guide widget in nav mode
     const [lyricsHeight, setLyricsHeight] = useState(100); // Lyrics area height in pixels
     const [hideOtherPins, setHideOtherPins] = useState(false); // Hide other pins when "View Route" is clicked
+    const [isLandingImageLoaded, setIsLandingImageLoaded] = useState(false); // Track if landing image is loaded
 
     const [coords, setCoords] = useState<Coordinates | null>(null);
     const [spots, setSpots] = useState<Spot[]>([]);
-    const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2]); // Default: Comfortable, Somewhat Comfortable
+    const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
     const [devMode, setDevMode] = useState(false); // Developer mode for advanced features
@@ -318,7 +319,7 @@ function App() {
     const requestLocation = () => {
         // Check API key availability at startup
         const aiAvailable = isAIAvailable();
-        console.log(`[App] AI Guide ${aiAvailable ? 'ENABLED' : 'DISABLED (using basic info)'}`);
+
 
         setLoading(true);
         // Demo: Hardcoded Kyoto Station coordinates
@@ -450,7 +451,7 @@ function App() {
 
 
     // useEffect(() => {
-    //     console.log('Current SpotDetails:', spotDetails);
+
     // }, [spotDetails]);
 
 
@@ -1302,7 +1303,7 @@ function App() {
 
             {/* Global Header */}
             {mode !== AppMode.LANDING && mode !== AppMode.ROUTE_SELECT && mode !== AppMode.PLANNING && (
-                <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-3 sticky top-0 z-40 shadow-sm flex items-center justify-between gap-3 shrink-0">
+                <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-2 sticky top-0 z-40 shadow-sm flex items-center justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-3 overflow-hidden w-full">
                         <button onClick={goBackToPlanning} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors shrink-0">
                             <ChevronLeftIcon />
@@ -1311,19 +1312,18 @@ function App() {
                         {/* Traffic Info Display for Navigation */}
                         {(mode === AppMode.NAVIGATING && selectedRoute) ? (
                             <div className="flex-1 flex flex-col items-start min-w-0">
-                                {/* Status message (e.g., "205 乗車前", "205 乗車中") + Destination Arrival Time */}
-                                <div className="w-full flex justify-between items-baseline mb-0.5">
-                                    <div className="text-[10px] text-white/60 font-bold tracking-wider uppercase leading-none">
-                                        {transitInfo?.message || 'NAVIGATION'}
-                                    </div>
-                                    <div className="text-[10px] text-white/90 font-bold tracking-wider">
-                                        目的地到着予定: <span className="text-white text-xs">{selectedRoute.endTime}</span>
-                                    </div>
-                                </div>
-                                {/* Boarding → Alighting Station Display with Times */}
                                 {(() => {
                                     const transitSeg = selectedRoute.segments.find(s => ['BUS', 'SUBWAY', 'TRAIN'].includes(s.type));
-                                    if (!transitSeg) return <span className="text-lg font-bold">{selectedSpot?.name || '目的地'}</span>;
+
+                                    // If no transit segment (Walking only), show simple destination
+                                    if (!transitSeg) {
+                                        return (
+                                            <div className="flex flex-col justify-center h-full">
+                                                <div className="text-[10px] text-white/60 font-bold uppercase tracking-wider">目的地</div>
+                                                <div className="text-lg font-bold leading-tight">{selectedSpot?.name || '目的地'}</div>
+                                            </div>
+                                        );
+                                    }
 
                                     // Use explicit boardingStop/alightingStop fields from route data
                                     const boardingStation = transitSeg.boardingStop || transitSeg.platform || '乗車駅';
@@ -1333,28 +1333,53 @@ function App() {
                                     const departureTime = transitSeg.departureTime || '';
                                     const arrivalTime = transitSeg.arrivalTime || '';
 
+                                    // Bus/Line Name
+                                    const lineName = transitSeg.lineName || transitSeg.text.replace('Bus ', '系統 ');
+
                                     return (
-                                        <div className="flex items-center gap-1 w-full text-base font-bold">
-                                            {/* Boarding */}
-                                            <div className="flex items-baseline gap-1 truncate max-w-[40%]">
-                                                <span>{boardingStation}</span>
-                                                {departureTime && <span className="text-xs text-white/70 font-mono font-medium">{departureTime}</span>}
+                                        <div className="w-full flex flex-col gap-0">
+                                            {/* Top Row: Bus Name & Status */}
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-lg font-extrabold text-yellow-300 leading-none drop-shadow-md">
+                                                        {lineName}
+                                                    </span>
+                                                    {transitInfo && transitInfo.stopsAway > 0 && (
+                                                        <span className="text-[10px] font-bold text-white bg-indigo-600/80 px-1.5 py-0.5 rounded-full">
+                                                            あと{transitInfo.stopsAway}駅
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-[10px] text-white/80 font-bold tracking-wider">
+                                                    {transitInfo?.message || 'NAVIGATION'}
+                                                </div>
                                             </div>
 
-                                            <span className="text-indigo-300 shrink-0">→</span>
+                                            {/* Two Lines: Departure -> Arrival */}
+                                            <div className="flex flex-col text-sm font-bold w-full">
+                                                {/* Departure */}
+                                                <div className="flex items-center justify-between leading-none opacity-90 mb-[2px]">
+                                                    <div className="flex items-center gap-1.5 truncate min-w-0">
+                                                        <span className="text-[10px] w-3 text-center shrink-0 opacity-70">発</span>
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-white shrink-0"></div>
+                                                        <span className="truncate">{boardingStation}</span>
+                                                    </div>
+                                                    <span className="font-mono text-[10px] ml-2 tabular-nums">{departureTime}</span>
+                                                </div>
 
-                                            {/* Alighting */}
-                                            <div className="flex items-baseline gap-1 truncate max-w-[40%]">
-                                                <span>{alightingStation}</span>
-                                                {arrivalTime && <span className="text-xs text-white/70 font-mono font-medium">{arrivalTime}</span>}
+                                                {/* Connecting Line (Visual Only) - Optional */}
+                                                <div className="ml-[20px] w-0.5 h-1.5 bg-white/30 -my-0.5"></div>
+
+                                                {/* Arrival */}
+                                                <div className="flex items-center justify-between leading-none">
+                                                    <div className="flex items-center gap-1.5 truncate min-w-0">
+                                                        <span className="text-[10px] w-3 text-center shrink-0 opacity-70">着</span>
+                                                        <div className="w-1.5 h-1.5 rounded-full border border-white shrink-0"></div>
+                                                        <span className="truncate text-white">{alightingStation}</span>
+                                                    </div>
+                                                    <span className="font-mono text-[10px] ml-2 tabular-nums">{arrivalTime}</span>
+                                                </div>
                                             </div>
-
-                                            {/* Remaining stops badge */}
-                                            {transitInfo && transitInfo.stopsAway > 0 && (
-                                                <span className="text-xs font-medium text-indigo-200 shrink-0 bg-indigo-800/50 px-1.5 py-0.5 rounded ml-auto">
-                                                    あと{transitInfo.stopsAway}駅
-                                                </span>
-                                            )}
                                         </div>
                                     );
                                 })()}
@@ -1379,60 +1404,60 @@ function App() {
 
                 {/* Map Background */}
                 <div className="absolute inset-0 z-0">
-                    <Map
-                        center={simulatedPosition
-                            ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
-                            : (coords || { latitude: 34.9858, longitude: 135.7588 })}
-                        spots={(() => {
-                            // Use nearbySpots for instant pin display (no waiting for guide content)
-                            const nearbySpotIds = new Set(nearbySpots.map(s => s.id));
+                    {(mode !== AppMode.LANDING || isLandingImageLoaded) && (
+                        <Map
+                            center={simulatedPosition
+                                ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
+                                : (coords || { latitude: 34.9858, longitude: 135.7588 })}
+                            spots={(() => {
+                                // Use nearbySpots for instant pin display (no waiting for guide content)
+                                const nearbySpotIds = new Set(nearbySpots.map(s => s.id));
 
-                            // During navigation, only show nearby spots (instantly available)
-                            const isInNavMode = mode === AppMode.NAVIGATING;
+                                // During navigation, only show nearby spots (instantly available)
+                                const isInNavMode = mode === AppMode.NAVIGATING;
 
-                            // Show all relevant spots (filtered by route), not just "nearby" ones for audio
-                            const baseSpots = visibleSpots;
+                                // Show all relevant spots (filtered by route), not just "nearby" ones for audio
+                                const baseSpots = visibleSpots;
 
-                            // Filter by distance from current position - REMOVED to show all spots
-                            // const cur = simulatedPosition
-                            //     ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
-                            //     : (coords || { latitude: 34.9858, longitude: 135.7588 });
-                            // return baseSpots.filter(s => getDistance(cur, s.location) > 50);
-                            return baseSpots;
-                        })()}
-                        onSelectSpot={handleSpotSelect}
-                        onViewRoute={handleRouteSearch}
-                        onPinClick={() => setSheetHeight(88)}
+                                // Filter by distance from current position - REMOVED to show all spots
+                                // const cur = simulatedPosition
+                                //     ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
+                                //     : (coords || { latitude: 34.9858, longitude: 135.7588 });
+                                // return baseSpots.filter(s => getDistance(cur, s.location) > 50);
+                                return baseSpots;
+                            })()}
+                            onSelectSpot={handleSpotSelect}
+                            onViewRoute={handleRouteSearch}
+                            onPinClick={() => setSheetHeight(88)}
 
-                        selectedSpotId={selectedSpot?.id}
-                        focusedSpotId={focusedSpotId || undefined}
-                        selectedRoute={selectedRoute}
-                        routeOptions={routeOptions}
-                        isNavigating={mode === AppMode.NAVIGATING}
-                        isSheetDragging={isDragging}
-                        disableSmartPan={mode === AppMode.NAVIGATING}
-                        showBusRoutes={showBusRoutes}
-                        transportMode={simState.currentTransportMode}
-                        bearing={simState.bearing || 0}
-                        busRoutes={busRoutes}
-                        subwayRoutes={[]}
-                        highlightedGuideSpotId={highlightedGuideSpotId}
-                        recenterTrigger={recenterTrigger}
-                    />
-
-
-
+                            selectedSpotId={selectedSpot?.id}
+                            focusedSpotId={focusedSpotId || undefined}
+                            selectedRoute={selectedRoute}
+                            routeOptions={routeOptions}
+                            isNavigating={mode === AppMode.NAVIGATING}
+                            isSheetDragging={isDragging}
+                            disableSmartPan={mode === AppMode.NAVIGATING}
+                            showBusRoutes={showBusRoutes}
+                            transportMode={simState.currentTransportMode}
+                            bearing={simState.bearing || 0}
+                            busRoutes={busRoutes}
+                            subwayRoutes={[]}
+                            highlightedGuideSpotId={highlightedGuideSpotId}
+                            recenterTrigger={recenterTrigger}
+                        />
+                    )}
                 </div>
 
                 {/* LANDING MODE */}
                 {mode === AppMode.LANDING && (
                     <div className="relative h-full flex flex-col items-center justify-end pb-20 text-center">
                         {/* Background Image */}
-                        <div className="absolute inset-0 z-0">
+                        <div className="absolute inset-0 z-0 bg-indigo-900">
                             <img
                                 src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2000&auto=format&fit=crop"
                                 alt="Kyoto Street"
                                 className="w-full h-full object-cover"
+                                onLoad={() => setIsLandingImageLoaded(true)}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-indigo-900 via-indigo-900/40 to-transparent"></div>
                         </div>
@@ -1469,7 +1494,7 @@ function App() {
 
                                 {/* Credits */}
                                 <div className="mt-4 text-center">
-                                    <p className="text-[10px] text-white/50">Images provided by Wikimedia Commons (CC-BY-SA)</p>
+                                    <p className="text-[10px] text-white/50">Images provided by Wikimedia Commons (CC-BY-SA)<br />and Unsplash</p>
                                 </div>
 
                                 {/* Developer Mode Toggle */}

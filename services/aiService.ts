@@ -38,7 +38,7 @@ async function callAI(prompt: string): Promise<any> {
 
     for (const model of FREE_MODELS) {
         try {
-            // console.log(`Attempting generation with model: ${model}`);
+
 
             const requestBody = {
                 model: model,
@@ -92,7 +92,7 @@ async function callAI(prompt: string): Promise<any> {
 
             try {
                 const parsed = JSON.parse(contentText);
-                // console.log(`Success with model: ${model}`);
+
                 return parsed;
             } catch (e) {
                 console.error(`JSON Parse Error for model ${model}:`, e);
@@ -123,7 +123,7 @@ export const generateGuideContent = async (
 
     // Early check: If API key is not configured, immediately return basic info
     if (!API_KEY) {
-        console.log(`API Key not configured. Using basic info for: ${spot.name}`);
+
         return {
             id: `guide-${spot.id}-${Date.now()}`,
             text: spot.description,
@@ -136,7 +136,7 @@ export const generateGuideContent = async (
     const directionTextFull = relativeDirection === 'LEFT' ? '左手' :
         relativeDirection === 'RIGHT' ? '右手' : '近く';
 
-    // console.log('Generating guide for:', spot.name);
+
 
     const prompt = `あなたは京都の歴史と文化を知り尽くしたベテラン観光ガイドです。
 現在、ユーザーはバスや徒歩で移動中です。${directionTextFull}に見える「${spot.name}」について、移動中の風景がより輝いて見えるような、魅力的な語りをお願いします。
@@ -154,13 +154,11 @@ export const generateGuideContent = async (
 {"text": "ガイドの語り内容"}
 `;
 
-    console.log('------ PROMPT START ------');
-    console.log(prompt);
-    console.log('------ PROMPT END ------');
+
 
     try {
         const result = await callAI(prompt);
-        // console.log('Gemini Success:', result);
+
         return {
             id: `guide-${spot.id}-${Date.now()}`,
             text: result.text || result.content || 'ガイド情報を生成できませんでした。',

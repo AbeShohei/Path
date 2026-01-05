@@ -5,7 +5,7 @@ import {
     getDistance,
     GuideContent
 } from '../services/guideService';
-import { isAIAvailable } from '../services/geminiService';
+import { isAIAvailable } from '../services/aiService';
 
 interface UseGuideSystemProps {
     coords: Coordinates | null;

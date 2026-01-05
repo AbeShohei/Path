@@ -138,7 +138,7 @@ class RouteService {
         }
 
         if (this.staticRoutes && this.staticRoutes[key]) {
-            // console.log('Using static route for', key);
+
             return this.staticRoutes[key];
         }
 
@@ -324,7 +324,7 @@ class RouteService {
         endStopId: string,
         walkMinutes: number,
         date: Date = new Date()
-    ): { departureTime: string; arrivalTime: string; waitMinutes: number; tripId: string; intermediateStops: { name: string; time: string }[] } | null {
+    ): { departureTime: string; arrivalTime: string; waitMinutes: number; tripId: string; intermediateStops: { name: string; time: string; lat?: number; lng?: number }[] } | null {
         // Threshold: When can we arrive at the stop?
         // If searching for "tomorrow", we assume we can start "early enough", blocking is just the schedule.
         // But to be safe, let's strictly follow the provided date + walkMinutes.

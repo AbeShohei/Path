@@ -1,10 +1,10 @@
 import { Spot, Coordinates } from '../types';
-import { generateGuideContent, GuideContent } from './geminiService';
+import { generateGuideContent, GuideContent } from './aiService';
 import { wikimediaService } from './wikimediaService';
 
 // --- Types ---
-// Re-export GuideContent from geminiService to ensure consistency
-export type { GuideContent } from './geminiService';
+// Re-export GuideContent from aiService to ensure consistency
+export type { GuideContent } from './aiService';
 
 const GUIDE_CACHE_KEY = 'kyoto_guide_cache_v5__prompt_debug';
 
@@ -93,7 +93,7 @@ export async function fetchSpotGuide(
 
         // Invalid Cache Check: If it contains the fallback error message, treat as missing
         if (cachedGuide.text.includes('申し訳ありませんが') || cachedGuide.text.includes('ガイド情報を生成できませんでした')) {
-            console.log('Found cached error message, refreshing:', spot.name);
+
             // Fall through to fetch
         } else {
             // Dynamic Context Update (Direction)
