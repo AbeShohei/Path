@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './tailwind.css';
 import App from './App';
+import { ConvexClientProvider } from './src/providers/ConvexClientProvider';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -11,6 +12,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <ConvexClientProvider>
+      <App />
+    </ConvexClientProvider>
   </React.StrictMode>
 );

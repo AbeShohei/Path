@@ -31,6 +31,9 @@ interface MapProps {
     isNavWidgetMinimized?: boolean;
     isSheetDragging?: boolean;
     disableSmartPan?: boolean;
+    // Favorites
+    onToggleFavorite?: (spot: Spot) => void;
+    isFavorite?: (spotId: string) => boolean;
 }
 
 const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigating, lastFocusedSpotId, disableSmartPan, selectedRoute }: {
@@ -117,7 +120,7 @@ const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigat
     return null;
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false }) => {
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false, onToggleFavorite, isFavorite }) => {
     const [activeSpot, setActiveSpot] = useState<Spot | null>(null);
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
 
@@ -384,15 +387,35 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
                                     )}
                                 </div>
 
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (onViewRoute) onViewRoute(spot);
-                                    }}
-                                    className="w-full mt-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-2 rounded shadow text-xs font-bold hover:opacity-90 transition-opacity"
-                                >
-                                    ルートを見る
-                                </button>
+                                {/* Action Buttons */}
+                                <div className="flex gap-2 mt-3">
+                                    {/* Favorite Button */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onToggleFavorite) onToggleFavorite(spot);
+                                        }}
+                                        className={`p-2 rounded shadow transition-all ${
+                                            isFavorite && isFavorite(spot.id)
+                                                ? 'bg-red-500 text-white'
+                                                : 'bg-white text-gray-400 hover:text-red-500 border border-gray-200'
+                                        }`}
+                                    >
+                                        <svg className="w-4 h-4" fill={isFavorite && isFavorite(spot.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                    </button>
+                                    {/* View Route Button */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onViewRoute) onViewRoute(spot);
+                                        }}
+                                        className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-2 rounded shadow text-xs font-bold hover:opacity-90 transition-opacity"
+                                    >
+                                        ルートを見る
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </Popup>

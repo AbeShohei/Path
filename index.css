@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bounce Animation for Swipe Hint */
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
 /* Custom Scrollbar Styles (migrated from index.html if needed, but Tailwind handles most) */
 ::-webkit-scrollbar {
     width: 4px;

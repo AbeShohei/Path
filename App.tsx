@@ -11,6 +11,14 @@ import { getDistance } from './services/guideService';
 import Map from './components/Map';
 import LyricsReader from './components/LyricsReader';
 
+// New imports for Clerk + Convex integration
+import { BottomNav, TabId } from './src/components/navigation/BottomNav';
+import { FavoritesPage } from './src/pages/FavoritesPage';
+import { SettingsPage } from './src/pages/SettingsPage';
+import { useAuth } from './src/hooks/useAuth';
+import { useFavorites } from './src/hooks/useFavorites';
+import { useRouteHistory } from './src/hooks/useRouteHistory';
+
 // SVG Icons
 const MapPinIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
 const WalkIcon = ({ className = "w-5 h-5" }: { className?: string }) => <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2V8.9z" /></svg>;
@@ -100,9 +108,16 @@ const parseDurationStr = (str: string | undefined): number => {
 
 function App() {
     const [mode, setMode] = useState<AppMode>(AppMode.LANDING);
+    const [previousMode, setPreviousMode] = useState<AppMode>(AppMode.LANDING); // Track previous mode for back navigation
+    const [currentTab, setCurrentTab] = useState<TabId>('home');
     const [coords, setCoords] = useState<Coordinates | null>(null);
     const [spots, setSpots] = useState<Spot[]>([]);
     const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
+
+    // Auth & Data hooks
+    const { isSignedIn, openSignIn, convexUserId } = useAuth();
+    const { toggleFavorite, isFavorite } = useFavorites();
+    const { addHistory } = useRouteHistory();
     const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
     const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
     const [focusedSpotId, setFocusedSpotId] = useState<string | null>(null);  // For list click pan+popup
@@ -758,6 +773,59 @@ function App() {
         setIsPlaying(false);
     };
 
+    // Bottom Navigation Tab Handler
+    const handleTabChange = (tab: TabId) => {
+        setCurrentTab(tab);
+
+        if (tab === 'home') {
+            // Return to previous home mode or PLANNING if available
+            if (coords) {
+                setMode(AppMode.PLANNING);
+            } else {
+                setMode(AppMode.LANDING);
+            }
+        } else if (tab === 'favorites') {
+            setPreviousMode(mode);
+            setMode(AppMode.FAVORITES);
+        } else if (tab === 'settings') {
+            setPreviousMode(mode);
+            setMode(AppMode.SETTINGS);
+        } else if (tab === 'profile') {
+            if (!isSignedIn) {
+                openSignIn();
+            }
+            // If signed in, the tab shows profile but we don't need to change mode
+        }
+    };
+
+    // Handle selecting a spot from favorites page
+    const handleFavoriteSpotSelect = (spot: {
+        id: string;
+        name: string;
+        description?: string;
+        location: { latitude: number; longitude: number };
+        congestionLevel?: number;
+        imageUrl?: string;
+    }) => {
+        // Convert to Spot type and select
+        const fullSpot: Spot = {
+            id: spot.id,
+            name: spot.name,
+            description: spot.description || '',
+            location: spot.location,
+            congestionLevel: (spot.congestionLevel as 1 | 2 | 3 | 4 | 5) || 3,
+            imageUrl: spot.imageUrl,
+        };
+        setSelectedSpot(fullSpot);
+        setCurrentTab('home');
+        if (coords) {
+            setMode(AppMode.ROUTE_SELECT);
+            handleRouteSearch(fullSpot);
+        } else {
+            setMode(AppMode.PLANNING);
+        }
+    };
+
     // Sheet Drag Handlers for Nearby Spots - Direct DOM Manipulation for Performance
     const handlePointerDown = (e: React.PointerEvent) => {
         e.stopPropagation();
@@ -975,6 +1043,15 @@ function App() {
                         isNavigating={mode === AppMode.NAVIGATING || mode === AppMode.ROUTE_SELECT}
                         isSheetDragging={isDragging}
                         disableSmartPan={mode === AppMode.NAVIGATING}
+                        onToggleFavorite={(spot) => toggleFavorite({
+                            spotId: spot.id,
+                            spotName: spot.name,
+                            spotDescription: spot.description,
+                            spotLocation: spot.location,
+                            spotCongestionLevel: spot.congestionLevel,
+                            spotImageUrl: spot.imageUrl
+                        })}
+                        isFavorite={isFavorite}
                     />
 
                 </div>
@@ -1073,9 +1150,9 @@ function App() {
                             onTouchEnd={(e) => e.stopPropagation()}
                             onPointerDown={(e) => e.stopPropagation()}
                         >
-                            {/* Drag Handle */}
+                            {/* Drag Handle with Swipe Hint */}
                             <div
-                                className="w-full flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing hover:bg-gray-50 transition-colors touch-none shrink-0"
+                                className="w-full flex flex-col items-center pt-3 pb-1 cursor-grab active:cursor-grabbing hover:bg-gray-50 transition-colors touch-none shrink-0"
                                 onPointerDown={handlePointerDown}
                                 onPointerMove={handlePointerMove}
                                 onPointerUp={handlePointerUp}
@@ -1085,8 +1162,17 @@ function App() {
                                 onClick={(e) => e.stopPropagation()}
                                 onMouseDown={(e) => e.stopPropagation()}
                                 onTouchStart={(e) => e.stopPropagation()}
+                                style={sheetHeight < 120 ? { animation: 'bounce 1s infinite' } : {}}
                             >
                                 <div className="w-12 h-1.5 bg-gray-300 rounded-full opacity-50 pointer-events-none"></div>
+                                {sheetHeight < 120 && (
+                                    <div className="flex items-center gap-1 mt-2 pointer-events-none">
+                                        <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                        </svg>
+                                        <span className="text-xs font-bold text-gray-500">スワイプで開く</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="px-6 pb-2 shrink-0 bg-white z-20 space-y-3 pointer-events-none">
@@ -1345,17 +1431,42 @@ function App() {
                                             <div className="h-28"></div> {/* Spacer for fixed button */}
                                         </div>
 
-                                        {/* Float Start Button (Fixed at Bottom of View) */}
+                                        {/* Float Start Button with Favorite (Fixed at Bottom of View) */}
                                         <div className="absolute bottom-6 left-6 right-6 z-20">
-                                            <button
-                                                onClick={() => startNavigation(selectedRoute)}
-                                                className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                                                    <PlayIcon className="w-4 h-4 ml-0.5" />
-                                                </div>
-                                                <span className="text-lg">ガイドを開始</span>
-                                            </button>
+                                            <div className="flex gap-3">
+                                                {/* Favorite Button */}
+                                                {selectedSpot && (
+                                                    <button
+                                                        onClick={() => toggleFavorite({
+                                                            id: selectedSpot.id,
+                                                            name: selectedSpot.name,
+                                                            description: selectedSpot.description,
+                                                            location: selectedSpot.location,
+                                                            congestionLevel: selectedSpot.congestionLevel,
+                                                            imageUrl: selectedSpot.imageUrl
+                                                        })}
+                                                        className={`p-4 rounded-2xl shadow-xl transition-all flex items-center justify-center ${
+                                                            isFavorite(selectedSpot.id)
+                                                                ? 'bg-red-500 text-white shadow-red-200'
+                                                                : 'bg-white text-gray-400 hover:text-red-500 shadow-gray-200'
+                                                        }`}
+                                                    >
+                                                        <svg className="w-6 h-6" fill={isFavorite(selectedSpot.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                        </svg>
+                                                    </button>
+                                                )}
+                                                {/* Start Navigation Button */}
+                                                <button
+                                                    onClick={() => startNavigation(selectedRoute)}
+                                                    className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                                        <PlayIcon className="w-4 h-4 ml-0.5" />
+                                                    </div>
+                                                    <span className="text-lg">ガイドを開始</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ) : (
@@ -1871,6 +1982,46 @@ function App() {
                     )}
 
             </main >
+
+            {/* Favorites Page */}
+            {mode === AppMode.FAVORITES && (
+                <div className="absolute inset-0 z-40 bg-white flex flex-col">
+                    {/* Page Header */}
+                    <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-3 shadow-sm flex items-center gap-3 shrink-0">
+                        <button onClick={() => handleTabChange('home')} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors">
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                        </button>
+                        <h1 className="text-lg font-bold">お気に入り</h1>
+                    </header>
+                    <div className="flex-1 overflow-y-auto bg-gray-50">
+                        <FavoritesPage onSpotSelect={handleFavoriteSpotSelect} />
+                    </div>
+                </div>
+            )}
+
+            {/* Settings Page */}
+            {mode === AppMode.SETTINGS && (
+                <div className="absolute inset-0 z-40 bg-white flex flex-col">
+                    {/* Page Header */}
+                    <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-3 shadow-sm flex items-center gap-3 shrink-0">
+                        <button onClick={() => handleTabChange('home')} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors">
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                        </button>
+                        <h1 className="text-lg font-bold">設定</h1>
+                    </header>
+                    <div className="flex-1 overflow-y-auto bg-gray-50">
+                        <SettingsPage />
+                    </div>
+                </div>
+            )}
+
+
+            {/* Bottom Navigation - Hidden during NAVIGATING and LANDING */}
+            <BottomNav
+                currentTab={currentTab}
+                onTabChange={handleTabChange}
+                hidden={mode === AppMode.NAVIGATING || mode === AppMode.LANDING}
+            />
         </div >
     );
 }
