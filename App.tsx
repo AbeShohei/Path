@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Coordinates, AppMode, Spot, TransportMode, GroundingChunk, RouteOption, RouteSegment, TransitUpdate } from './types';
 import { getTransitInfo, generateGuideContent, playTextToSpeech, getRouteOptions } from './services/geminiService';
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
@@ -847,8 +848,8 @@ function App() {
         const deltaY = dragStartY.current - e.clientY; // positive = dragging up
         const newHeight = sheetStartHeight.current + deltaY;
 
-        // Constraints: minimum 88px, maximum 90% of screen
-        const minHeight = 88;
+        // Constraints: minimum 105px (keeps "スワイプで開く" visible), maximum 90% of screen
+        const minHeight = 105;
         const maxHeight = Math.floor(window.innerHeight * 0.9);
         const clampedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
@@ -873,7 +874,7 @@ function App() {
             let finalHeight = currentHeight;
 
             if (currentHeight < 150) {
-                finalHeight = 88;
+                finalHeight = 105;
             } else if (currentHeight > screenHeight * 0.85) {
                 finalHeight = Math.floor(screenHeight * 0.9);
             }
@@ -1445,11 +1446,10 @@ function App() {
                                                             congestionLevel: selectedSpot.congestionLevel,
                                                             imageUrl: selectedSpot.imageUrl
                                                         })}
-                                                        className={`p-4 rounded-2xl shadow-xl transition-all flex items-center justify-center ${
-                                                            isFavorite(selectedSpot.id)
-                                                                ? 'bg-red-500 text-white shadow-red-200'
-                                                                : 'bg-white text-gray-400 hover:text-red-500 shadow-gray-200'
-                                                        }`}
+                                                        className={`p-4 rounded-2xl shadow-xl transition-all flex items-center justify-center ${isFavorite(selectedSpot.id)
+                                                            ? 'bg-red-500 text-white shadow-red-200'
+                                                            : 'bg-white text-gray-400 hover:text-red-500 shadow-gray-200'
+                                                            }`}
                                                     >
                                                         <svg className="w-6 h-6" fill={isFavorite(selectedSpot.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -1984,10 +1984,11 @@ function App() {
             </main >
 
             {/* Favorites Page */}
+            {/* Favorites Page */}
             {mode === AppMode.FAVORITES && (
                 <div className="absolute inset-0 z-40 bg-white flex flex-col">
                     {/* Page Header */}
-                    <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-3 shadow-sm flex items-center gap-3 shrink-0">
+                    <header className="bg-indigo-900 text-white px-4 py-3 shadow-sm flex items-center gap-3 shrink-0">
                         <button onClick={() => handleTabChange('home')} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors">
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         </button>
@@ -2000,10 +2001,11 @@ function App() {
             )}
 
             {/* Settings Page */}
+            {/* Settings Page */}
             {mode === AppMode.SETTINGS && (
                 <div className="absolute inset-0 z-40 bg-white flex flex-col">
                     {/* Page Header */}
-                    <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-3 shadow-sm flex items-center gap-3 shrink-0">
+                    <header className="bg-indigo-900 text-white px-4 py-3 shadow-sm flex items-center gap-3 shrink-0">
                         <button onClick={() => handleTabChange('home')} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors">
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         </button>

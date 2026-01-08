@@ -1,6 +1,8 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import { useFavorites } from "../hooks/useFavorites";
 import { useAuth } from "../hooks/useAuth";
 import { LoginButton } from "../components/auth/LoginButton";
+import { SkeletonList } from "../components/ui/SkeletonCard";
 
 interface FavoritesPageProps {
   onSpotSelect?: (spot: {
@@ -13,20 +15,51 @@ interface FavoritesPageProps {
   }) => void;
 }
 
+// アニメーション設定
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.98 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 24,
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    x: -50,
+    transition: { duration: 0.2 },
+  },
+};
+
 export function FavoritesPage({ onSpotSelect }: FavoritesPageProps) {
   const { favorites, isLoading, removeFavorite, isGuest } = useFavorites();
   const { openSignIn } = useAuth();
 
   const getCongestionColor = (level?: number) => {
-    if (!level) return "bg-gray-200";
+    if (!level) return "bg-gray-400";
     const colors = [
-      "bg-green-400",
-      "bg-lime-400",
-      "bg-yellow-400",
-      "bg-orange-400",
-      "bg-red-400",
+      "bg-blue-500",    // 空いている
+      "bg-cyan-500",    // やや空き
+      "bg-green-500",   // 普通
+      "bg-yellow-500",  // やや混雑
+      "bg-red-500",     // 混雑
     ];
-    return colors[level - 1] || "bg-gray-200";
+    return colors[level - 1] || "bg-gray-400";
   };
 
   const getCongestionText = (level?: number) => {
@@ -36,167 +69,214 @@ export function FavoritesPage({ onSpotSelect }: FavoritesPageProps) {
   };
 
   return (
-    <div className="min-h-full bg-gray-50 pb-20">
+    <motion.div
+      className="min-h-full bg-gray-50 pb-20"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       {/* Guest notice */}
-      {isGuest && (
-        <div className="mx-4 mt-4 mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
-          <p className="text-sm text-amber-800">
-            ログインすると保存したスポットが永続化されます
-          </p>
-        </div>
-      )}
+      <AnimatePresence>
+        {isGuest && favorites.length > 0 && (
+          <motion.div
+            className="mx-4 mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200"
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+          >
+            <p className="text-sm text-amber-800">
+              ログインすると保存したスポットが永続化されます
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Content */}
-      <div className={`px-4 ${!isGuest ? 'pt-4' : ''}`}>
+      <div className="p-4">
         {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <SkeletonList count={3} />
+          </motion.div>
         ) : favorites.length === 0 ? (
-          <div className="text-center py-12">
-            <svg
-              className="w-16 h-16 mx-auto text-gray-300 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <motion.div
+            className="text-center py-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-              />
-            </svg>
-            <p className="text-gray-500 mb-4">
+              <motion.svg
+                className="w-16 h-16 mx-auto text-gray-300 mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                animate={{
+                  scale: [1, 1.05, 1],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: 'reverse',
+                }}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </motion.svg>
+            </motion.div>
+            <motion.p
+              className="text-gray-500 mb-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
               お気に入りのスポットがありません
-            </p>
-            <p className="text-sm text-gray-400">
-              スポットのハートアイコンをタップして追加できます
-            </p>
+            </motion.p>
+            <motion.p
+              className="text-sm text-gray-400"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              スポットのハートをタップして追加できます
+            </motion.p>
 
             {isGuest && (
-              <div className="mt-6">
-                <LoginButton variant="secondary" />
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {favorites.map((favorite) => (
-              <div
-                key={favorite.id}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+              <motion.div
+                className="mt-6"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
               >
-                <div className="flex">
-                  {/* Image */}
-                  {favorite.spotImageUrl ? (
-                    <img
-                      src={favorite.spotImageUrl}
-                      alt={favorite.spotName}
-                      className="w-24 h-24 object-cover"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 bg-gray-200 flex items-center justify-center">
-                      <svg
-                        className="w-8 h-8 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                    </div>
-                  )}
-
+                <LoginButton variant="secondary" />
+              </motion.div>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div
+            className="space-y-3"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <AnimatePresence mode="popLayout">
+              {favorites.map((favorite) => (
+                <motion.div
+                  key={favorite.id}
+                  variants={cardVariants}
+                  exit="exit"
+                  layout
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer"
+                  whileHover={{
+                    y: -2,
+                    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.1)',
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() =>
+                    onSpotSelect?.({
+                      id: favorite.spotId,
+                      name: favorite.spotName,
+                      description: favorite.spotDescription,
+                      location: favorite.spotLocation,
+                      congestionLevel: favorite.spotCongestionLevel as
+                        | 1
+                        | 2
+                        | 3
+                        | 4
+                        | 5
+                        | undefined,
+                      imageUrl: favorite.spotImageUrl,
+                    })
+                  }
+                >
                   {/* Content */}
-                  <div className="flex-1 p-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">
-                          {favorite.spotName}
-                        </h3>
-                        {favorite.spotDescription && (
-                          <p className="text-sm text-gray-500 line-clamp-1 mt-0.5">
-                            {favorite.spotDescription}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Remove button */}
-                      <button
-                        onClick={() => removeFavorite(favorite.spotId)}
-                        className="p-1 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-gray-900 text-base">
+                        {favorite.spotName}
+                      </h3>
+                      <motion.button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFavorite(favorite.spotId);
+                        }}
+                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-full"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                       >
-                        <svg
+                        <motion.svg
                           className="w-5 h-5"
                           fill="currentColor"
                           viewBox="0 0 24 24"
+                          whileHover={{ scale: 1.1 }}
                         >
                           <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                      </button>
+                        </motion.svg>
+                      </motion.button>
                     </div>
 
-                    {/* Congestion badge */}
-                    <div className="flex items-center gap-2 mt-2">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white ${getCongestionColor(
+                    {favorite.spotDescription && (
+                      <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+                        {favorite.spotDescription}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <motion.span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-white ${getCongestionColor(
                           favorite.spotCongestionLevel
                         )}`}
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.1 }}
                       >
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse"></span>
                         {getCongestionText(favorite.spotCongestionLevel)}
-                      </span>
+                      </motion.span>
+
+                      <div className="flex items-center gap-1 text-emerald-600 text-sm font-medium">
+                        <span>詳細を見る</span>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
-
-                    {/* Action button */}
-                    <button
-                      onClick={() =>
-                        onSpotSelect?.({
-                          id: favorite.spotId,
-                          name: favorite.spotName,
-                          description: favorite.spotDescription,
-                          location: favorite.spotLocation,
-                          congestionLevel: favorite.spotCongestionLevel as
-                            | 1
-                            | 2
-                            | 3
-                            | 4
-                            | 5
-                            | undefined,
-                          imageUrl: favorite.spotImageUrl,
-                        })
-                      }
-                      className="mt-2 text-sm text-emerald-600 font-medium hover:text-emerald-700"
-                    >
-                      ルートを検索 →
-                    </button>
                   </div>
-                </div>
-              </div>
-            ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-            {isGuest && (
-              <div className="mt-6 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-                <p className="text-sm text-emerald-800 mb-3">
-                  ログインすると、お気に入りが永続的に保存され、他のデバイスからもアクセスできます。
-                </p>
-                <LoginButton variant="primary" />
-              </div>
-            )}
-          </div>
+            <AnimatePresence>
+              {isGuest && (
+                <motion.div
+                  className="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <p className="text-sm text-emerald-800 mb-3">
+                    ログインすると、お気に入りが永続的に保存されます
+                  </p>
+                  <LoginButton variant="primary" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
