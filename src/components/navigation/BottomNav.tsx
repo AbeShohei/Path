@@ -78,15 +78,15 @@ export function BottomNav({ currentTab, onTabChange, hidden }: BottomNavProps) {
   ];
 
   return (
-    <nav className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50 w-full max-w-md mx-auto">
       <div className="flex justify-around items-center h-16">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${currentTab === tab.id
-                ? "text-emerald-600"
-                : "text-gray-500 hover:text-gray-700"
+              ? "text-emerald-600"
+              : "text-gray-500 hover:text-gray-700"
               }`}
           >
             {tab.icon}
