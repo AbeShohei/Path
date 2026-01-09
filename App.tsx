@@ -141,6 +141,17 @@ function App() {
     const sheetStartHeight = useRef(0);
     const sheetRef = useRef<HTMLDivElement>(null);
 
+    // Viewport Height Fix for Mobile (LINE, PWA, etc.)
+    useEffect(() => {
+        const setVh = () => {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+        setVh();
+        window.addEventListener('resize', setVh);
+        return () => window.removeEventListener('resize', setVh);
+    }, []);
+
     // Lyrics Drag State
     const [isLyricsDragging, setIsLyricsDragging] = useState(false);
     const lyricsDragStartY = useRef(0);
@@ -953,7 +964,10 @@ function App() {
     const stageTimeInfo = getStageTimeInfo();
 
     return (
-        <div className="h-screen w-full max-w-md mx-auto bg-gray-50 shadow-2xl overflow-hidden relative font-sans text-gray-800 flex flex-col">
+        <div
+            className="w-full max-w-md mx-auto bg-gray-50 shadow-2xl overflow-hidden relative font-sans text-gray-800 flex flex-col"
+            style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
+        >
 
             {/* Toast Notification */}
             {toastMessage && (
@@ -998,7 +1012,7 @@ function App() {
 
             {/* Global Header */}
             {mode !== AppMode.LANDING && mode !== AppMode.ROUTE_SELECT && mode !== AppMode.PLANNING && (
-                <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-3 sticky top-0 z-40 shadow-sm flex items-center justify-between gap-3 shrink-0">
+                <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-3 pt-safe sticky top-0 z-40 shadow-sm flex items-center justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-3 overflow-hidden w-full">
                         <button onClick={goBackToPlanning} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors shrink-0">
                             <ChevronLeftIcon />
@@ -1070,7 +1084,7 @@ function App() {
                             <div className="absolute inset-0 bg-gradient-to-t from-indigo-900 via-indigo-900/40 to-transparent"></div>
                         </div>
 
-                        <div className="relative z-10 w-full px-6 space-y-8 animate-fade-in-up">
+                        <div className="relative z-10 w-full px-6 space-y-8 animate-fade-in-up pb-safe">
                             <div className="space-y-4">
                                 <p className="text-indigo-200 text-sm tracking-[0.2em] uppercase font-bold">スマートツーリズム</p>
                                 <h1 className="text-6xl font-bold text-white font-serif tracking-tighter drop-shadow-md">Path</h1>
@@ -1433,7 +1447,7 @@ function App() {
                                         </div>
 
                                         {/* Float Start Button with Favorite (Fixed at Bottom of View) */}
-                                        <div className="absolute bottom-6 left-6 right-6 z-20">
+                                        <div className="absolute bottom-6 left-6 right-6 z-20 pb-safe">
                                             <div className="flex gap-3">
                                                 {/* Favorite Button */}
                                                 {selectedSpot && (
@@ -1832,7 +1846,7 @@ function App() {
                                             )}
 
                                             {/* Compact Controls */}
-                                            <div className="px-3 py-2 bg-white border-t border-gray-100 shrink-0 flex items-center justify-between gap-2">
+                                            <div className="px-3 py-2 bg-white border-t border-gray-100 shrink-0 flex items-center justify-between gap-2 pb-safe">
                                                 {!showNavRouteDetail && guideText ? (
                                                     <button
                                                         onClick={() => handlePlayAudio(guideText)}
@@ -1988,7 +2002,7 @@ function App() {
             {mode === AppMode.FAVORITES && (
                 <div className="absolute inset-0 z-40 bg-white flex flex-col">
                     {/* Page Header */}
-                    <header className="bg-indigo-900 text-white px-4 py-3 shadow-sm flex items-center gap-3 shrink-0">
+                    <header className="bg-indigo-900 text-white px-4 pb-3 shadow-sm flex items-center gap-3 shrink-0" style={{ paddingTop: 'max(12px, env(safe-area-inset-top) + 12px)' }}>
                         <button onClick={() => handleTabChange('home')} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors">
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         </button>
@@ -2005,7 +2019,7 @@ function App() {
             {mode === AppMode.SETTINGS && (
                 <div className="absolute inset-0 z-40 bg-white flex flex-col">
                     {/* Page Header */}
-                    <header className="bg-indigo-900 text-white px-4 py-3 shadow-sm flex items-center gap-3 shrink-0">
+                    <header className="bg-indigo-900 text-white px-4 pb-3 shadow-sm flex items-center gap-3 shrink-0" style={{ paddingTop: 'max(12px, env(safe-area-inset-top) + 12px)' }}>
                         <button onClick={() => handleTabChange('home')} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors">
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         </button>

@@ -84,11 +84,10 @@ export function BottomNav({ currentTab, onTabChange, hidden }: BottomNavProps) {
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-              currentTab === tab.id
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${currentTab === tab.id
                 ? "text-emerald-600"
                 : "text-gray-500 hover:text-gray-700"
-            }`}
+              }`}
           >
             {tab.icon}
             <span className="text-xs mt-1">{tab.label}</span>
