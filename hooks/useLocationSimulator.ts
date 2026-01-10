@@ -373,6 +373,16 @@ export function useLocationSimulator() {
         setDisplayState(prev => ({ ...prev, speed: speedRef.current }));
     }, []);
 
+    const setProgress = useCallback((percent: number) => {
+        if (!isRunningRef.current && travelledDistanceRef.current === 0 && totalDistanceRef.current === 0) return;
+
+        const p = Math.max(0, Math.min(100, percent));
+        travelledDistanceRef.current = (p / 100) * totalDistanceRef.current;
+
+        // Force update UI
+        updatePosition();
+    }, [updatePosition]);
+
     // Cleanup
     useEffect(() => {
         return () => {
@@ -388,7 +398,8 @@ export function useLocationSimulator() {
         stop,
         pause,
         resume,
-        setSpeed
+        setSpeed,
+        setProgress
     };
 }
 

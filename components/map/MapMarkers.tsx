@@ -2,7 +2,7 @@ import React from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import { divIcon } from 'leaflet';
 import { renderToString } from 'react-dom/server';
-import { MapPin, MapPinCheck } from '../icons';
+import { MapPinIcon } from '../icons';
 import { Spot } from '../../types';
 
 interface MapMarkersProps {
@@ -61,7 +61,9 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
             }
         }
 
-        const IconComponent = isSelected ? MapPinCheck : MapPin;
+        // const IconComponent = isSelected ? MapPinCheck : MapPin; // MapPinCheck not available
+        const iconSizeClass = isSelected || isHighlighted ? "w-10 h-10" : "w-8 h-8";
+
         const iconHtml = renderToString(
             <div style={{
                 color: colorClass,
@@ -70,7 +72,7 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
                 transform: `scale(${scale})`,
                 transition: 'all 0.3s ease'
             }}>
-                <IconComponent size={isSelected || isHighlighted ? 40 : 32} />
+                <MapPinIcon className={iconSizeClass} />
             </div>
         );
 

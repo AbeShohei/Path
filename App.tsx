@@ -8,6 +8,7 @@ import { getCongestionLevel, getCurrentTimeOfDay, getCurrentMonth, TimeOfDay, Mo
 
 import { useLocationSimulator } from './hooks/useLocationSimulator';
 import { useGuideSystem } from './hooks/useGuideSystem';
+import { useTutorial } from './hooks/useTutorial';
 import { getDistance, descTime, parseDurationStr, getDynamicArrivalTime } from './utils/geo';
 import Map from './components/Map';
 
@@ -28,7 +29,7 @@ import {
 import { LandingPage } from './components/screens/LandingPage';
 
 // UI Components
-import { CongestionLegend, SegmentIcon, AudioPromptModal } from './components/ui';
+import { CongestionLegend, SegmentIcon, AudioPromptModal, TutorialGuide } from './components/ui';
 
 // Navigation Stages
 type NavigationStage = 'TO_STOP' | 'ON_BUS' | 'ALIGHTING' | 'TO_DEST';
@@ -51,6 +52,10 @@ function App() {
     const [hideOtherPins, setHideOtherPins] = useState(false); // Hide other pins when "View Route" is clicked
     const [isLandingImageLoaded, setIsLandingImageLoaded] = useState(false); // Track if landing image is loaded
 
+    // Interactive tutorial hook
+    const tutorialMode = mode === AppMode.LANDING ? 'LANDING' : mode;
+
+
     const [coords, setCoords] = useState<Coordinates | null>(null);
     const [spots, setSpots] = useState<Spot[]>([]);
     const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
@@ -65,12 +70,17 @@ function App() {
     const [destinationSpot, setDestinationSpot] = useState<Spot | null>(null); // Track destination separately
     const [focusedSpotId, setFocusedSpotId] = useState<string | null>(null);  // For list click pan+popup
 
+    // Interactive Tutorial (uses mode and selectedSpot state)
+    const tutorial = useTutorial(tutorialMode, !!selectedSpot);
+
     // Route State
     const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
     const [selectedRoute, setSelectedRoute] = useState<RouteOption | null>(null);
     const [showRouteDetail, setShowRouteDetail] = useState(false); // Separate state for showing detail view
     const [showAudioPrompt, setShowAudioPrompt] = useState(false);
     const [showArrivalModal, setShowArrivalModal] = useState(false); // Arrival confirmation modal
+
+
 
     // Sheet height in pixels (for free-form dragging)
     const [sheetHeight, setSheetHeight] = useState(Math.floor(window.innerHeight * 0.45));
@@ -114,117 +124,37 @@ function App() {
     const [remainingSeconds, setRemainingSeconds] = useState(0); // Countdown timer
     const [toastMessage, setToastMessage] = useState<string | null>(null); // Visual notification for stage change
 
+    // Audio State
+    const [audioDuration, setAudioDuration] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [guideText, setGuideText] = useState("");
+    const [isMuted, setIsMuted] = useState(false);
+
     // Location Simulator for testing navigation (Moved up for dependencies)
     const locationSimulator = useLocationSimulator();
-    const { state: simState } = locationSimulator;
-    const simulatedPosition = simState.currentPosition;
+    const { state: realSimState } = locationSimulator;
+    // Fallback object to ensure simState is always valid
+    const defaultSimState = {
+        isRunning: false,
+        currentPosition: null,
+        progress: 0,
+        currentTransportMode: 'WALK',
+        speed: 0,
+        currentSegmentIndex: 0,
+        bearing: 0
+    };
 
-    // Helper helper for distances (moved here to have access to types)
-    const getDistance = (p1: { lat?: number, lng?: number, latitude?: number, longitude?: number }, p2: { lat?: number, lng?: number, latitude?: number, longitude?: number }) => {
-        const lat1 = p1.lat ?? p1.latitude ?? 0;
-        const lng1 = p1.lng ?? p1.longitude ?? 0;
-        const lat2 = p2.lat ?? p2.latitude ?? 0;
-        const lng2 = p2.lng ?? p2.longitude ?? 0;
+    // Use real sim state directly
+    const simState = realSimState || defaultSimState;
 
-        const R = 6371e3; // metres
-        const φ1 = lat1 * Math.PI / 180;
-        const φ2 = lat2 * Math.PI / 180;
-        const Δφ = (lat2 - lat1) * Math.PI / 180;
-        const Δλ = (lng2 - lng1) * Math.PI / 180;
+    const simulatedPosition = simState?.currentPosition || null;
 
-        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-            Math.cos(φ1) * Math.cos(φ2) *
-            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    }
-    const descTime = (stops: number) => {
-        return `${stops * 2}分`;
-    }
+
 
     // Transit Info State
     const [isArrived, setIsArrived] = useState(false); // Track arrival state for GuideSlider completion
     const [loading, setLoading] = useState(false);
-    const [guideText, setGuideText] = useState("");
-    const [transitInfo, setTransitInfo] = useState<TransitUpdate | null>(null);
-
-    // Dynamic Transit Info Accuracy Logic
-    useEffect(() => {
-        // Only run if navigating and we have data
-        if (mode !== AppMode.NAVIGATING || !selectedRoute) {
-            if (transitInfo) setTransitInfo(null);
-            return;
-        }
-
-        // Find the FIRST transit segment in the route (not just current segment)
-        const transitSeg = selectedRoute.segments.find(s => ['BUS', 'SUBWAY', 'TRAIN'].includes(s.type));
-
-        if (!transitSeg) {
-            // No transit segment in this route (walking only)
-            if (transitInfo) setTransitInfo(null);
-            return;
-        }
-
-        // Get the transit segment's info from ROUTE DATA
-        // Use intermediateStops (has name, time, lat, lng) or fallback to stopCount
-        const intermediateStops = transitSeg.intermediateStops || [];
-        const totalStops = transitSeg.stopCount || intermediateStops.length || 5;
-
-        // Extract alighting station: last intermediate stop, or parse from direction/text
-        const alightingStation = intermediateStops.length > 0
-            ? intermediateStops[intermediateStops.length - 1].name
-            : (transitSeg.direction || transitSeg.text || '目的地');
-
-        // Extract boarding station: first intermediate stop, or from platform/text
-        const boardingStation = intermediateStops.length > 0
-            ? intermediateStops[0].name
-            : (transitSeg.platform || transitSeg.text || '乗車駅');
-        // Check if we're currently IN the transit segment or before/after
-        const currentSegIndex = simState.currentSegmentIndex;
-        const transitSegIndex = selectedRoute.segments.findIndex(s => s === transitSeg);
-
-        if (currentSegIndex < transitSegIndex) {
-            // Still walking TO the transit stop - show full stop count
-            const newInfo: TransitUpdate = {
-                status: 'ON_TIME',
-                stopsAway: totalStops,
-                currentLocation: boardingStation,
-                nextBusTime: transitSeg.departureTime || '',
-                message: '乗車前'
-            };
-            setTransitInfo(prev => JSON.stringify(prev) !== JSON.stringify(newInfo) ? newInfo : prev);
-
-        } else if (currentSegIndex === transitSegIndex) {
-            // Currently ON the transit - calculate remaining
-            const progressRatio = simState.progress / 100;
-            const estimatedRemaining = Math.max(1, Math.round(totalStops * (1 - progressRatio)));
-
-            const newInfo: TransitUpdate = {
-                status: 'ON_TIME',
-                stopsAway: estimatedRemaining,
-                currentLocation: alightingStation,
-                nextBusTime: descTime(estimatedRemaining),
-                message: `${transitSeg.lineName || transitSeg.text} 乗車中`
-            };
-            setTransitInfo(prev => JSON.stringify(prev) !== JSON.stringify(newInfo) ? newInfo : prev);
-
-        } else {
-            // Already past the transit segment - walking to destination
-            const newInfo: TransitUpdate = {
-                status: 'ON_TIME',
-                stopsAway: 0,
-                currentLocation: alightingStation,
-                nextBusTime: '',
-                message: '下車済み・目的地へ徒歩'
-            };
-            setTransitInfo(prev => JSON.stringify(prev) !== JSON.stringify(newInfo) ? newInfo : prev);
-        }
-    }, [simulatedPosition, coords, simState.currentSegmentIndex, simState.progress, mode, selectedRoute]);
-
-    // Audio Player State
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
-    const [audioDuration, setAudioDuration] = useState(0);
+    const [transitInfo, setTransitInfo] = useState<TransitUpdate | null>(null); // Added missing state
     const currentAudioController = useRef<{ stop: () => void } | null>(null);
 
     // Currently highlighted guide spot (for map pin highlighting)
@@ -263,6 +193,23 @@ function App() {
 
 
     }, []);
+
+    // Load spots for tutorial demo (ensure spots are loaded so map pins appear)
+    useEffect(() => {
+        if (tutorial.isDemoMode && spots.length === 0 && !loading) {
+            const demoCoords = { latitude: 34.985849, longitude: 135.758767 };
+            // Ensure coords are set for map centering (if not already set)
+            if (!coords) setCoords(demoCoords);
+            // Fetch real spots around the demo location
+            fetchSpots(demoCoords);
+        }
+    }, [tutorial.isDemoMode, spots.length, loading, coords]);
+
+
+
+    const handleShowTutorial = () => {
+        tutorial.startTutorial();
+    };
 
     // 1. Get Location
     const requestLocation = () => {
@@ -343,6 +290,105 @@ function App() {
             setLoading(false);
         }
     };
+
+    // --- TUTORIAL REAL STATE DRIVER ---
+    useEffect(() => {
+        if (!tutorial.isActive || !tutorial.currentStep) return;
+
+        const demoState = tutorial.demoState;
+        if (!demoState) return;
+
+        // 1. Sync App Mode (Navigating & Destination fallback)
+        // We handle PLANNING -> ROUTE_SELECT via handleRouteSearch now.
+        // We still need to handle the initial switch to PLANNING or the jump to NAVIGATING
+        if (mode !== AppMode.NAVIGATING && demoState.mode === AppMode.NAVIGATING) {
+            setMode(AppMode.NAVIGATING);
+        }
+        if (mode !== AppMode.DESTINATION && demoState.mode === AppMode.DESTINATION) {
+            setMode(AppMode.DESTINATION);
+        }
+        // Ensure starting mode is correct
+        if (tutorial.currentStep.id === 'spots' && mode !== AppMode.PLANNING) {
+            setMode(AppMode.PLANNING);
+        }
+
+        // 2. Sync Spots (safeguard) - DISABLED to keep all spots loaded
+        // if (demoState.spots && spots.length !== demoState.spots.length) {
+        //     setSpots(demoState.spots);
+        // }
+
+        // 3. Step-Specific Actions (Simulating Click Events)
+
+        // Step: "Route" (Check Details) -> Click the Spot Card
+        if (tutorial.currentStep.id === 'route') {
+            // If we have a demo spot and it's not currently selected (or we want to ensure popup logic runs)
+            if (demoState.selectedSpot && selectedSpot?.id !== demoState.selectedSpot.id) {
+                // Simulate clicking the spot card
+                handleSpotSelect(demoState.selectedSpot);
+            }
+        }
+
+        // Step: "Route Select" -> Click "View Route"
+        if (tutorial.currentStep.id === 'route_select') {
+            // Need to ensure we have a spot to route FROM (destination)
+            const targetSpot = selectedSpot || demoState.selectedSpot;
+
+            // Only trigger if we aren't already in route select mode (to avoid loops)
+            if (mode !== AppMode.ROUTE_SELECT && targetSpot) {
+                // Simulate clicking "View Route"
+                handleRouteSearch(targetSpot);
+            }
+        }
+
+        // 4. Navigation Logic
+        if (tutorial.currentStep.id === 'nav_start') {
+            // Start simulator using the REAL selected route logic
+            if (selectedRoute && selectedRoute.segments && !locationSimulator.state.isRunning) {
+                setTimeout(() => {
+                    locationSimulator.start(selectedRoute.segments!);
+                }, 500);
+            }
+            // One-time centering
+            setRecenterTrigger(prev => prev + 1);
+        }
+
+        if (tutorial.currentStep.id === 'nav_transit') {
+            if (locationSimulator.state.isRunning) {
+                locationSimulator.setProgress(50);
+                // One-time centering
+                setRecenterTrigger(prev => prev + 1);
+            }
+        }
+
+        if (tutorial.currentStep.id === 'nav_arrive') {
+            if (locationSimulator.state.isRunning) {
+                locationSimulator.setProgress(90);
+                // One-time centering
+                setRecenterTrigger(prev => prev + 1);
+            }
+        }
+
+        if (tutorial.currentStep.id === 'nav_arrival_complete') {
+            if (locationSimulator.state.isRunning) {
+                // Move to end but don't stop (keep "Navigating") or stop? 
+                // To show "Arrived" state we usually rely on `isArrived` prop in GuideSlider which checks distance/progress.
+                // Let's set it to 99.9% to be safe, or 100%. 
+                locationSimulator.setProgress(99.9);
+                // One-time centering
+                setRecenterTrigger(prev => prev + 1);
+            }
+        }
+
+        if (tutorial.currentStep.id === 'nav_guide') {
+            if (locationSimulator.state.isRunning) {
+                locationSimulator.stop();
+            }
+            if (mode !== AppMode.DESTINATION) {
+                setMode(AppMode.DESTINATION);
+            }
+        }
+
+    }, [tutorial.currentStep?.id, tutorial.isActive]);
 
     // Handle congestion toggle
     const toggleCongestion = (level: number) => {
@@ -439,6 +485,7 @@ function App() {
 
     // Calculate derived state for visible spots based on selected route AND selected time
     const visibleSpots = React.useMemo(() => {
+
         // Helper to calculate distance from current location
         const getDistance = (spot: Spot) => {
             if (!coords) return 0;
@@ -619,6 +666,8 @@ function App() {
 
         setLoading(false);
     };
+
+
 
     // 4. Start Navigation (Skip audio prompt, directly start)
     const startNavigation = (route: RouteOption) => {
@@ -837,6 +886,7 @@ function App() {
 
     // --- AUTO GUIDE GENERATION & AUDIO CONTROL ---
     useEffect(() => {
+        // Use mode and selectedRoute to support both Real and Demo modes
         if (mode !== AppMode.NAVIGATING || !selectedRoute) return;
 
         const autoGenerate = async () => {
@@ -844,6 +894,7 @@ function App() {
             let durationSec = STAGE_DURATIONS[navStage] / 1000; // Default fallback
 
             // Get current location (Simulation or Real GPS)
+            // simulatedPosition is already derived from effective simState
             const currentPos = simulatedPosition
                 ? { latitude: simulatedPosition.lat, longitude: simulatedPosition.lng }
                 : (coords || { latitude: 34.9858, longitude: 135.7588 });
@@ -851,17 +902,18 @@ function App() {
             if (selectedRoute.segments) {
                 if (navStage === 'TO_STOP') {
                     // First segment (Walking to start)
-                    durationSec = parseDurationStr(selectedRoute.segments[0]?.duration);
+                    const firstSeg = selectedRoute.segments[0];
+                    durationSec = parseDurationStr(firstSeg?.duration);
 
                     // Real-time update for Walking
-                    if (selectedRoute.segments[0]?.path && currentPos) {
-                        const path = selectedRoute.segments[0].path;
+                    if (firstSeg?.path && currentPos) {
+                        const path = firstSeg.path;
                         const dest = path[path.length - 1];
                         const destCoord = { latitude: dest.lat, longitude: dest.lng };
                         const startCoord = { latitude: path[0].lat, longitude: path[0].lng };
 
                         const remainingDist = getDistance(currentPos, destCoord);
-                        const totalDist = selectedRoute.segments[0].distance || getDistance(startCoord, destCoord);
+                        const totalDist = firstSeg.distance || getDistance(startCoord, destCoord);
 
                         if (totalDist > 0) {
                             const ratio = remainingDist / totalDist;
@@ -917,6 +969,9 @@ function App() {
             // await handleGenerateGuide(selectedRoute, navStage, durationSec, true);
 
             // Set Transit Info from GTFS data
+            // Ensure segments exist before trying to find
+            if (!selectedRoute.segments) return;
+
             const busSegment = selectedRoute.segments.find(s => s.type === 'BUS' || s.type === 'SUBWAY');
             const realDepartureTime = busSegment?.departureTime || '--:--';
             const realArrivalTime = busSegment?.arrivalTime || '--:--';
@@ -942,7 +997,7 @@ function App() {
         };
 
         autoGenerate();
-    }, [navStage, mode]);
+    }, [navStage, mode, selectedRoute, simulatedPosition, coords, stopsAway]);
 
     // 5. Gemini Actions (Legacy removed)
     // New GuideSlider handles guide generation and playback.
@@ -1347,8 +1402,8 @@ function App() {
                             isSheetDragging={isDragging}
                             disableSmartPan={mode === AppMode.NAVIGATING}
                             showBusRoutes={showBusRoutes}
-                            transportMode={simState.currentTransportMode}
-                            bearing={simState.bearing || 0}
+                            transportMode={simState?.currentTransportMode || 'WALK'}
+                            bearing={simState?.bearing || 0}
                             busRoutes={busRoutes}
                             subwayRoutes={[]}
                             highlightedGuideSpotId={highlightedGuideSpotId}
@@ -1359,17 +1414,20 @@ function App() {
 
                 {/* LANDING MODE */}
                 {mode === AppMode.LANDING && (
-                    <LandingPage
-                        loading={loading}
-                        devMode={devMode}
-                        onRequestLocation={requestLocation}
-                        onToggleDevMode={() => setDevMode(prev => !prev)}
-                        onImageLoad={() => setIsLandingImageLoaded(true)}
-                    />
+                    <>
+                        <LandingPage
+                            loading={loading}
+                            devMode={devMode}
+                            onRequestLocation={requestLocation}
+                            onToggleDevMode={() => setDevMode(prev => !prev)}
+                            onImageLoad={() => setIsLandingImageLoaded(true)}
+                            onShowTutorial={tutorial.startTutorial}
+                        />
+                    </>
                 )}
 
                 {/* PLANNING MODE UI */}
-                {mode === AppMode.PLANNING && coords && (
+                {mode === AppMode.PLANNING && (coords || coords) && (
                     <div className="w-full h-full relative pointer-events-none">
                         {/* Legend 5 Levels */}
                         <CongestionLegend />
@@ -1975,7 +2033,7 @@ function App() {
 
                 {/* NAVIGATION MODE - Overlay */}
                 {
-                    mode === AppMode.NAVIGATING && selectedRoute && (
+                    mode === AppMode.NAVIGATING && (selectedRoute || selectedRoute) && (
                         <>
                             {/* Location Simulator Control Panel (Dev Mode Only) */}
                             {devMode && (
@@ -2236,6 +2294,15 @@ function App() {
 
             </main >
 
+            {/* Tutorial Interaction Blocker - prevents clicking real buttons during tutorial */}
+            {tutorial.isDemoMode && (
+                <div
+                    className="absolute inset-0 z-[85]"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                />
+            )}
+
             {/* Recenter Button (Global Overlay) */}
             {
                 mode !== AppMode.LANDING && mode !== AppMode.DESTINATION && (
@@ -2262,6 +2329,42 @@ function App() {
                     </button>
                 )
             }
+
+            {/* Interactive Tutorial Guide */}
+            {tutorial.isActive && tutorial.currentStep && (
+                <TutorialGuide
+                    step={tutorial.currentStep}
+                    stepIndex={tutorial.stepIndex}
+                    totalSteps={tutorial.totalSteps}
+                    isLoading={loading}
+                    onNext={() => {
+                        if (tutorial.stepIndex === tutorial.totalSteps - 1) {
+                            setMode(AppMode.LANDING);
+                            setSpots([]);
+                            setSelectedSpot(null);
+                            setSelectedRoute(null);
+                            setRouteOptions([]);
+                            setFocusedSpotId(null);
+                            setGuideText("");
+                            locationSimulator.stop();
+                            stopCurrentAudio();
+                        }
+                        tutorial.nextStep();
+                    }}
+                    onSkip={() => {
+                        setMode(AppMode.LANDING);
+                        setSpots([]);
+                        setSelectedSpot(null);
+                        setSelectedRoute(null);
+                        setRouteOptions([]);
+                        setFocusedSpotId(null);
+                        setGuideText("");
+                        locationSimulator.stop();
+                        stopCurrentAudio();
+                        tutorial.skipTutorial();
+                    }}
+                />
+            )}
         </div >
     );
 }

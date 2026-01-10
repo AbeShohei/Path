@@ -175,12 +175,22 @@ const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigat
         }
     }, [selectedRoute, map]);
 
-    // Handle Recenter Trigger
+    // Handle Recenter Trigger (One-time move to Upper Half)
     const lastRecenterTrigger = useRef(recenterTrigger);
     useEffect(() => {
         if (recenterTrigger && recenterTrigger !== lastRecenterTrigger.current) {
             lastRecenterTrigger.current = recenterTrigger;
-            map.flyTo([center.latitude, center.longitude], 15, { duration: 0.8 });
+
+            // Calculate Upper Half Offset
+            const zoom = 15; // Standard recenter zoom
+            const centerPoint = map.project([center.latitude, center.longitude], zoom);
+            const mapSize = map.getSize();
+            const offsetY = mapSize.y * 0.25; // Shift down by 25% of height (User at ~25% from top)
+
+            const targetPoint = L.point(centerPoint.x, centerPoint.y + offsetY);
+            const targetLatLng = map.unproject(targetPoint, zoom);
+
+            map.flyTo(targetLatLng, zoom, { duration: 0.8 });
         }
     }, [recenterTrigger, map, center]);
 

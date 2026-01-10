@@ -365,7 +365,7 @@ class RouteService {
                     const waitFromArrival = timeVal - thresholdTimeVal;
 
                     // Extract intermediate stops (between start and end, exclusive)
-                    const intermediateStops: { name: string; time: string }[] = [];
+                    const intermediateStops: { name: string; time: string; lat?: number; lng?: number }[] = [];
                     for (let i = startIdx + 1; i < endIdx; i++) {
                         const stopId = trip.st[i].s;
                         const stopNode = this.graphData?.stops[stopId];
