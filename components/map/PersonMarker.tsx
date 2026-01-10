@@ -13,7 +13,7 @@ export const PersonMarker = React.forwardRef<Group, PersonMarkerProps>(({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
-  color = '#EF4444',
+  color = '#3B82F6',
   isMoving = false,
   isStatic = false,
 }, ref) => {
@@ -64,6 +64,12 @@ export const PersonMarker = React.forwardRef<Group, PersonMarkerProps>(({
   return (
     // Outer group handles position from parent (App.tsx)
     <group ref={ref} position={position} rotation={rotation} scale={scale} dispose={null}>
+      {/* Fake Shadow - Grounded circle */}
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <circleGeometry args={[0.75, 32]} />
+        <meshBasicMaterial color="#000000" opacity={0.4} transparent depthWrite={false} />
+      </mesh>
+
       {/* Inner group handles local animation */}
       <group ref={internalRef}>
         {/* Head */}

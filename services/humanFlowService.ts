@@ -1,30 +1,37 @@
 /**
- * Human Flow Data Service with Time-of-Day Support
+ * Human Flow Data Service with Monthly and Time-of-Day Support
  * 
  * Provides dynamic congestion levels based on:
+ * - Month (1-12)
  * - Time of day (morning/noon/evening)
  * - Location (Kyoto city vs. outside)
  * 
- * Data source: opendata/human 2019-2021 December, 3-year average
+ * Data source: opendata/human 2019-2021, 3-year average per month
  */
 
-import humanFlowData from '../human_flow_by_time.json';
+import humanFlowMonthlyData from '../human_flow_monthly.json';
 
 export type TimeOfDay = 'morning' | 'noon' | 'evening';
+export type Month = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09' | '10' | '11' | '12';
 export type Region = 'city' | 'outside';
 export type CongestionLevel = 1 | 2 | 3 | 4 | 5;
 
 // Kyoto city bounds
-const KYOTO_CITY_BOUNDS = humanFlowData.kyotoCityBounds;
+const KYOTO_CITY_BOUNDS = humanFlowMonthlyData.kyotoCityBounds;
 
-// Thresholds per region and time
-const THRESHOLDS = humanFlowData.thresholds;
+// Monthly data structure
+const MONTHLY_DATA = humanFlowMonthlyData.monthlyData as Record<Month, {
+    meshPopulations: Record<string, { morning: number, noon: number, evening: number }>;
+    meshRegions: Record<string, string>;
+}>;
 
-// Mesh population data
-const MESH_POPULATIONS = humanFlowData.meshPopulations as Record<string, { morning: number, noon: number, evening: number }>;
-
-// Mesh regions
-const MESH_REGIONS = humanFlowData.meshRegions as Record<string, string>;
+/**
+ * Get current month as 2-digit string
+ */
+export function getCurrentMonth(): Month {
+    const month = new Date().getMonth() + 1; // 0-indexed to 1-indexed
+    return month.toString().padStart(2, '0') as Month;
+}
 
 /**
  * Get current time of day
@@ -67,17 +74,23 @@ export function isInKyotoCity(lat: number, lon: number): boolean {
 }
 
 /**
- * Get region for a mesh code
+ * Get region for a mesh code (for a specific month)
  */
-export function getMeshRegion(meshCode: string): Region {
-    return (MESH_REGIONS[meshCode] as Region) || 'outside';
+export function getMeshRegion(meshCode: string, month?: Month): Region {
+    const m = month || getCurrentMonth();
+    const monthData = MONTHLY_DATA[m];
+    if (!monthData) return 'outside';
+    return (monthData.meshRegions[meshCode] as Region) || 'outside';
 }
 
 /**
- * Get population for a mesh code at a specific time
+ * Get population for a mesh code at a specific time and month
  */
-export function getMeshPopulation(meshCode: string, timeOfDay: TimeOfDay): number {
-    const data = MESH_POPULATIONS[meshCode];
+export function getMeshPopulation(meshCode: string, timeOfDay: TimeOfDay, month?: Month): number {
+    const m = month || getCurrentMonth();
+    const monthData = MONTHLY_DATA[m];
+    if (!monthData) return 0;
+    const data = monthData.meshPopulations[meshCode];
     if (!data) return 0;
     return data[timeOfDay] || 0;
 }
@@ -93,8 +106,8 @@ export function getMeshPopulation(meshCode: string, timeOfDay: TimeOfDay): numbe
  * - Level 5 (混雑): Top 20% (deviation >= 58)
  */
 
-// Population stats calculated from SPOT LOCATIONS ONLY
-let populationStats: { mean: number; stdDev: number } | null = null;
+// Population stats calculated from SPOT LOCATIONS ONLY - per time period, per month
+let populationStatsCache: Record<string, Record<TimeOfDay, { mean: number; stdDev: number }>> = {};
 let registeredSpotLocations: { lat: number; lng: number }[] = [];
 
 /**
@@ -103,78 +116,103 @@ let registeredSpotLocations: { lat: number; lng: number }[] = [];
  */
 export function registerSpotLocations(locations: { lat: number; lng: number }[]) {
     registeredSpotLocations = locations;
-    populationStats = null; // Reset to recalculate
-
+    populationStatsCache = {}; // Reset cache
 }
 
-// Initialize population statistics from SPOT MESHES ONLY
-function initPopulationStats() {
-    if (populationStats !== null) return;
+// Get population statistics for a specific month (cached)
+function getStatsForMonth(month: Month): Record<TimeOfDay, { mean: number; stdDev: number }> {
+    if (populationStatsCache[month]) {
+        return populationStatsCache[month];
+    }
 
-    const spotPopulations: number[] = [];
+    const monthData = MONTHLY_DATA[month];
+
+    if (!monthData) {
+        return {
+            morning: { mean: 1000, stdDev: 500 },
+            noon: { mean: 1000, stdDev: 500 },
+            evening: { mean: 1000, stdDev: 500 }
+        };
+    }
+
+    const spotPopulationsByTime: Record<TimeOfDay, number[]> = {
+        morning: [],
+        noon: [],
+        evening: []
+    };
     const seenMeshes = new Set<string>();
 
-    // If no spots registered, use all meshes as fallback
-    if (registeredSpotLocations.length === 0) {
+    // Collect mesh codes from spot locations
+    const meshCodesToUse: string[] = [];
 
-        for (const meshCode of Object.keys(MESH_POPULATIONS)) {
-            const data = MESH_POPULATIONS[meshCode];
-            if (data) {
-                if (data.morning > 0) spotPopulations.push(data.morning);
-                if (data.noon > 0) spotPopulations.push(data.noon);
-                if (data.evening > 0) spotPopulations.push(data.evening);
-            }
-        }
+    if (registeredSpotLocations.length === 0) {
+        // Fallback: use all meshes from month
+        meshCodesToUse.push(...Object.keys(monthData.meshPopulations));
     } else {
-        // Collect population data ONLY from meshes where spots exist
+        // Only use meshes where spots exist
         for (const loc of registeredSpotLocations) {
             const meshCode = latLonToMesh1km(loc.lat, loc.lng);
-            if (seenMeshes.has(meshCode)) continue;
-            seenMeshes.add(meshCode);
-
-            const data = MESH_POPULATIONS[meshCode];
-            if (data) {
-                if (data.morning > 0) spotPopulations.push(data.morning);
-                if (data.noon > 0) spotPopulations.push(data.noon);
-                if (data.evening > 0) spotPopulations.push(data.evening);
+            if (!seenMeshes.has(meshCode)) {
+                seenMeshes.add(meshCode);
+                meshCodesToUse.push(meshCode);
             }
         }
-
     }
 
-    if (spotPopulations.length === 0) {
-        populationStats = { mean: 1000, stdDev: 500 };
-        return;
+    // Collect population data per time period
+    for (const meshCode of meshCodesToUse) {
+        const data = monthData.meshPopulations[meshCode];
+        if (data) {
+            if (data.morning > 0) spotPopulationsByTime.morning.push(data.morning);
+            if (data.noon > 0) spotPopulationsByTime.noon.push(data.noon);
+            if (data.evening > 0) spotPopulationsByTime.evening.push(data.evening);
+        }
     }
 
-    // Calculate mean
-    const sum = spotPopulations.reduce((a, b) => a + b, 0);
-    const mean = sum / spotPopulations.length;
+    // Calculate stats for each time period
+    const stats = {
+        morning: calculateStats(spotPopulationsByTime.morning),
+        noon: calculateStats(spotPopulationsByTime.noon),
+        evening: calculateStats(spotPopulationsByTime.evening)
+    };
 
-    // Calculate standard deviation
-    const squareDiffs = spotPopulations.map(v => Math.pow(v - mean, 2));
-    const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / spotPopulations.length;
+    populationStatsCache[month] = stats;
+    return stats;
+}
+
+function calculateStats(values: number[]): { mean: number; stdDev: number } {
+    if (values.length === 0) {
+        return { mean: 1000, stdDev: 500 };
+    }
+
+    const sum = values.reduce((a, b) => a + b, 0);
+    const mean = sum / values.length;
+
+    const squareDiffs = values.map(v => Math.pow(v - mean, 2));
+    const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / values.length;
     const stdDev = Math.sqrt(avgSquareDiff);
 
-    populationStats = { mean, stdDev };
-
+    return { mean, stdDev: stdDev || 1 }; // Prevent division by zero
 }
 
 function populationToCongestionLevel(
     population: number,
     region: Region,
-    timeOfDay: TimeOfDay
+    timeOfDay: TimeOfDay,
+    month?: Month
 ): CongestionLevel {
-    // Initialize stats if not done
-    initPopulationStats();
+    // Get stats for the specific month
+    const m = month || getCurrentMonth();
+    const allStats = getStatsForMonth(m);
+    const stats = allStats[timeOfDay];
 
-    if (!populationStats || populationStats.stdDev === 0) {
+    if (!stats || stats.stdDev === 0) {
         // Fallback if stats not available
         return 3;
     }
 
     // Calculate deviation score (偏差値): 50 + 10 * (value - mean) / stdDev
-    const deviationScore = 50 + 10 * (population - populationStats.mean) / populationStats.stdDev;
+    const deviationScore = 50 + 10 * (population - stats.mean) / stats.stdDev;
 
     // Map deviation score to congestion level (1-5)
     // Using 20% percentile thresholds
@@ -191,18 +229,21 @@ function populationToCongestionLevel(
  * @param lat Latitude
  * @param lon Longitude
  * @param timeOfDay Optional time override (defaults to current time)
+ * @param month Optional month override (defaults to current month)
  */
 export function getCongestionLevel(
     lat: number,
     lon: number,
-    timeOfDay?: TimeOfDay
+    timeOfDay?: TimeOfDay,
+    month?: Month
 ): CongestionLevel {
     const time = timeOfDay || getCurrentTimeOfDay();
+    const m = month || getCurrentMonth();
     const meshCode = latLonToMesh1km(lat, lon);
-    const region = getMeshRegion(meshCode);
-    const population = getMeshPopulation(meshCode, time);
+    const region = getMeshRegion(meshCode, m);
+    const population = getMeshPopulation(meshCode, time, m);
 
-    return populationToCongestionLevel(population, region, time);
+    return populationToCongestionLevel(population, region, time, m);
 }
 
 /**

@@ -4,7 +4,7 @@ import { getTransitInfo, generateGuideContent, playTextToSpeech, isAIAvailable }
 import { routeService } from './services/routeService';
 import { wikimediaService } from './services/wikimediaService';
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
-import { getCongestionLevel, getCurrentTimeOfDay, TimeOfDay, getTimeOfDayLabel } from './services/humanFlowService';
+import { getCongestionLevel, getCurrentTimeOfDay, getCurrentMonth, TimeOfDay, Month, getTimeOfDayLabel } from './services/humanFlowService';
 
 import { useLocationSimulator } from './hooks/useLocationSimulator';
 import { useGuideSystem } from './hooks/useGuideSystem';
@@ -56,6 +56,7 @@ function App() {
     const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
+    const [selectedMonth, setSelectedMonth] = useState<Month>(getCurrentMonth()); // Month for congestion (dev mode)
     const [devMode, setDevMode] = useState(false); // Developer mode for advanced features
     const [recenterTrigger, setRecenterTrigger] = useState(0); // Trigger to recenter map
 
@@ -236,6 +237,17 @@ function App() {
         { level: 4, label: 'やや混雑', color: 'bg-yellow-500' },
         { level: 5, label: '混雑', color: 'bg-red-500' }
     ];
+
+    // Recalculate congestion levels when dev mode month/time selection changes
+    const displaySpots = React.useMemo(() => {
+        if (!devMode) return spots;
+
+        // Recalculate congestion levels with selected month/time
+        return spots.map(spot => ({
+            ...spot,
+            congestionLevel: getCongestionLevel(spot.location.latitude, spot.location.longitude, selectedTime, selectedMonth)
+        }));
+    }, [spots, devMode, selectedMonth, selectedTime]);
 
     // Load bus and subway routes data
     useEffect(() => {
@@ -440,10 +452,7 @@ function App() {
         };
 
         // Recalculate Congestion based on Selected Time
-        const currentSpots = spots.map(s => ({
-            ...s,
-            congestionLevel: getCongestionLevel(s.location.latitude, s.location.longitude, selectedTime)
-        }));
+        const currentSpots = displaySpots;
 
         // Relaxed condition: If a route is selected, always filter pins (unless explicitly cleared)
         if (selectedRoute) {
@@ -500,7 +509,7 @@ function App() {
                 // Tertiary: distance (closer is better)
                 return getDistance(a) - getDistance(b);
             });
-    }, [mode, selectedRoute, spots, selectedSpot, selectedCongestion, coords, selectedTime, hideOtherPins]);
+    }, [mode, selectedRoute, displaySpots, selectedSpot, selectedCongestion, coords, hideOtherPins]);
 
     // --- Guide System Integration (Moved after visibleSpots to use filtered list) ---
     const { nearbyGuides, nearbySpots, loading: guideLoading } = useGuideSystem({
@@ -1404,25 +1413,30 @@ function App() {
                             </div>
 
                             <div className="px-6 pb-2 shrink-0 bg-white z-20 space-y-3 pointer-events-none">
-                                <div className="flex items-center justify-between pointer-events-auto">
+                                <div className="flex flex-wrap items-start justify-between gap-y-2 pointer-events-auto min-h-[60px]">
                                     <div>
-                                        <h2 className="text-xl font-bold text-gray-800">近くの観光スポット</h2>
-                                        <p className={`text-sm text-gray-400 transition-opacity duration-200 ${sheetHeight < 120 ? 'opacity-0 h-0' : 'opacity-100'}`}>{visibleSpots.length}件のスポットが見つかりました</p>
+                                        <h2 className="text-xl font-black text-gray-800 tracking-tight leading-tight whitespace-nowrap">
+                                            近くの観光スポット
+                                        </h2>
+                                        <p className="text-xs font-bold text-gray-400 mt-1">
+                                            {visibleSpots.length}件のスポットが見つかりました
+                                        </p>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {/* View Mode Toggle */}
+
+                                    <div className="flex flex-wrap items-center justify-end gap-2">
+                                        {/* View Mode Selector */}
                                         <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
                                             <button
                                                 onClick={() => setViewMode('list')}
-                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                                             >
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
                                                 </svg>
                                             </button>
                                             <button
                                                 onClick={() => setViewMode('grid')}
-                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                                             >
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -1430,22 +1444,45 @@ function App() {
                                             </button>
                                         </div>
 
-                                        {/* Time Filter (Dev Mode Only) */}
+                                        {/* Month & Time Filter (Dev Mode Only) */}
                                         {devMode && (
-                                            <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
-                                                {(['morning', 'noon', 'evening'] as TimeOfDay[]).map((t) => (
-                                                    <button
-                                                        key={t}
-                                                        onClick={() => setSelectedTime(t)}
-                                                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedTime === t
-                                                            ? 'bg-white text-indigo-600 shadow-sm'
-                                                            : 'text-gray-400 hover:text-gray-600'
-                                                            }`}
+                                            <>
+                                                {/* Month Selector */}
+                                                <div className="relative">
+                                                    <select
+                                                        value={selectedMonth}
+                                                        onChange={(e) => setSelectedMonth(e.target.value as Month)}
+                                                        className="pl-3 pr-7 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 border-none appearance-none cursor-pointer hover:bg-gray-200 transition-colors focus:ring-0"
                                                     >
-                                                        {t === 'morning' ? '朝' : t === 'noon' ? '昼' : '夕'}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                                        {(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'] as Month[]).map((m) => (
+                                                            <option key={m} value={m}>
+                                                                {parseInt(m)}月
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+
+                                                {/* Time Selector */}
+                                                <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
+                                                    {(['morning', 'noon', 'evening'] as TimeOfDay[]).map((t) => (
+                                                        <button
+                                                            key={t}
+                                                            onClick={() => setSelectedTime(t)}
+                                                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedTime === t
+                                                                ? 'bg-white text-indigo-600 shadow-sm'
+                                                                : 'text-gray-400 hover:text-gray-600'
+                                                                }`}
+                                                        >
+                                                            {t === 'morning' ? '朝' : t === 'noon' ? '昼' : '夕'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -1618,8 +1655,8 @@ function App() {
                                 )}
                                 <div className="h-10"></div>
                             </div>
-                        </div>
-                    </div>
+                        </div >
+                    </div >
                 )
                 }
 
