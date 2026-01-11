@@ -666,11 +666,28 @@ function App() {
             });
         });
 
-        setRouteOptions(fetchedRoutes); // Final consistent state
+        // Apply tutorial-specific sorting: prioritize "市バス五条通５"
+        let sortedRoutes = fetchedRoutes;
+        if (tutorial.isActive) {
+            sortedRoutes = [...fetchedRoutes].sort((a, b) => {
+                const hasGojodori5 = (r: RouteOption) => {
+                    return r.segments.some(seg =>
+                        seg.text?.includes('市バス五条通５') || seg.text?.includes('市バス 五条通５')
+                    );
+                };
+                const aHas = hasGojodori5(a);
+                const bHas = hasGojodori5(b);
+                if (aHas && !bHas) return -1;
+                if (!aHas && bHas) return 1;
+                return 0; // Keep original order otherwise
+            });
+        }
+
+        setRouteOptions(sortedRoutes); // Final consistent state
 
         // Auto-select first route to show it by default
-        if (fetchedRoutes.length > 0) {
-            setSelectedRoute(fetchedRoutes[0]);
+        if (sortedRoutes.length > 0) {
+            setSelectedRoute(sortedRoutes[0]);
         }
 
         setLoading(false);
