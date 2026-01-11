@@ -65,6 +65,14 @@ export const DEMO_SPOTS_LIST: Spot[] = [
 
 // デモ用ルートセグメント
 // デモ用ルートセグメント
+// Helper to get time string (HH:MM) relative to now
+const getRelativeTime = (minutesOffset: number): string => {
+    const now = new Date();
+    const d = new Date(now.getTime() + minutesOffset * 60000);
+    return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+};
+
+// デモ用ルートセグメント (Dynamic)
 const demoSegments: RouteSegment[] = [
     {
         type: 'WALK',
@@ -84,14 +92,23 @@ const demoSegments: RouteSegment[] = [
         text: '市バス 5系統',
         duration: '35分',
         durationMinutes: 35,
-        departureTime: '10:15',
-        arrivalTime: '10:50',
+        departureTime: getRelativeTime(15),     // +15 mins
+        arrivalTime: getRelativeTime(15 + 35), // +50 mins
         direction: '岩倉操車場前行き',
         lineColor: '#008000',
         companyName: '京都市交通局',
         boardingStop: '京都駅前',
         alightingStop: '修学院離宮道',
         stopCount: 18,
+        intermediateStops: [
+            { name: "塩小路", time: getRelativeTime(16), lat: 34.986500, lng: 135.759500 },
+            { name: "四条京阪前", time: getRelativeTime(25), lat: 35.003000, lng: 135.768000 },
+            { name: "三条京阪前", time: getRelativeTime(28), lat: 35.009000, lng: 135.772000 },
+            { name: "東山三条", time: getRelativeTime(30), lat: 35.010000, lng: 135.775000 },
+            { name: "岡崎道", time: getRelativeTime(35), lat: 35.015000, lng: 135.782000 },
+            { name: "北白川", time: getRelativeTime(40), lat: 35.025000, lng: 135.788000 },
+            { name: "修学院", time: getRelativeTime(48), lat: 35.045000, lng: 135.800000 }
+        ],
         path: [
             { lat: 34.985458, lng: 135.758867 }, // 京都駅前
             { lat: 34.986500, lng: 135.759500 }, // 塩小路
@@ -120,14 +137,14 @@ const demoSegments: RouteSegment[] = [
     }
 ];
 
-// デモ用ルートオプション
+// デモ用ルートオプション (Dynamic)
 export const DEMO_ROUTE_OPTIONS: RouteOption[] = [
     {
         id: 'demo-route-1',
         title: 'バス + 徒歩',
         duration: '約53分',
-        startTime: '10:12',
-        endTime: '11:05',
+        startTime: getRelativeTime(12),
+        endTime: getRelativeTime(12 + 53),
         cost: '230円',
         steps: ['京都駅から市バス5系統', '修学院離宮道で下車', '徒歩15分'],
         segments: demoSegments,
@@ -144,8 +161,8 @@ export const DEMO_ROUTE_OPTIONS: RouteOption[] = [
         id: 'demo-route-2',
         title: '地下鉄 + バス',
         duration: '約58分',
-        startTime: '10:15',
-        endTime: '11:13',
+        startTime: getRelativeTime(15),
+        endTime: getRelativeTime(15 + 58),
         cost: '490円',
         steps: ['地下鉄烏丸線で国際会館', 'バス5系統に乗り換え', '徒歩15分'],
         segments: [
@@ -161,8 +178,8 @@ export const DEMO_ROUTE_OPTIONS: RouteOption[] = [
                 text: '地下鉄烏丸線',
                 duration: '20分',
                 durationMinutes: 20,
-                departureTime: '10:17',
-                arrivalTime: '10:37',
+                departureTime: getRelativeTime(17),
+                arrivalTime: getRelativeTime(17 + 20),
                 direction: '国際会館行き',
                 lineColor: '#3CB371',
                 boardingStop: '京都',
@@ -174,8 +191,8 @@ export const DEMO_ROUTE_OPTIONS: RouteOption[] = [
                 text: '京都バス',
                 duration: '10分',
                 durationMinutes: 10,
-                departureTime: '10:45',
-                arrivalTime: '10:55',
+                departureTime: getRelativeTime(45),
+                arrivalTime: getRelativeTime(45 + 10),
                 direction: '大原行き',
                 lineColor: '#FFD700',
                 boardingStop: '国際会館駅前',
@@ -270,7 +287,7 @@ export const DEMO_STATES: Record<string, DemoState> = {
         selectedRoute: DEMO_ROUTE_OPTIONS[0],
         // バス移動中の座標（北山通付近）
         coords: { latitude: 35.039196, longitude: 135.773007 }
-        // simulationState removed
+        // simulationState removed to allow real simulator to run
     },
     nav_arrive: {
         mode: AppMode.NAVIGATING,

@@ -298,6 +298,11 @@ function App() {
         const demoState = tutorial.demoState;
         if (!demoState) return;
 
+        // Reset arrival state if restarting
+        if (tutorial.currentStep.id === 'welcome') {
+            setIsArrived(false);
+        }
+
         // 1. Sync App Mode (Navigating & Destination fallback)
         // We handle PLANNING -> ROUTE_SELECT via handleRouteSearch now.
         // We still need to handle the initial switch to PLANNING or the jump to NAVIGATING
@@ -353,6 +358,10 @@ function App() {
         }
 
         if (tutorial.currentStep.id === 'nav_transit') {
+            // Force UI to show Bus stage immediately to ensure "Stops Away" badge is visible
+            if (navStage !== 'ON_BUS') {
+                changeStage('ON_BUS');
+            }
             if (locationSimulator.state.isRunning) {
                 locationSimulator.setProgress(50);
                 // One-time centering
@@ -768,7 +777,20 @@ function App() {
         setAudioDuration(0);
         // Use actual segment duration instead of hardcoded value
         setRemainingSeconds(getSegmentDurationForStage(newStage));
+
+        // Initialize stopsAway when entering bus stage
+        if (newStage === 'ON_BUS') {
+            const busSegment = selectedRoute?.segments?.find(s => ['BUS', 'SUBWAY', 'TRAIN'].includes(s.type));
+            const initialStops = (busSegment?.intermediateStops?.length || 0) + 1;
+            setStopsAway(initialStops);
+        }
     }
+
+    // --- REF for Simulated Position (Fix for Stale Closure) ---
+    const simulatedPositionRef = useRef(simulatedPosition);
+    useEffect(() => {
+        simulatedPositionRef.current = simulatedPosition;
+    }, [simulatedPosition]);
 
     // --- AUTOMATED JOURNEY SIMULATION (1-second tick) ---
     useEffect(() => {
@@ -794,7 +816,6 @@ function App() {
                     // Logic to switch stages
                     if (navStage === 'TO_STOP') {
                         changeStage('ON_BUS');
-                        setStopsAway(4);
                         return getSegmentDurationForStage('ON_BUS');
                     } else if (navStage === 'ON_BUS') {
                         changeStage('ALIGHTING');
@@ -809,42 +830,95 @@ function App() {
                     }
                 }
 
-                // Calculate remaining stops based on current time vs scheduled stop times
+                // Calculate remaining stops based on GEOGRAPHIC PROGRESS (Syncs with simulation)
                 if (navStage === 'ON_BUS') {
                     const busSegment = selectedRoute?.segments?.find(s => s.type === 'BUS' || s.type === 'SUBWAY');
                     const intermediateStops = busSegment?.intermediateStops || [];
                     const arrivalTimeStr = busSegment?.arrivalTime;
 
-                    if (intermediateStops.length > 0) {
-                        // Count how many stops we've passed based on current time
-                        const now = new Date();
-                        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                    if (busSegment && busSegment.path && busSegment.path.length > 1) {
+                        const currentPos = simulatedPositionRef.current
+                            ? { latitude: simulatedPositionRef.current.lat, longitude: simulatedPositionRef.current.lng }
+                            : (coords || { latitude: 34.9858, longitude: 135.7588 });
 
-                        let passedStops = 0;
-                        for (const stop of intermediateStops) {
-                            if (stop.time) {
-                                const [h, m] = stop.time.split(':').map(Number);
-                                if (currentMinutes >= h * 60 + m) {
-                                    passedStops++;
+                        // Find destination of this bus segment
+                        const destNode = busSegment.path[busSegment.path.length - 1];
+                        const startNode = busSegment.path[0];
+
+                        const destCoord = { latitude: destNode.lat, longitude: destNode.lng };
+                        const startCoord = { latitude: startNode.lat, longitude: startNode.lng };
+
+                        // Calculate total distance of this segment and remaining distance
+                        // Calculate total distance of this segment and remaining distance
+                        // const totalDist = busSegment.distance || getDistance(startCoord, destCoord);
+                        const distToDest = getDistance(currentPos, destCoord);
+
+                        // NEW LOGIC: Find the last stop we have definitely passed
+                        let lastPassedIndex = -1;
+                        let hasStopWithCoords = false;
+
+                        for (let i = 0; i < intermediateStops.length; i++) {
+                            const stop = intermediateStops[i];
+                            if (stop.lat && stop.lng) {
+                                hasStopWithCoords = true;
+                                const stopCoord = { latitude: stop.lat, longitude: stop.lng };
+                                const stopDistToDest = getDistance(stopCoord, destCoord);
+
+                                // If we are closer to dest than the stop is (with 30m buffer), we passed it
+                                // (distToDest < stopDistToDest implies we are "after" the stop)
+                                if (distToDest < stopDistToDest - 30) {
+                                    lastPassedIndex = i;
                                 }
                             }
                         }
 
-                        // +1 for destination stop
-                        const totalStops = intermediateStops.length + 1;
-                        const newStops = Math.max(1, totalStops - passedStops);
+                        let newStops = 0;
+
+                        if (!hasStopWithCoords) {
+                            // Fallback: Linear progress if NO stops have coords
+                            const totalDist = busSegment.distance || getDistance(startCoord, destCoord);
+                            const progress = totalDist > 100 ? Math.max(0, Math.min(1, 1 - (distToDest / totalDist))) : 0;
+                            const totalStopCount = intermediateStops.length + 1;
+                            const passedStopsLinear = Math.floor(progress * totalStopCount);
+                            newStops = Math.max(1, totalStopCount - passedStopsLinear);
+                        } else {
+                            // Calculate remaining intermediate stops based on last passed index
+                            const remainingIntermediates = intermediateStops.length - 1 - lastPassedIndex;
+                            newStops = Math.max(0, remainingIntermediates);
+
+                            // Add destination if we haven't arrived (dist > 50m)
+                            if (distToDest > 50) {
+                                newStops += 1;
+                            }
+
+                            // Ensure at least 1 if not physically at destination coords provided we are in ON_BUS
+                            newStops = Math.max(1, newStops);
+                        }
 
                         if (newStops !== stopsAway) {
                             setStopsAway(newStops);
+                            // Update UI Info directly here to avoid dependency cycles and ensure UI reflects latest state
+                            const realArrivalTime = busSegment?.arrivalTime || '--:--';
+                            setTransitInfo(prev => ({
+                                ...prev,
+                                status: 'ON_TIME',
+                                stopsAway: newStops,
+                                currentLocation: '移動中',
+                                nextBusTime: realArrivalTime,
+                                message: `${realArrivalTime} 着予定`
+                            }));
                         }
                     } else {
-                        // Fallback: timer-based countdown
+                        // Fallback: timer-based countdown (if no path data)
                         const totalDuration = getSegmentDurationForStage('ON_BUS');
-                        const progress = 1 - (remainingSeconds / totalDuration);
+                        const progress = 1 - (next / (totalDuration > 0 ? totalDuration : 60)); // use valid 'next' variable
                         const initialStops = stopsAway > 0 ? stopsAway : 5;
                         const newStops = Math.max(1, initialStops - Math.floor(progress * initialStops));
                         if (newStops !== stopsAway) {
                             setStopsAway(newStops);
+                            // Update simple countdown info
+                            const realArrivalTime = busSegment?.arrivalTime || '--:--';
+                            setTransitInfo(prev => ({ ...prev, stopsAway: newStops, message: `${realArrivalTime} 着予定` }));
                         }
                     }
                 }
@@ -883,6 +957,24 @@ function App() {
         }
     }, [audioDuration]); // Trigger when new audio starts
 
+
+    // --- SYNC NAV STAGE WITH SIMULATOR MODE ---
+    useEffect(() => {
+        if (mode !== AppMode.NAVIGATING) return;
+
+        // Check both real simulator and demo state (for tutorial)
+        const simMode = tutorial.demoState?.simulationState?.currentTransportMode ?? locationSimulator.state.currentTransportMode;
+
+        // Force transition to ON_BUS if simulator enters transit mode while we are still in TO_STOP
+        if (navStage === 'TO_STOP' && (simMode === 'BUS' || simMode === 'SUBWAY' || simMode === 'TRAIN')) {
+            changeStage('ON_BUS');
+        }
+
+        // Force transition to ALIGHTING/TO_DEST if simulator goes back to WALK after being on BUS
+        if (navStage === 'ON_BUS' && simMode === 'WALK') {
+            changeStage('ALIGHTING');
+        }
+    }, [mode, navStage, locationSimulator.state.currentTransportMode, tutorial.demoState]);
 
     // --- AUTO GUIDE GENERATION & AUDIO CONTROL ---
     useEffect(() => {
@@ -988,7 +1080,7 @@ function App() {
             } else if (navStage === 'ON_BUS') {
                 setTransitInfo({
                     status: 'ON_TIME',
-                    stopsAway: stopsAway,
+                    stopsAway: stopsAway, // Use current state (which should have been init by changeStage)
                     currentLocation: '移動中',
                     nextBusTime: realArrivalTime,
                     message: `${realArrivalTime} 着予定`
@@ -1308,9 +1400,9 @@ function App() {
                                                     <span className="text-lg font-extrabold text-yellow-300 leading-none drop-shadow-md">
                                                         {lineName}
                                                     </span>
-                                                    {transitInfo && transitInfo.stopsAway > 0 && (
+                                                    {transitInfo && transitInfo.stopsAway > 0 && navStage === 'ON_BUS' && (
                                                         <span className="text-[10px] font-bold text-white bg-indigo-600/80 px-1.5 py-0.5 rounded-full">
-                                                            あと{transitInfo.stopsAway}駅
+                                                            {transitInfo.stopsAway === 1 ? 'まもなく到着' : `あと${transitInfo.stopsAway}駅`}
                                                         </span>
                                                     )}
                                                 </div>

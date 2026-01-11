@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { AppMode } from '../types';
-import { DEMO_STATES, DemoState, DEMO_SPOT, DEMO_ROUTE_OPTIONS } from '../data/tutorialDemoData';
+import { DEMO_STATES, DemoState } from '../data/tutorialDemoData';
 
 export interface TutorialStep {
     id: string;
@@ -110,8 +110,6 @@ export interface UseTutorialResult {
 export function useTutorial(currentMode: AppMode | 'LANDING', hasSpotSelected: boolean): UseTutorialResult {
     const [isActive, setIsActive] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
-
-
 
     const currentStep = isActive ? TUTORIAL_STEPS[stepIndex] || null : null;
 

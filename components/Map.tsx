@@ -376,6 +376,30 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
                     }
                 })
             )}
+
+            {/* Intermediate Stops (Bus/Train) */}
+            {selectedRoute && selectedRoute.segments && (
+                selectedRoute.segments.map((seg, i) => {
+                    if (!seg.intermediateStops || seg.intermediateStops.length === 0) return null;
+
+                    return seg.intermediateStops.map((stop, j) => {
+                        if (!stop.lat || !stop.lng) return null;
+                        return (
+                            <CircleMarker
+                                key={`stop-${i}-${j}`}
+                                center={[stop.lat, stop.lng]}
+                                radius={4}
+                                pathOptions={{ color: '#2563EB', fillOpacity: 1, fillColor: 'white', weight: 2 }}
+                            >
+                                <Tooltip direction="top" offset={[0, -5]} opacity={0.9} className="font-sans text-xs font-bold text-gray-700 bg-white border border-gray-200 shadow-sm px-2 py-1 rounded">
+                                    <span>{stop.name}</span>
+                                    {stop.time && <span className="ml-1 text-gray-500 font-mono text-[10px]">{stop.time}</span>}
+                                </Tooltip>
+                            </CircleMarker>
+                        );
+                    });
+                })
+            )}
         </MapContainer>
     );
 };
