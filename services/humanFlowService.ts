@@ -1,8 +1,9 @@
 /**
- * Human Flow Data Service with Monthly and Time-of-Day Support
+ * Human Flow Data Service with Monthly, Day Type, and Time-of-Day Support
  * 
  * Provides dynamic congestion levels based on:
  * - Month (1-12)
+ * - Day type (weekday/weekend)
  * - Time of day (morning/noon/evening)
  * - Location (Kyoto city vs. outside)
  * 
@@ -13,16 +14,23 @@ import humanFlowMonthlyData from '../human_flow_monthly.json';
 
 export type TimeOfDay = 'morning' | 'noon' | 'evening';
 export type Month = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09' | '10' | '11' | '12';
+export type DayType = 'weekday' | 'weekend';
 export type Region = 'city' | 'outside';
 export type CongestionLevel = 1 | 2 | 3 | 4 | 5;
 
 // Kyoto city bounds
 const KYOTO_CITY_BOUNDS = humanFlowMonthlyData.kyotoCityBounds;
 
-// Monthly data structure
+// Monthly data structure with weekday/weekend separation
 const MONTHLY_DATA = humanFlowMonthlyData.monthlyData as Record<Month, {
-    meshPopulations: Record<string, { morning: number, noon: number, evening: number }>;
-    meshRegions: Record<string, string>;
+    weekday: {
+        meshPopulations: Record<string, { morning: number, noon: number, evening: number }>;
+        meshRegions: Record<string, string>;
+    };
+    weekend: {
+        meshPopulations: Record<string, { morning: number, noon: number, evening: number }>;
+        meshRegions: Record<string, string>;
+    };
 }>;
 
 /**
@@ -41,6 +49,14 @@ export function getCurrentTimeOfDay(): TimeOfDay {
     if (hour >= 6 && hour < 12) return 'morning';
     if (hour >= 12 && hour < 18) return 'noon';
     return 'evening';
+}
+
+/**
+ * Get current day type (weekday or weekend)
+ */
+export function getCurrentDayType(): DayType {
+    const day = new Date().getDay(); // 0 = Sunday, 6 = Saturday
+    return (day === 0 || day === 6) ? 'weekend' : 'weekday';
 }
 
 /**
@@ -74,23 +90,25 @@ export function isInKyotoCity(lat: number, lon: number): boolean {
 }
 
 /**
- * Get region for a mesh code (for a specific month)
+ * Get region for a mesh code (for a specific month and day type)
  */
-export function getMeshRegion(meshCode: string, month?: Month): Region {
+export function getMeshRegion(meshCode: string, month?: Month, dayType?: DayType): Region {
     const m = month || getCurrentMonth();
+    const d = dayType || getCurrentDayType();
     const monthData = MONTHLY_DATA[m];
-    if (!monthData) return 'outside';
-    return (monthData.meshRegions[meshCode] as Region) || 'outside';
+    if (!monthData || !monthData[d]) return 'outside';
+    return (monthData[d].meshRegions[meshCode] as Region) || 'outside';
 }
 
 /**
- * Get population for a mesh code at a specific time and month
+ * Get population for a mesh code at a specific time, month, and day type
  */
-export function getMeshPopulation(meshCode: string, timeOfDay: TimeOfDay, month?: Month): number {
+export function getMeshPopulation(meshCode: string, timeOfDay: TimeOfDay, month?: Month, dayType?: DayType): number {
     const m = month || getCurrentMonth();
+    const d = dayType || getCurrentDayType();
     const monthData = MONTHLY_DATA[m];
-    if (!monthData) return 0;
-    const data = monthData.meshPopulations[meshCode];
+    if (!monthData || !monthData[d]) return 0;
+    const data = monthData[d].meshPopulations[meshCode];
     if (!data) return 0;
     return data[timeOfDay] || 0;
 }
@@ -106,8 +124,8 @@ export function getMeshPopulation(meshCode: string, timeOfDay: TimeOfDay, month?
  * - Level 5 (混雑): Top 20% (deviation >= 58)
  */
 
-// Population stats calculated from SPOT LOCATIONS ONLY - per time period, per month
-let populationStatsCache: Record<string, Record<TimeOfDay, { mean: number; stdDev: number }>> = {};
+// Population stats calculated from SPOT LOCATIONS ONLY - per time period, per month, per day type
+let populationStatsCache: Record<string, Record<DayType, Record<TimeOfDay, { mean: number; stdDev: number }>>> = {};
 let registeredSpotLocations: { lat: number; lng: number }[] = [];
 
 /**
@@ -119,15 +137,16 @@ export function registerSpotLocations(locations: { lat: number; lng: number }[])
     populationStatsCache = {}; // Reset cache
 }
 
-// Get population statistics for a specific month (cached)
-function getStatsForMonth(month: Month): Record<TimeOfDay, { mean: number; stdDev: number }> {
-    if (populationStatsCache[month]) {
-        return populationStatsCache[month];
+// Get population statistics for a specific month and day type (cached)
+function getStatsForMonthAndDayType(month: Month, dayType: DayType): Record<TimeOfDay, { mean: number; stdDev: number }> {
+    const cacheKey = `${month}_${dayType}`;
+    if (populationStatsCache[cacheKey]) {
+        return populationStatsCache[cacheKey][dayType];
     }
 
     const monthData = MONTHLY_DATA[month];
 
-    if (!monthData) {
+    if (!monthData || !monthData[dayType]) {
         return {
             morning: { mean: 1000, stdDev: 500 },
             noon: { mean: 1000, stdDev: 500 },
@@ -147,7 +166,7 @@ function getStatsForMonth(month: Month): Record<TimeOfDay, { mean: number; stdDe
 
     if (registeredSpotLocations.length === 0) {
         // Fallback: use all meshes from month
-        meshCodesToUse.push(...Object.keys(monthData.meshPopulations));
+        meshCodesToUse.push(...Object.keys(monthData[dayType].meshPopulations));
     } else {
         // Only use meshes where spots exist
         for (const loc of registeredSpotLocations) {
@@ -161,7 +180,7 @@ function getStatsForMonth(month: Month): Record<TimeOfDay, { mean: number; stdDe
 
     // Collect population data per time period
     for (const meshCode of meshCodesToUse) {
-        const data = monthData.meshPopulations[meshCode];
+        const data = monthData[dayType].meshPopulations[meshCode];
         if (data) {
             if (data.morning > 0) spotPopulationsByTime.morning.push(data.morning);
             if (data.noon > 0) spotPopulationsByTime.noon.push(data.noon);
@@ -176,7 +195,10 @@ function getStatsForMonth(month: Month): Record<TimeOfDay, { mean: number; stdDe
         evening: calculateStats(spotPopulationsByTime.evening)
     };
 
-    populationStatsCache[month] = stats;
+    if (!populationStatsCache[cacheKey]) {
+        populationStatsCache[cacheKey] = {} as Record<DayType, Record<TimeOfDay, { mean: number; stdDev: number }>>;
+    }
+    populationStatsCache[cacheKey][dayType] = stats;
     return stats;
 }
 
@@ -199,11 +221,13 @@ function populationToCongestionLevel(
     population: number,
     region: Region,
     timeOfDay: TimeOfDay,
-    month?: Month
+    month?: Month,
+    dayType?: DayType
 ): CongestionLevel {
-    // Get stats for the specific month
+    // Get stats for the specific month and day type
     const m = month || getCurrentMonth();
-    const allStats = getStatsForMonth(m);
+    const d = dayType || getCurrentDayType();
+    const allStats = getStatsForMonthAndDayType(m, d);
     const stats = allStats[timeOfDay];
 
     if (!stats || stats.stdDev === 0) {
@@ -230,36 +254,40 @@ function populationToCongestionLevel(
  * @param lon Longitude
  * @param timeOfDay Optional time override (defaults to current time)
  * @param month Optional month override (defaults to current month)
+ * @param dayType Optional day type override (defaults to current day type)
  */
 export function getCongestionLevel(
     lat: number,
     lon: number,
     timeOfDay?: TimeOfDay,
-    month?: Month
+    month?: Month,
+    dayType?: DayType
 ): CongestionLevel {
     const time = timeOfDay || getCurrentTimeOfDay();
     const m = month || getCurrentMonth();
+    const d = dayType || getCurrentDayType();
     const meshCode = latLonToMesh1km(lat, lon);
-    const region = getMeshRegion(meshCode, m);
-    const population = getMeshPopulation(meshCode, time, m);
+    const region = getMeshRegion(meshCode, m, d);
+    const population = getMeshPopulation(meshCode, time, m, d);
 
-    return populationToCongestionLevel(population, region, time, m);
+    return populationToCongestionLevel(population, region, time, m, d);
 }
 
 /**
  * Get congestion levels for all time periods
  */
-export function getAllCongestionLevels(lat: number, lon: number): {
+export function getAllCongestionLevels(lat: number, lon: number, dayType?: DayType): {
     morning: CongestionLevel;
     noon: CongestionLevel;
     evening: CongestionLevel;
     current: CongestionLevel;
 } {
+    const d = dayType || getCurrentDayType();
     return {
-        morning: getCongestionLevel(lat, lon, 'morning'),
-        noon: getCongestionLevel(lat, lon, 'noon'),
-        evening: getCongestionLevel(lat, lon, 'evening'),
-        current: getCongestionLevel(lat, lon)
+        morning: getCongestionLevel(lat, lon, 'morning', undefined, d),
+        noon: getCongestionLevel(lat, lon, 'noon', undefined, d),
+        evening: getCongestionLevel(lat, lon, 'evening', undefined, d),
+        current: getCongestionLevel(lat, lon, undefined, undefined, d)
     };
 }
 
@@ -284,5 +312,15 @@ export function getTimeOfDayLabel(time: TimeOfDay): string {
         case 'morning': return '朝 (6-12時)';
         case 'noon': return '昼 (12-18時)';
         case 'evening': return '夕方 (18-24時)';
+    }
+}
+
+/**
+ * Get day type label in Japanese
+ */
+export function getDayTypeLabel(dayType: DayType): string {
+    switch (dayType) {
+        case 'weekday': return '平日';
+        case 'weekend': return '休日';
     }
 }

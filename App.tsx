@@ -4,7 +4,7 @@ import { getTransitInfo, generateGuideContent, playTextToSpeech, isAIAvailable }
 import { routeService } from './services/routeService';
 import { wikimediaService } from './services/wikimediaService';
 import { findNearbySpots, filterSpotsNearRoute, getDistanceFromLatLonInKm } from './services/spotService';
-import { getCongestionLevel, getCurrentTimeOfDay, getCurrentMonth, TimeOfDay, Month, getTimeOfDayLabel } from './services/humanFlowService';
+import { getCongestionLevel, getCurrentTimeOfDay, getCurrentMonth, getCurrentDayType, TimeOfDay, Month, DayType, getTimeOfDayLabel, getDayTypeLabel } from './services/humanFlowService';
 
 import { useLocationSimulator } from './hooks/useLocationSimulator';
 import { useGuideSystem } from './hooks/useGuideSystem';
@@ -62,6 +62,7 @@ function App() {
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
     const [selectedMonth, setSelectedMonth] = useState<Month>(getCurrentMonth()); // Month for congestion (dev mode)
+    const [selectedDayType, setSelectedDayType] = useState<DayType>(getCurrentDayType()); // Day type for congestion (dev mode)
     const [devMode, setDevMode] = useState(false); // Developer mode for advanced features
     const [recenterTrigger, setRecenterTrigger] = useState(0); // Trigger to recenter map
 
@@ -172,12 +173,12 @@ function App() {
     const displaySpots = React.useMemo(() => {
         if (!devMode) return spots;
 
-        // Recalculate congestion levels with selected month/time
+        // Recalculate congestion levels with selected month/time/dayType
         return spots.map(spot => ({
             ...spot,
-            congestionLevel: getCongestionLevel(spot.location.latitude, spot.location.longitude, selectedTime, selectedMonth)
+            congestionLevel: getCongestionLevel(spot.location.latitude, spot.location.longitude, selectedTime, selectedMonth, selectedDayType)
         }));
-    }, [spots, devMode, selectedMonth, selectedTime]);
+    }, [spots, devMode, selectedMonth, selectedTime, selectedDayType]);
 
     // Load bus and subway routes data
     useEffect(() => {
@@ -1654,6 +1655,22 @@ function App() {
                                                                 }`}
                                                         >
                                                             {t === 'morning' ? '朝' : t === 'noon' ? '昼' : '夕'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                {/* Day Type Selector (Weekday/Weekend) */}
+                                                <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
+                                                    {(['weekday', 'weekend'] as DayType[]).map((d) => (
+                                                        <button
+                                                            key={d}
+                                                            onClick={() => setSelectedDayType(d)}
+                                                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedDayType === d
+                                                                ? 'bg-white text-indigo-600 shadow-sm'
+                                                                : 'text-gray-400 hover:text-gray-600'
+                                                                }`}
+                                                        >
+                                                            {d === 'weekday' ? '平日' : '休日'}
                                                         </button>
                                                     ))}
                                                 </div>
