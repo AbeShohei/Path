@@ -364,16 +364,21 @@ function App() {
             }
             if (locationSimulator.state.isRunning) {
                 locationSimulator.setProgress(50);
-                // One-time centering
-                setRecenterTrigger(prev => prev + 1);
+                // Delay recenter to allow position state to update first
+                // This ensures the map moves to the NEW position, not the old one
+                setTimeout(() => {
+                    setRecenterTrigger(prev => prev + 1);
+                }, 300);
             }
         }
 
         if (tutorial.currentStep.id === 'nav_arrive') {
             if (locationSimulator.state.isRunning) {
                 locationSimulator.setProgress(90);
-                // One-time centering
-                setRecenterTrigger(prev => prev + 1);
+                // Delay recenter to allow position state to update first
+                setTimeout(() => {
+                    setRecenterTrigger(prev => prev + 1);
+                }, 300);
             }
         }
 
@@ -383,8 +388,10 @@ function App() {
                 // To show "Arrived" state we usually rely on `isArrived` prop in GuideSlider which checks distance/progress.
                 // Let's set it to 99.9% to be safe, or 100%. 
                 locationSimulator.setProgress(99.9);
-                // One-time centering
-                setRecenterTrigger(prev => prev + 1);
+                // Delay recenter to allow position state to update first
+                setTimeout(() => {
+                    setRecenterTrigger(prev => prev + 1);
+                }, 300);
             }
         }
 
