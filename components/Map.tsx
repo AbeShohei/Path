@@ -181,16 +181,30 @@ const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigat
         if (recenterTrigger && recenterTrigger !== lastRecenterTrigger.current) {
             lastRecenterTrigger.current = recenterTrigger;
 
+            // Target zoom level
+            const targetZoom = 15;
+            const currentZoom = map.getZoom();
+
             // Calculate Upper Half Offset
-            const zoom = 15; // Standard recenter zoom
-            const centerPoint = map.project([center.latitude, center.longitude], zoom);
+            const centerPoint = map.project([center.latitude, center.longitude], targetZoom);
             const mapSize = map.getSize();
             const offsetY = mapSize.y * 0.25; // Shift down by 25% of height (User at ~25% from top)
 
             const targetPoint = L.point(centerPoint.x, centerPoint.y + offsetY);
-            const targetLatLng = map.unproject(targetPoint, zoom);
+            const targetLatLng = map.unproject(targetPoint, targetZoom);
 
-            map.flyTo(targetLatLng, zoom, { duration: 0.8 });
+            // If zoom level is the same, use panTo (smoother, no route lag)
+            // If zoom needs to change, use short flyTo animation
+            if (Math.abs(currentZoom - targetZoom) < 0.5) {
+                // Same zoom level - use panTo for smooth panning without route lag
+                map.panTo(targetLatLng, { animate: true, duration: 0.5, easeLinearity: 1 });
+            } else {
+                // Different zoom - use short flyTo, then pan if needed
+                // Set zoom first instantly to prevent lag during animation
+                map.setZoom(targetZoom, { animate: false });
+                // Then pan smoothly
+                map.panTo(targetLatLng, { animate: true, duration: 0.4, easeLinearity: 1 });
+            }
         }
     }, [recenterTrigger, map, center]);
 
