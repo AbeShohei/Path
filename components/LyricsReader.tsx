@@ -22,20 +22,20 @@ const LyricsReader: React.FC<LyricsReaderProps> = ({ text, isPlaying, duration, 
     switch (status) {
       case 'normal':
         return isLight
-          ? 'text-gray-100 opacity-100 scale-100'
-          : 'text-gray-700 opacity-100 scale-100';
+          ? 'text-gray-100 opacity-100'
+          : 'text-gray-700 opacity-100';
       case 'read':
         return isLight
           ? 'text-white/60 blur-[0.5px]'
           : 'text-gray-800 opacity-60 blur-[0.5px]';
       case 'reading':
         return isLight
-          ? 'text-cyan-300 scale-105 drop-shadow-md'
-          : 'text-indigo-700 opacity-100 scale-105 drop-shadow-md';
+          ? 'text-cyan-300 drop-shadow-md'
+          : 'text-indigo-700 opacity-100 drop-shadow-md';
       case 'unread':
         return isLight
-          ? 'text-white/40 blur-[0.5px] scale-95'
-          : 'text-gray-400 opacity-70 blur-[0.5px] scale-95';
+          ? 'text-white/40 blur-[0.5px]'
+          : 'text-gray-400 opacity-70 blur-[0.5px]';
     }
   };
 
@@ -116,7 +116,7 @@ const LyricsReader: React.FC<LyricsReaderProps> = ({ text, isPlaying, duration, 
     <div className="w-full">
       <div
         ref={containerRef}
-        className="space-y-6 text-left"
+        className="space-y-6 text-left pl-1"
       >
         {lines.map((line, i) => {
           const lineStart = charCount;

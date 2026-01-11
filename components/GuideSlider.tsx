@@ -531,7 +531,7 @@ export const GuideSlider: React.FC<GuideSliderProps> = ({
                                 {/* Text (show in all non-collapsed states) */}
                                 {(viewState === 'full' || viewState === 'normal' || viewState === 'compact') && (
                                     <>
-                                        <div className={`text-xs text-gray-600 leading-relaxed ${viewState === 'full' || viewState === 'compact' ? 'flex-1 overflow-y-auto mb-4 pr-2 custom-scrollbar' :
+                                        <div className={`text-xs text-gray-600 leading-relaxed whitespace-pre-wrap text-left ${viewState === 'full' || viewState === 'compact' ? 'flex-1 overflow-y-auto mb-4 pr-2 custom-scrollbar' :
                                             'line-clamp-5 mb-1'
                                             }`}>
                                             <div ref={textRef}>

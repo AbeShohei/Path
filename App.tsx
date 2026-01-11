@@ -739,6 +739,7 @@ function App() {
         setGuideText("");
         setTransitInfo(null);
         setAudioDuration(0);
+        setIsArrived(false); // Reset arrival state for fresh navigation
 
         // Initialize timer with actual segment duration from route
         const firstSegmentDuration = selectedRoute?.segments?.[0]?.duration;

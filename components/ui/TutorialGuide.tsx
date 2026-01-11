@@ -57,8 +57,8 @@ export const TutorialGuide: React.FC<TutorialGuideProps> = ({
 
     return (
         <>
-            {/* Semi-transparent overlay - only for center positioned steps */}
-            {step.position === 'center' && (
+            {/* Semi-transparent overlay - only for center positioned steps, except nav_guide */}
+            {step.position === 'center' && step.id !== 'nav_guide' && (
                 <div className="fixed inset-0 bg-black/50 z-[90] animate-fade-in" />
             )}
 
