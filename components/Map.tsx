@@ -49,9 +49,12 @@ interface MapProps {
     subwayRoutes?: BusRoute[];
     highlightedRouteIds?: string[];
     highlightedGuideSpotId?: string | null;
-    recenterTrigger?: number; // Increment to trigger recenter to current location
-    transportMode?: string; // 'WALK' | 'BUS' | etc
+    recenterTrigger?: number;
+    transportMode?: string;
     bearing?: number;
+    // Favorites
+    onToggleFavorite?: (spot: Spot) => void;
+    isFavorite?: (spotId: string) => boolean;
 }
 
 const LocationMarker3D = ({ position, mode, isMoving, bearing = 0 }: { position: Coordinates, mode: string, isMoving: boolean, bearing?: number }) => {
@@ -197,7 +200,7 @@ const MapController = ({ center, selectedSpotId, focusedSpotId, spots, isNavigat
     return null;
 };
 
-const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false, showBusRoutes = false, busRoutes = [], subwayRoutes = [], highlightedRouteIds = [], highlightedGuideSpotId, recenterTrigger, transportMode = 'WALK', bearing = 0 }) => {
+const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onPinClick, onMapClick, selectedSpotId, focusedSpotId, selectedRoute, routeOptions = [], isNavigating, isSheetDragging = false, disableSmartPan = false, showBusRoutes = false, busRoutes = [], subwayRoutes = [], highlightedRouteIds = [], highlightedGuideSpotId, recenterTrigger, transportMode = 'WALK', bearing = 0, onToggleFavorite, isFavorite }) => {
     const [activeSpot, setActiveSpot] = useState<Spot | null>(null);
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
     const lastFocusedSpotId = useRef<string | undefined>(undefined);
@@ -349,7 +352,35 @@ const Map: React.FC<MapProps> = ({ center, spots, onSelectSpot, onViewRoute, onP
                                         {spot.openingHours && (<div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden"><svg className="shrink-0 w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span className="truncate">{spot.openingHours}</span></div>)}
                                         {spot.price && (<div className="flex items-center gap-2 text-xs text-gray-500 overflow-hidden"><div className="shrink-0 w-3.5 h-3.5 flex items-center justify-center text-indigo-400 font-bold text-[10px] border border-indigo-200 rounded-full">¥</div><span className="truncate">{spot.price}</span></div>)}
                                     </div>
-                                    <button onClick={(e) => { e.stopPropagation(); if (onViewRoute) onViewRoute(spot); }} className="w-full mt-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-2 rounded shadow text-xs font-bold hover:opacity-90 transition-opacity">ルートを見る</button>
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-2 mt-3">
+                                        {/* Favorite Button */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (onToggleFavorite) onToggleFavorite(spot);
+                                            }}
+                                            className={`p-2 rounded shadow transition-all ${
+                                                isFavorite && isFavorite(spot.id)
+                                                    ? 'bg-red-500 text-white'
+                                                    : 'bg-white text-gray-400 hover:text-red-500 border border-gray-200'
+                                            }`}
+                                        >
+                                            <svg className="w-4 h-4" fill={isFavorite && isFavorite(spot.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                            </svg>
+                                        </button>
+                                        {/* View Route Button */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (onViewRoute) onViewRoute(spot);
+                                            }}
+                                            className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-2 rounded shadow text-xs font-bold hover:opacity-90 transition-opacity"
+                                        >
+                                            ルートを見る
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </Popup>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Coordinates, AppMode, Spot, TransportMode, GroundingChunk, RouteOption, RouteSegment, TransitUpdate } from './types';
 import { getTransitInfo, generateGuideContent, playTextToSpeech, isAIAvailable } from './services/aiService';
 import { routeService } from './services/routeService';
@@ -25,6 +26,17 @@ import {
     ClockIcon, CameraIcon, CongestionLevelIcon
 } from './components/icons';
 
+// New imports for Clerk + Convex integration
+import { BottomNav, TabId } from './src/components/navigation/BottomNav';
+import { FavoritesPage } from './src/pages/FavoritesPage';
+import { SettingsPage } from './src/pages/SettingsPage';
+import { useAuth } from './src/hooks/useAuth';
+import { useFavorites } from './src/hooks/useFavorites';
+import { useRouteHistory } from './src/hooks/useRouteHistory';
+
+// Additional inline icons not in icons file
+const SwapIcon = () => <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>;
+
 // Screens
 import { LandingPage } from './components/screens/LandingPage';
 
@@ -44,6 +56,8 @@ const STAGE_DURATIONS = {
 
 function App() {
     const [mode, setMode] = useState<AppMode>(AppMode.LANDING);
+    const [previousMode, setPreviousMode] = useState<AppMode>(AppMode.LANDING); // Track previous mode for back navigation
+    const [currentTab, setCurrentTab] = useState<TabId>('home');
     const [routeSheetState, setRouteSheetState] = useState<'minimized' | 'default' | 'full'>('default');
     const [routeTab, setRouteTab] = useState<'RECOMMENDED' | 'TRANSIT' | 'WALKING'>('RECOMMENDED');
     const [showNavRouteDetail, setShowNavRouteDetail] = useState(false); // Route detail during navigation
@@ -55,7 +69,6 @@ function App() {
     // Interactive tutorial hook
     const tutorialMode = mode === AppMode.LANDING ? 'LANDING' : mode;
 
-
     const [coords, setCoords] = useState<Coordinates | null>(null);
     const [spots, setSpots] = useState<Spot[]>([]);
     const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
@@ -64,6 +77,11 @@ function App() {
     const [selectedMonth, setSelectedMonth] = useState<Month>(getCurrentMonth()); // Month for congestion (dev mode)
     const [devMode, setDevMode] = useState(false); // Developer mode for advanced features
     const [recenterTrigger, setRecenterTrigger] = useState(0); // Trigger to recenter map
+
+    // Auth & Data hooks
+    const { isSignedIn, openSignIn, convexUserId } = useAuth();
+    const { toggleFavorite, isFavorite } = useFavorites();
+    const { addHistory } = useRouteHistory();
 
     // Selection State
     const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
@@ -78,12 +96,9 @@ function App() {
     const [selectedRoute, setSelectedRoute] = useState<RouteOption | null>(null);
     const [showRouteDetail, setShowRouteDetail] = useState(false); // Separate state for showing detail view
     const [showAudioPrompt, setShowAudioPrompt] = useState(false);
-    const [showArrivalModal, setShowArrivalModal] = useState(false); // Arrival confirmation modal
-
-
-
     // Sheet height in pixels (for free-form dragging)
     const [sheetHeight, setSheetHeight] = useState(Math.floor(window.innerHeight * 0.45));
+    const [showArrivalModal, setShowArrivalModal] = useState(false); // Arrival confirmation modal
 
     // Bus Routes Display State
     const [showBusRoutes, setShowBusRoutes] = useState(false);
@@ -105,6 +120,17 @@ function App() {
     const dragStartY = useRef(0);
     const sheetStartHeight = useRef(0);
     const sheetRef = useRef<HTMLDivElement>(null);
+
+    // Viewport Height Fix for Mobile (LINE, PWA, etc.)
+    useEffect(() => {
+        const setVh = () => {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+        setVh();
+        window.addEventListener('resize', setVh);
+        return () => window.removeEventListener('resize', setVh);
+    }, []);
 
     // Lyrics Drag State
     const [isLyricsDragging, setIsLyricsDragging] = useState(false);
@@ -1207,6 +1233,59 @@ function App() {
         setIsPlaying(false);
     };
 
+    // Bottom Navigation Tab Handler
+    const handleTabChange = (tab: TabId) => {
+        setCurrentTab(tab);
+
+        if (tab === 'home') {
+            // Return to previous home mode or PLANNING if available
+            if (coords) {
+                setMode(AppMode.PLANNING);
+            } else {
+                setMode(AppMode.LANDING);
+            }
+        } else if (tab === 'favorites') {
+            setPreviousMode(mode);
+            setMode(AppMode.FAVORITES);
+        } else if (tab === 'settings') {
+            setPreviousMode(mode);
+            setMode(AppMode.SETTINGS);
+        } else if (tab === 'profile') {
+            if (!isSignedIn) {
+                openSignIn();
+            }
+            // If signed in, the tab shows profile but we don't need to change mode
+        }
+    };
+
+    // Handle selecting a spot from favorites page
+    const handleFavoriteSpotSelect = (spot: {
+        id: string;
+        name: string;
+        description?: string;
+        location: { latitude: number; longitude: number };
+        congestionLevel?: number;
+        imageUrl?: string;
+    }) => {
+        // Convert to Spot type and select
+        const fullSpot: Spot = {
+            id: spot.id,
+            name: spot.name,
+            description: spot.description || '',
+            location: spot.location,
+            congestionLevel: (spot.congestionLevel as 1 | 2 | 3 | 4 | 5) || 3,
+            imageUrl: spot.imageUrl,
+        };
+        setSelectedSpot(fullSpot);
+        setCurrentTab('home');
+        if (coords) {
+            setMode(AppMode.ROUTE_SELECT);
+            handleRouteSearch(fullSpot);
+        } else {
+            setMode(AppMode.PLANNING);
+        }
+    };
+
     // Sheet Drag Handlers for Nearby Spots - Direct DOM Manipulation for Performance
     const handlePointerDown = (e: React.PointerEvent) => {
         e.stopPropagation();
@@ -1228,8 +1307,8 @@ function App() {
         const deltaY = dragStartY.current - e.clientY; // positive = dragging up
         const newHeight = sheetStartHeight.current + deltaY;
 
-        // Constraints: minimum 88px, maximum 90% of screen
-        const minHeight = 88;
+        // Constraints: minimum 105px (keeps "スワイプで開く" visible), maximum 90% of screen
+        const minHeight = 105;
         const maxHeight = Math.floor(window.innerHeight * 0.9);
         const clampedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
@@ -1254,7 +1333,7 @@ function App() {
             let finalHeight = currentHeight;
 
             if (currentHeight < 150) {
-                finalHeight = 88;
+                finalHeight = 105;
             } else if (currentHeight > screenHeight * 0.85) {
                 finalHeight = Math.floor(screenHeight * 0.9);
             }
@@ -1363,7 +1442,10 @@ function App() {
     const stageTimeInfo = getStageTimeInfo();
 
     return (
-        <div className="h-screen w-full max-w-md mx-auto bg-gray-50 shadow-2xl overflow-hidden relative font-sans text-gray-800 flex flex-col">
+        <div
+            className="w-full max-w-md mx-auto bg-gray-50 shadow-2xl overflow-hidden relative font-sans text-gray-800 flex flex-col"
+            style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
+        >
 
             {/* Toast Notification */}
             {toastMessage && (
@@ -1377,7 +1459,7 @@ function App() {
 
             {/* Global Header */}
             {mode !== AppMode.LANDING && mode !== AppMode.ROUTE_SELECT && mode !== AppMode.PLANNING && (
-                <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-2 sticky top-0 z-40 shadow-sm flex items-center justify-between gap-3 shrink-0">
+                <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-3 pt-safe sticky top-0 z-40 shadow-sm flex items-center justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-3 overflow-hidden w-full">
                         <button onClick={goBackToPlanning} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors shrink-0">
                             <ChevronLeftIcon />
@@ -1518,6 +1600,15 @@ function App() {
                             subwayRoutes={[]}
                             highlightedGuideSpotId={highlightedGuideSpotId}
                             recenterTrigger={recenterTrigger}
+                            onToggleFavorite={(spot) => toggleFavorite({
+                                spotId: spot.id,
+                                spotName: spot.name,
+                                spotDescription: spot.description,
+                                spotLocation: spot.location,
+                                spotCongestionLevel: spot.congestionLevel,
+                                spotImageUrl: spot.imageUrl
+                            })}
+                            isFavorite={isFavorite}
                         />
                     )}
                 </div>
@@ -1564,9 +1655,9 @@ function App() {
                             onTouchEnd={(e) => e.stopPropagation()}
                             onPointerDown={(e) => e.stopPropagation()}
                         >
-                            {/* Drag Handle */}
+                            {/* Drag Handle with Swipe Hint */}
                             <div
-                                className="w-full flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing hover:bg-gray-50 transition-colors touch-none shrink-0"
+                                className="w-full flex flex-col items-center pt-3 pb-1 cursor-grab active:cursor-grabbing hover:bg-gray-50 transition-colors touch-none shrink-0"
                                 onPointerDown={handlePointerDown}
                                 onPointerMove={handlePointerMove}
                                 onPointerUp={handlePointerUp}
@@ -1576,8 +1667,17 @@ function App() {
                                 onClick={(e) => e.stopPropagation()}
                                 onMouseDown={(e) => e.stopPropagation()}
                                 onTouchStart={(e) => e.stopPropagation()}
+                                style={sheetHeight < 120 ? { animation: 'bounce 1s infinite' } : {}}
                             >
                                 <div className="w-12 h-1.5 bg-gray-300 rounded-full opacity-50 pointer-events-none"></div>
+                                {sheetHeight < 120 && (
+                                    <div className="flex items-center gap-1 mt-2 pointer-events-none">
+                                        <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                        </svg>
+                                        <span className="text-xs font-bold text-gray-500">スワイプで開く</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="px-6 pb-2 shrink-0 bg-white z-20 space-y-3 pointer-events-none">
@@ -1971,17 +2071,41 @@ function App() {
                                             <div className="h-28"></div> {/* Spacer for fixed button */}
                                         </div>
 
-                                        {/* Float Start Button (Fixed at Bottom of View) */}
-                                        <div className="absolute bottom-6 left-6 right-6 z-20">
-                                            <button
-                                                onClick={() => startNavigation(selectedRoute)}
-                                                className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                                                    <PlayIcon className="w-4 h-4 ml-0.5" />
-                                                </div>
-                                                <span className="text-lg">ガイドを開始</span>
-                                            </button>
+                                        {/* Float Start Button with Favorite (Fixed at Bottom of View) */}
+                                        <div className="absolute bottom-6 left-6 right-6 z-20 pb-safe">
+                                            <div className="flex gap-3">
+                                                {/* Favorite Button */}
+                                                {selectedSpot && (
+                                                    <button
+                                                        onClick={() => toggleFavorite({
+                                                            spotId: selectedSpot.id,
+                                                            spotName: selectedSpot.name,
+                                                            spotDescription: selectedSpot.description,
+                                                            spotLocation: selectedSpot.location,
+                                                            spotCongestionLevel: selectedSpot.congestionLevel,
+                                                            spotImageUrl: selectedSpot.imageUrl
+                                                        })}
+                                                        className={`p-4 rounded-2xl shadow-xl transition-all flex items-center justify-center ${isFavorite(selectedSpot.id)
+                                                            ? 'bg-red-500 text-white shadow-red-200'
+                                                            : 'bg-white text-gray-400 hover:text-red-500 shadow-gray-200'
+                                                            }`}
+                                                    >
+                                                        <svg className="w-6 h-6" fill={isFavorite(selectedSpot.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                        </svg>
+                                                    </button>
+                                                )}
+                                                {/* Start Navigation Button */}
+                                                <button
+                                                    onClick={() => startNavigation(selectedRoute)}
+                                                    className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                                        <PlayIcon className="w-4 h-4 ml-0.5" />
+                                                    </div>
+                                                    <span className="text-lg">ガイドを開始</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ) : (
@@ -2417,7 +2541,6 @@ function App() {
             {
                 mode !== AppMode.LANDING && mode !== AppMode.DESTINATION && (
                     <button
-
                         onClick={() => setRecenterTrigger(prev => prev + 1)}
                         className="absolute right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all border border-gray-200 overflow-hidden"
                         style={{
@@ -2475,6 +2598,45 @@ function App() {
                     }}
                 />
             )}
+
+            {/* Favorites Page */}
+            {mode === AppMode.FAVORITES && (
+                <div className="absolute inset-0 z-40 bg-white flex flex-col">
+                    {/* Page Header */}
+                    <header className="bg-indigo-900 text-white px-4 pb-3 shadow-sm flex items-center gap-3 shrink-0" style={{ paddingTop: 'max(12px, env(safe-area-inset-top) + 12px)' }}>
+                        <button onClick={() => handleTabChange('home')} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors">
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                        </button>
+                        <h1 className="text-lg font-bold">お気に入り</h1>
+                    </header>
+                    <div className="flex-1 overflow-y-auto bg-gray-50">
+                        <FavoritesPage onSpotSelect={handleFavoriteSpotSelect} />
+                    </div>
+                </div>
+            )}
+
+            {/* Settings Page */}
+            {mode === AppMode.SETTINGS && (
+                <div className="absolute inset-0 z-40 bg-white flex flex-col">
+                    {/* Page Header */}
+                    <header className="bg-indigo-900 text-white px-4 pb-3 shadow-sm flex items-center gap-3 shrink-0" style={{ paddingTop: 'max(12px, env(safe-area-inset-top) + 12px)' }}>
+                        <button onClick={() => handleTabChange('home')} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors">
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                        </button>
+                        <h1 className="text-lg font-bold">設定</h1>
+                    </header>
+                    <div className="flex-1 overflow-y-auto bg-gray-50">
+                        <SettingsPage />
+                    </div>
+                </div>
+            )}
+
+            {/* Bottom Navigation - Hidden during NAVIGATING and LANDING */}
+            <BottomNav
+                currentTab={currentTab}
+                onTabChange={handleTabChange}
+                hidden={mode === AppMode.NAVIGATING || mode === AppMode.LANDING}
+            />
         </div >
     );
 }

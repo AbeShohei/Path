@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { ConvexClientProvider } from './src/providers/ConvexClientProvider';
 
 // Suppress specific console logs
 const originalConsoleLog = console.log;
@@ -41,6 +42,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <ConvexClientProvider>
+      <App />
+    </ConvexClientProvider>
   </React.StrictMode>
 );

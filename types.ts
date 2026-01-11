@@ -80,7 +80,10 @@ export enum AppMode {
   PLANNING = 'PLANNING',
   ROUTE_SELECT = 'ROUTE_SELECT',
   NAVIGATING = 'NAVIGATING',
-  DESTINATION = 'DESTINATION'
+  DESTINATION = 'DESTINATION',
+  // New modes for bottom navigation
+  FAVORITES = 'FAVORITES',
+  SETTINGS = 'SETTINGS'
 }
 
 export enum TransportMode {
