@@ -1,5 +1,5 @@
-import React from 'react';
-import { MapPinIcon } from '../icons';
+import React, { useState } from 'react';
+import { MapPinIcon, ChevronDownIcon, ChevronUpIcon } from '../icons';
 
 interface LandingPageProps {
     loading: boolean;
@@ -18,6 +18,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     onImageLoad,
     onShowTutorial
 }) => {
+    const [showDisclaimer, setShowDisclaimer] = useState(false);
+
     return (
         <div className="relative h-full flex flex-col items-center justify-end pb-20 text-center">
             {/* Background Image */}
@@ -73,10 +75,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         <p className="text-[10px] text-white/50">Images provided by Wikimedia Commons (CC-BY-SA)<br />and Unsplash</p>
                     </div>
 
+                    {/* Disclaimer Button */}
+                    <div className="mt-2 pt-2 border-t border-white/10 w-full text-center">
+                        <button
+                            onClick={() => setShowDisclaimer(true)}
+                            className="text-[10px] text-white/50 hover:text-white underline decoration-white/30 underline-offset-2 transition-colors"
+                        >
+                            データ利用規約・免責事項
+                        </button>
+                    </div>
+
                     {/* Developer Mode Toggle */}
                     <button
                         onClick={onToggleDevMode}
-                        className={`mt-2 text-[10px] px-3 py-1 rounded-full transition-all ${devMode
+                        className={`mt-2 text-[10px] px-3 py-1 rounded-full transition-all w-full text-center ${devMode
                             ? 'bg-indigo-500 text-white'
                             : 'bg-white/10 text-white/40 hover:text-white/60'
                             }`}
@@ -85,6 +97,43 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     </button>
                 </div>
             </div>
+
+            {/* Disclaimer Modal */}
+            {showDisclaimer && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+                    onClick={() => setShowDisclaimer(false)}
+                >
+                    <div
+                        className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative animate-scale-in"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <h3 className="font-bold text-lg mb-4 text-center border-b border-gray-100 pb-3 text-indigo-900">データ利用規約・免責事項</h3>
+
+                        <div className="text-xs text-left space-y-4 leading-relaxed max-h-[60vh] overflow-y-auto text-gray-600">
+                            <p>
+                                本アプリケーションが利用する公共交通データは、公共交通オープンデータセンターにおいて提供されるものです。
+                            </p>
+                            <p>
+                                公共交通事業者により提供されたデータを元にしていますが、必ずしも正確・完全なものとは限りません。本アプリケーションの表示内容について、公共交通事業者への直接の問合せは行わないでください。
+                            </p>
+                            <p className="pt-2 border-t border-gray-100">
+                                本アプリケーションに関するお問い合わせは、以下のメールアドレスにお願いします。<br />
+                                <a href="mailto:shokoi0618@gmail.com" className="text-indigo-600 hover:text-indigo-800 underline font-medium break-all">shokoi0618@gmail.com</a>
+                            </p>
+                        </div>
+
+                        <div className="mt-6 pt-2 text-center">
+                            <button
+                                onClick={() => setShowDisclaimer(false)}
+                                className="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-indigo-700 transition-colors shadow-lg active:scale-95 transform"
+                            >
+                                閉じる
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
