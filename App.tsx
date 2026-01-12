@@ -183,7 +183,7 @@ function App() {
     // Load bus and subway routes data
     useEffect(() => {
         // Load Bus Routes
-        fetch('/data/kyoto-bus-routes.json')
+        fetch(`${import.meta.env.BASE_URL}data/kyoto-bus-routes.json`)
             .then(res => res.json())
             .then(data => {
                 if (data.routes) {
