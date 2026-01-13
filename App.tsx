@@ -1217,58 +1217,64 @@ function App() {
 
     // Sheet Drag Handlers for Nearby Spots - Direct DOM Manipulation for Performance
     const handlePointerDown = (e: React.PointerEvent) => {
+        // Only trigger on the drag handle or the header itself
         e.stopPropagation();
-        e.preventDefault(); // Prevent default touch behavior and map interaction
         setIsDragging(true);
         dragStartY.current = e.clientY;
         sheetStartHeight.current = sheetHeight;
-        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
         if (!isDragging) return;
-        e.stopPropagation(); // Also prevent move propagation
+        e.stopPropagation();
 
-        // Use requestAnimationFrame to prevent layout thrashing, 
-        // but for simple height updates, direct assignment is usually fine.
-        // We bypass React state (setSheetHeight) to avoid re-rendering the whole App tree 60fps.
-
-        const deltaY = dragStartY.current - e.clientY; // positive = dragging up
+        const deltaY = dragStartY.current - e.clientY;
         const newHeight = sheetStartHeight.current + deltaY;
 
-        // Constraints: minimum 88px, maximum 90% of screen
         const minHeight = 88;
-        const maxHeight = Math.floor(window.innerHeight * 0.9);
+        const maxHeight = Math.floor(window.innerHeight * 0.95);
         const clampedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
-        // Ensure DOM is in sync with the state we just set (React will update it, but good to be explicit)
-        sheetRef.current.style.height = `${clampedHeight}px`;
+        if (sheetRef.current) {
+            sheetRef.current.style.height = `${clampedHeight}px`;
+        }
     }
     const handlePointerUp = (e: React.PointerEvent) => {
         if (!isDragging) return;
         e.stopPropagation();
-        e.preventDefault(); // Prevent click event from firing on map after drag
-        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
 
-        // Delay resetting isDragging to block subsequent click event from hitting the map (prevents "Tap" issue)
-        // Increased to 500ms to cover standard mobile 300ms tap delay
-        setTimeout(() => setIsDragging(false), 500);
+        // Reset dragging state after a short delay to prevent accidental map clicks
+        setTimeout(() => setIsDragging(false), 200);
 
         if (sheetRef.current) {
             const currentHeight = parseInt(sheetRef.current.style.height || '0', 10);
 
-            // Snap Logic
-            const screenHeight = window.innerHeight;
+            // Snap to bottom (88px) if released near the bottom (below 160px)
+            // Otherwise, stay at the current position (free positioning)
             let finalHeight = currentHeight;
-
-            if (currentHeight < 150) {
+            if (currentHeight < 160) {
                 finalHeight = 88;
-            } else if (currentHeight > screenHeight * 0.85) {
-                finalHeight = Math.floor(screenHeight * 0.9);
             }
 
             setSheetHeight(finalHeight);
             sheetRef.current.style.height = `${finalHeight}px`;
+        }
+    };
+
+    const handleDragHandleClick = () => {
+        const screenHeight = window.innerHeight;
+        const snapPoints = [88, Math.floor(screenHeight * 0.5), Math.floor(screenHeight * 0.9)];
+
+        // Find current state index
+        const currentIndex = snapPoints.findIndex(p => Math.abs(p - sheetHeight) < 10);
+        const nextIndex = (currentIndex + 1) % snapPoints.length;
+        const nextHeight = snapPoints[nextIndex];
+
+        setSheetHeight(nextHeight);
+        if (sheetRef.current) {
+            sheetRef.current.style.height = `${nextHeight}px`;
         }
     };
 
@@ -1564,7 +1570,7 @@ function App() {
                         {/* Draggable Sheet Container */}
                         <div
                             ref={sheetRef}
-                            className="absolute bottom-0 left-0 right-0 z-[20] bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col pointer-events-auto transition-[height] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] overflow-hidden"
+                            className={`absolute bottom-0 left-0 right-0 z-[20] bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col pointer-events-auto overflow-hidden ${isDragging ? '' : 'transition-[height] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)]'}`}
                             style={{ height: `${sheetHeight}px` }}
                             onClick={(e) => e.stopPropagation()}
                             onMouseDown={(e) => e.stopPropagation()}
@@ -1579,11 +1585,7 @@ function App() {
                                 onPointerMove={handlePointerMove}
                                 onPointerUp={handlePointerUp}
                                 onPointerCancel={handlePointerUp}
-                                onPointerLeave={handlePointerUp}
-                                onClickCapture={(e) => e.stopPropagation()}
-                                onClick={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                onTouchStart={(e) => e.stopPropagation()}
+                                onClick={handleDragHandleClick}
                             >
                                 <div className="w-12 h-1.5 bg-gray-300 rounded-full opacity-50 pointer-events-none"></div>
                             </div>
