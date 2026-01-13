@@ -18,7 +18,7 @@ class WikimediaService {
 
     private async loadStaticData() {
         try {
-            const res = await fetch('/data/spot_images.json');
+            const res = await fetch(`${import.meta.env.BASE_URL}data/spot_images.json`);
             if (res.ok) {
                 const data = await res.json();
                 Object.entries(data).forEach(([key, value]) => {

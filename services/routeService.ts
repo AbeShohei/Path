@@ -70,14 +70,14 @@ class RouteService {
         this.initializationPromise = (async () => {
             try {
                 // Load stops graph
-                const graphResponse = await fetch('/data/kyoto-stops-graph.json');
+                const graphResponse = await fetch(`${import.meta.env.BASE_URL}data/kyoto-stops-graph.json`);
                 if (!graphResponse.ok) {
                     throw new Error(`Failed to load routing data: ${graphResponse.statusText}`);
                 }
                 this.graphData = await graphResponse.json();
 
                 // Load bus route shapes for drawing
-                const shapesResponse = await fetch('/data/kyoto-bus-routes.json');
+                const shapesResponse = await fetch(`${import.meta.env.BASE_URL}data/kyoto-bus-routes.json`);
                 if (shapesResponse.ok) {
                     const shapesData: BusRoutesData = await shapesResponse.json();
                     for (const route of shapesData.routes) {
@@ -128,7 +128,7 @@ class RouteService {
         // Or simple lazy load:
         if (!this.staticRoutes) {
             try {
-                const res = await fetch('/data/static_routes.json');
+                const res = await fetch(`${import.meta.env.BASE_URL}data/static_routes.json`);
                 if (res.ok) {
                     this.staticRoutes = await res.json();
                 } else {
@@ -298,7 +298,7 @@ class RouteService {
             return this.timetableCache.get(routeId)!;
         }
         try {
-            const res = await fetch(`/data/timetables/${routeId}.json`);
+            const res = await fetch(`${import.meta.env.BASE_URL}data/timetables/${routeId}.json`);
             if (res.ok) {
                 const data = await res.json();
                 this.timetableCache.set(routeId, data);
