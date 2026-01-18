@@ -9,8 +9,8 @@ const API_KEY = ((import.meta as any).env?.VITE_OPENROUTER_API_KEY ||
 
 // Priority List of Free Models to try in order
 const FREE_MODELS = [
-    'xiaomi/mimo-v2-flash:free',       // User Request (Primary)
-    'z-ai/glm-4.5-air:free',           // User Request (Fallback)
+    'z-ai/glm-4.5-air:free',              // Primary
+    'google/gemini-2.0-flash-exp:free',   // Fallback
 ];
 
 const BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -25,7 +25,6 @@ export interface GuideContent {
     text: string;
     spotId?: string;
     spotName?: string;
-    direction?: 'LEFT' | 'RIGHT' | 'FRONT' | 'BACK';
     imageUrl?: string;
 }
 
@@ -117,29 +116,21 @@ async function callAI(prompt: string): Promise<any> {
 // --- GUIDE GENERATION ---
 
 export const generateGuideContent = async (
-    spot: Spot,
-    relativeDirection?: 'LEFT' | 'RIGHT' | 'FRONT' | 'BACK'
+    spot: Spot
 ): Promise<GuideContent> => {
 
     // Early check: If API key is not configured, immediately return basic info
     if (!API_KEY) {
-
         return {
             id: `guide-${spot.id}-${Date.now()}`,
             text: spot.description,
             spotId: spot.id,
-            spotName: spot.name,
-            direction: relativeDirection
+            spotName: spot.name
         };
     }
 
-    const directionTextFull = relativeDirection === 'LEFT' ? '左手' :
-        relativeDirection === 'RIGHT' ? '右手' : '近く';
-
-
-
     const prompt = `あなたは京都の歴史と文化を知り尽くしたベテラン観光ガイドです。
-現在、ユーザーはバスや徒歩で移動中です。${directionTextFull}に見える「${spot.name}」について、移動中の風景がより輝いて見えるような、魅力的な語りをお願いします。
+現在、ユーザーはバスや徒歩で移動中です。「${spot.name}」について、移動中の風景がより輝いて見えるような、魅力的な語りをお願いします。
 
 【スポット情報】
 名称: ${spot.name}
@@ -147,10 +138,11 @@ export const generateGuideContent = async (
 
 【執筆のルール】
 1. 200文字程度の日本語で、情緒豊かに語ってください。
-2. 「左手をご覧ください」といった定型句から始める必要はありません。自然な語り口で始めてください。
+2. 自然な語り口で始めてください。
 3. 土地の歴史的背景、地名の由来、または季節の情景など、ガイドブックにはない「生きた情報」を一味加えてください。
 4. 親しみやすく、丁寧な言葉遣い（です・ます調）で。歴史用語などの専門用語は避け、初めて京都に来た人でも直感的に分かるような平易な表現を使ってください。
-5. 出力は以下のJSON形式のみとし、Markdownの装飾は一切含めないでください。
+5. 「ああ」「おお」などの感嘆詞は使わないでください。
+6. 出力は以下のJSON形式のみとし、Markdownの装飾は一切含めないでください。
 {"text": "ガイドの語り内容"}
 `;
 
@@ -163,8 +155,7 @@ export const generateGuideContent = async (
             id: `guide-${spot.id}-${Date.now()}`,
             text: result.text || result.content || 'ガイド情報を生成できませんでした。',
             spotId: spot.id,
-            spotName: spot.name,
-            direction: relativeDirection
+            spotName: spot.name
         };
     } catch (error) {
         console.error('Gemini API Error:', error);
@@ -173,8 +164,7 @@ export const generateGuideContent = async (
             id: `guide-${spot.id}-${Date.now()}`,
             text: spot.description,
             spotId: spot.id,
-            spotName: spot.name,
-            direction: relativeDirection
+            spotName: spot.name
         };
     }
 }
