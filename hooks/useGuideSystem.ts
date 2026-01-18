@@ -89,14 +89,7 @@ export function useGuideSystem({
                     return;
                 }
 
-                // 2. Prepare next point
-                let nextPoint: Coordinates | undefined;
-                if (segment.path && segment.path.length > 0) {
-                    const end = segment.path[segment.path.length - 1];
-                    nextPoint = { latitude: end.lat, longitude: end.lng };
-                }
-
-                // 3. Identify spots needing fetch
+                // 2. Identify spots needing fetch
                 // Exclude cached AND failed spots (temporary ignore)
                 const spotsNeedingFetch = closeSpots.filter(s =>
                     !guideCache.current.has(s.id) && !failedSpots.current.has(s.id)
@@ -105,14 +98,14 @@ export function useGuideSystem({
                 const now = Date.now();
                 const aiAvailable = isAIAvailable();
 
-                // 4. Fetching Strategy
+                // 3. Fetching Strategy
                 if (spotsNeedingFetch.length > 0) {
                     if (!aiAvailable) {
                         // NO AI: Process ALL spots INSTANTLY with basic info
                         // No rate limiting, no waiting
                         for (const spot of spotsNeedingFetch) {
                             try {
-                                const guide = await fetchSpotGuide(spot, currentCoords, nextPoint);
+                                const guide = await fetchSpotGuide(spot);
                                 guideCache.current.set(spot.id, guide);
                             } catch (e) {
                                 // Should not fail for basic info, but log just in case
@@ -122,14 +115,14 @@ export function useGuideSystem({
                         // All spots processed, no more loading
                         setLoading(false);
                     } else {
-                        // AI AVAILABLE: Use rate limiting (10s between API calls)
-                        if (now - lastFetchTime.current >= 10000) {
+                        // AI AVAILABLE: Use rate limiting (4s between API calls = ~15 RPM, under 20 RPM limit)
+                        if (now - lastFetchTime.current >= 4000) {
                             setLoading(true);
                             const spot = spotsNeedingFetch[0];
                             lastFetchTime.current = Date.now();
 
                             try {
-                                const guide = await fetchSpotGuide(spot, currentCoords, nextPoint);
+                                const guide = await fetchSpotGuide(spot);
                                 guideCache.current.set(spot.id, guide);
                                 failedSpots.current.delete(spot.id);
                             } catch (e) {

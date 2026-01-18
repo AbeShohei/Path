@@ -12,40 +12,7 @@ interface GuideCache {
     [spotId: string]: GuideContent;
 }
 
-// --- Helper: Direction ---
-
-/**
- * Calculates relative direction of a target from current heading.
- * Returns only LEFT or RIGHT based on which side of the path the spot is.
- */
-export function calculateRelativeDirection(
-    current: Coordinates,
-    next: Coordinates,
-    target: Coordinates
-): 'LEFT' | 'RIGHT' {
-    const getBearing = (start: Coordinates, end: Coordinates): number => {
-        const startLat = start.latitude * Math.PI / 180;
-        const startLng = start.longitude * Math.PI / 180;
-        const endLat = end.latitude * Math.PI / 180;
-        const endLng = end.longitude * Math.PI / 180;
-
-        const y = Math.sin(endLng - startLng) * Math.cos(endLat);
-        const x = Math.cos(startLat) * Math.sin(endLat) -
-            Math.sin(startLat) * Math.cos(endLat) * Math.cos(endLng - startLng);
-        const θ = Math.atan2(y, x);
-        return (θ * 180 / Math.PI + 360) % 360;
-    };
-
-    const heading = getBearing(current, next);
-    const targetBearing = getBearing(current, target);
-
-    let diff = targetBearing - heading;
-    if (diff < -180) diff += 360;
-    if (diff > 180) diff -= 360;
-
-    // Positive diff = target is to the right; Negative = left
-    return diff >= 0 ? 'RIGHT' : 'LEFT';
-}
+// --- Helper: Distance ---
 
 export function getDistance(coord1: Coordinates, coord2: Coordinates): number {
     const R = 6371000;
@@ -80,27 +47,18 @@ function saveCache(cache: GuideCache) {
 // --- Main Orchestrator ---
 
 export async function fetchSpotGuide(
-    spot: Spot,
-    currentLocation?: Coordinates,
-    nextLocation?: Coordinates
+    spot: Spot
 ): Promise<GuideContent> {
     const cache = loadCache();
 
-    // 1. Check Cache
     // 1. Check Cache
     if (cache[spot.id]) {
         const cachedGuide = cache[spot.id];
 
         // Invalid Cache Check: If it contains the fallback error message, treat as missing
         if (cachedGuide.text.includes('申し訳ありませんが') || cachedGuide.text.includes('ガイド情報を生成できませんでした')) {
-
             // Fall through to fetch
         } else {
-            // Dynamic Context Update (Direction)
-            if (currentLocation && nextLocation) {
-                cachedGuide.direction = calculateRelativeDirection(currentLocation, nextLocation, spot.location);
-            }
-
             // Image Recovery: If image is missing, try to fetch it (it might be in spot_images.json now)
             if (!cachedGuide.imageUrl) {
                 const img = await wikimediaService.getSpotImage(spot.name);
@@ -116,15 +74,8 @@ export async function fetchSpotGuide(
         }
     }
 
-    // 2. Prepare Context
-    // Calculate relative direction for the prompt
-    let direction: 'LEFT' | 'RIGHT' | 'FRONT' | 'BACK' | undefined = undefined;
-    if (currentLocation && nextLocation) {
-        direction = calculateRelativeDirection(currentLocation, nextLocation, spot.location);
-    }
-
-    // 3. Generate Content (AI / Mock)
-    const guide = await generateGuideContent(spot, direction);
+    // 2. Generate Content (AI / Mock)
+    const guide = await generateGuideContent(spot);
 
     // 4. Fetch Image (Wikimedia)
     const imageUrl = await wikimediaService.getSpotImage(spot.name);
