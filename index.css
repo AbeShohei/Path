@@ -13,6 +13,8 @@ body,
     /* Prevent global scrollbar */
     margin: 0;
     padding: 0;
+    background-color: #f9fafb;
+    /* bg-gray-50 */
 }
 
 /* Safe Area Utility Classes */
@@ -26,6 +28,22 @@ body,
 
 .safe-pb {
     padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
+.safe-pb-4 {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+
+.safe-pb-6 {
+    padding-bottom: max(env(safe-area-inset-bottom), 1.5rem);
+}
+
+.safe-pb-24 {
+    padding-bottom: max(env(safe-area-inset-bottom), 6rem);
+}
+
+.safe-bottom-6 {
+    bottom: max(env(safe-area-inset-bottom), 1.5rem);
 }
 
 /* Custom Scrollbar Styles (migrated from index.html if needed, but Tailwind handles most) */

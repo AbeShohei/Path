@@ -1396,7 +1396,7 @@ function App() {
 
             {/* Global Header */}
             {mode !== AppMode.LANDING && mode !== AppMode.ROUTE_SELECT && mode !== AppMode.PLANNING && (
-                <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-2 sticky top-0 z-40 shadow-sm flex items-center justify-between gap-3 shrink-0 safe-pt">
+                <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 pb-2 sticky top-0 z-40 shadow-sm flex items-center justify-between gap-3 shrink-0 safe-pt">
                     <div className="flex items-center gap-3 overflow-hidden w-full">
                         <button onClick={goBackToPlanning} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors shrink-0">
                             <ChevronLeftIcon />
@@ -1575,7 +1575,7 @@ function App() {
                         {/* Draggable Sheet Container */}
                         <div
                             ref={sheetRef}
-                            className={`absolute bottom-0 left-0 right-0 z-[20] bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col pointer-events-auto overflow-hidden ${isDragging ? '' : 'transition-[height] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)]'}`}
+                            className={`absolute bottom-0 left-0 right-0 z-[20] bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col pointer-events-auto overflow-hidden safe-pb box-content ${isDragging ? '' : 'transition-[height] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)]'}`}
                             style={{ height: `${sheetHeight}px` }}
                             onClick={(e) => e.stopPropagation()}
                             onMouseDown={(e) => e.stopPropagation()}
@@ -2021,7 +2021,7 @@ function App() {
                                         </div>
 
                                         {/* Float Start Button (Fixed at Bottom of View) */}
-                                        <div className="absolute bottom-6 left-6 right-6 z-20">
+                                        <div className="absolute left-6 right-6 z-20 safe-bottom-6">
                                             <button
                                                 onClick={() => startNavigation(selectedRoute)}
                                                 className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
@@ -2363,7 +2363,7 @@ function App() {
                             </div>
 
                             {/* Bottom Section - Controls and Spots (Overlay) */}
-                            <div className="relative z-10 px-4 pb-24 shrink-0 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-transparent pt-8">
+                            <div className="relative z-10 px-4 shrink-0 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-transparent pt-8 safe-pb-24">
                                 {/* Audio Control */}
                                 {(guideText || selectedSpot.description) && (
                                     <button
