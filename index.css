@@ -17,7 +17,7 @@ body,
 
 /* Safe Area Utility Classes */
 .safe-pt {
-    padding-top: max(env(safe-area-inset-top), 0.5rem);
+    padding-top: max(env(safe-area-inset-top), 54px);
 }
 
 .safe-pb {
