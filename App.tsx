@@ -60,6 +60,7 @@ function App() {
     const [spots, setSpots] = useState<Spot[]>([]);
     const [selectedCongestion, setSelectedCongestion] = useState<number[]>([1, 2, 3]); // Default: Comfortable, Somewhat Comfortable, Normal
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const [searchQuery, setSearchQuery] = useState(''); // Search query for spot filtering
     const [selectedTime, setSelectedTime] = useState<TimeOfDay>(getCurrentTimeOfDay()); // Time of day for congestion
     const [selectedMonth, setSelectedMonth] = useState<Month>(getCurrentMonth()); // Month for congestion (dev mode)
     const [selectedDayType, setSelectedDayType] = useState<DayType>(getCurrentDayType()); // Day type for congestion (dev mode)
@@ -169,16 +170,14 @@ function App() {
         { level: 5, label: '混雑', color: 'bg-red-500' }
     ];
 
-    // Recalculate congestion levels when dev mode month/time selection changes
+    // Recalculate congestion levels when month/time/dayType selection changes
     const displaySpots = React.useMemo(() => {
-        if (!devMode) return spots;
-
         // Recalculate congestion levels with selected month/time/dayType
         return spots.map(spot => ({
             ...spot,
             congestionLevel: getCongestionLevel(spot.location.latitude, spot.location.longitude, selectedTime, selectedMonth, selectedDayType)
         }));
-    }, [spots, devMode, selectedMonth, selectedTime, selectedDayType]);
+    }, [spots, selectedMonth, selectedTime, selectedDayType]);
 
     // Load bus and subway routes data
     useEffect(() => {
@@ -555,6 +554,12 @@ function App() {
                 // Exclude spots without photos
                 return !!s.imageUrl;
             })
+            .filter(s => {
+                // Search filter: match spot name
+                if (!searchQuery.trim()) return true;
+                const query = searchQuery.trim().toLowerCase();
+                return s.name.toLowerCase().includes(query);
+            })
             .sort((a, b) => {
                 // Priority 0: '赤山禅院' always first
                 if (a.name === '赤山禅院') return -1;
@@ -573,7 +578,7 @@ function App() {
                 // Tertiary: distance (closer is better)
                 return getDistance(a) - getDistance(b);
             });
-    }, [mode, selectedRoute, displaySpots, selectedSpot, selectedCongestion, coords, hideOtherPins]);
+    }, [mode, selectedRoute, displaySpots, selectedSpot, selectedCongestion, coords, hideOtherPins, searchQuery]);
 
     // --- Guide System Integration (Moved after visibleSpots to use filtered list) ---
     const { nearbyGuides, nearbySpots, loading: guideLoading } = useGuideSystem({
@@ -1590,8 +1595,8 @@ function App() {
                                 <div className="w-12 h-1.5 bg-gray-300 rounded-full opacity-50 pointer-events-none"></div>
                             </div>
 
-                            <div className="px-6 pb-2 shrink-0 bg-white z-20 space-y-3 pointer-events-none">
-                                <div className="flex flex-wrap items-start justify-between gap-y-2 pointer-events-auto min-h-[60px]">
+                            <div className="px-6 pb-0 shrink-0 bg-white z-20 pointer-events-none">
+                                <div className="flex flex-wrap items-start justify-between gap-y-1 pointer-events-auto">
                                     <div>
                                         <h2 className="text-xl font-black text-gray-800 tracking-tight leading-tight whitespace-nowrap">
                                             近くの観光スポット
@@ -1622,63 +1627,81 @@ function App() {
                                             </button>
                                         </div>
 
-                                        {/* Month & Time Filter (Dev Mode Only) */}
-                                        {devMode && (
-                                            <>
-                                                {/* Month Selector */}
-                                                <div className="relative">
-                                                    <select
-                                                        value={selectedMonth}
-                                                        onChange={(e) => setSelectedMonth(e.target.value as Month)}
-                                                        className="pl-3 pr-7 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 border-none appearance-none cursor-pointer hover:bg-gray-200 transition-colors focus:ring-0"
-                                                    >
-                                                        {(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'] as Month[]).map((m) => (
-                                                            <option key={m} value={m}>
-                                                                {parseInt(m)}月
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-
-                                                {/* Time Selector */}
-                                                <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
-                                                    {(['morning', 'noon', 'evening'] as TimeOfDay[]).map((t) => (
-                                                        <button
-                                                            key={t}
-                                                            onClick={() => setSelectedTime(t)}
-                                                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedTime === t
-                                                                ? 'bg-white text-indigo-600 shadow-sm'
-                                                                : 'text-gray-400 hover:text-gray-600'
-                                                                }`}
-                                                        >
-                                                            {t === 'morning' ? '朝' : t === 'noon' ? '昼' : '夕'}
-                                                        </button>
-                                                    ))}
-                                                </div>
-
-                                                {/* Day Type Selector (Weekday/Weekend) */}
-                                                <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
-                                                    {(['weekday', 'weekend'] as DayType[]).map((d) => (
-                                                        <button
-                                                            key={d}
-                                                            onClick={() => setSelectedDayType(d)}
-                                                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedDayType === d
-                                                                ? 'bg-white text-indigo-600 shadow-sm'
-                                                                : 'text-gray-400 hover:text-gray-600'
-                                                                }`}
-                                                        >
-                                                            {d === 'weekday' ? '平日' : '休日'}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </>
-                                        )}
                                     </div>
+                                </div>
+
+                                {/* Time & Day Filters */}
+                                {sheetHeight > 120 && (
+                                    <div className="flex items-center gap-2 pointer-events-auto flex-nowrap overflow-x-auto no-scrollbar transition-all duration-300">
+                                        <span className="text-[10px] font-bold text-gray-400 shrink-0">日時設定:</span>
+                                        {/* Month Selector */}
+                                        <div className="relative shrink-0">
+                                            <select
+                                                value={selectedMonth}
+                                                onChange={(e) => setSelectedMonth(e.target.value as Month)}
+                                                className="pl-3 pr-7 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 border-none appearance-none cursor-pointer hover:bg-gray-200 transition-colors focus:ring-0"
+                                            >
+                                                {(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'] as Month[]).map((m) => (
+                                                    <option key={m} value={m}>{parseInt(m)}月</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        {/* Time Selector */}
+                                        <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
+                                            {(['morning', 'noon', 'evening'] as TimeOfDay[]).map((t) => (
+                                                <button
+                                                    key={t}
+                                                    onClick={() => setSelectedTime(t)}
+                                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedTime === t ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                >
+                                                    {t === 'morning' ? '朝' : t === 'noon' ? '昼' : '夕'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {/* Day Type Selector */}
+                                        <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
+                                            {(['weekday', 'weekend'] as DayType[]).map((d) => (
+                                                <button
+                                                    key={d}
+                                                    onClick={() => setSelectedDayType(d)}
+                                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${selectedDayType === d ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                >
+                                                    {d === 'weekday' ? '平日' : '休日'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Search Input */}
+                                <div className="relative pointer-events-auto my-2">
+                                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="スポットを検索..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-10 pr-10 py-2.5 bg-gray-100 rounded-xl text-sm text-gray-800 placeholder-gray-400 border-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Congestion Filter */}
