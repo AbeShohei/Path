@@ -12,7 +12,7 @@ export const CongestionLegend: React.FC = () => {
     );
 
     return (
-        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-2 shadow-lg z-[1] border border-gray-200/50 pointer-events-auto">
+        <div className="absolute safe-top left-4 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-2 shadow-lg z-[1] border border-gray-200/50 pointer-events-auto">
             <div className="font-bold mb-1.5 text-center text-gray-500 text-[9px] uppercase tracking-wider">混雑状況</div>
             <div className="flex gap-1.5">
                 {/* Level 1 - Very Low */}

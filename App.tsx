@@ -1382,11 +1382,11 @@ function App() {
     const stageTimeInfo = getStageTimeInfo();
 
     return (
-        <div className="h-screen w-full max-w-md mx-auto bg-gray-50 shadow-2xl overflow-hidden relative font-sans text-gray-800 flex flex-col">
+        <div className="h-full w-full max-w-md mx-auto bg-gray-50 shadow-2xl overflow-hidden relative font-sans text-gray-800 flex flex-col">
 
             {/* Toast Notification */}
             {toastMessage && (
-                <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg animate-fade-in-up transition-opacity">
+                <div className="absolute safe-top left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg animate-fade-in-up transition-opacity mt-2">
                     {toastMessage}
                 </div>
             )}
