@@ -21,7 +21,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     const [showDisclaimer, setShowDisclaimer] = useState(false);
 
     return (
-        <div className="relative h-full flex flex-col items-center justify-end pb-20 text-center">
+        <div className="relative h-full flex flex-col items-center justify-end pb-20 text-center safe-pt">
             {/* Background Image */}
             <div className="absolute inset-0 z-0 bg-indigo-900">
                 <img

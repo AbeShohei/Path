@@ -1396,7 +1396,7 @@ function App() {
 
             {/* Global Header */}
             {mode !== AppMode.LANDING && mode !== AppMode.ROUTE_SELECT && mode !== AppMode.PLANNING && (
-                <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-2 sticky top-0 z-40 shadow-sm flex items-center justify-between gap-3 shrink-0">
+                <header className="bg-indigo-900/95 backdrop-blur-md text-white px-4 py-2 sticky top-0 z-40 shadow-sm flex items-center justify-between gap-3 shrink-0 safe-pt">
                     <div className="flex items-center gap-3 overflow-hidden w-full">
                         <button onClick={goBackToPlanning} className="p-1 -ml-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors shrink-0">
                             <ChevronLeftIcon />

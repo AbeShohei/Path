@@ -15,6 +15,15 @@ body,
     padding: 0;
 }
 
+/* Safe Area Utility Classes */
+.safe-pt {
+    padding-top: max(env(safe-area-inset-top), 0.5rem);
+}
+
+.safe-pb {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
 /* Custom Scrollbar Styles (migrated from index.html if needed, but Tailwind handles most) */
 ::-webkit-scrollbar {
     width: 4px;

@@ -1,0 +1,16 @@
+{
+    "name": "Path - スマートツーリズム京都観光案内ガイド",
+    "short_name": "Path Kyoto",
+    "description": "Kyoto Tourism Guide AI",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#fdfcf8",
+    "theme_color": "#312e81",
+    "icons": [
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
